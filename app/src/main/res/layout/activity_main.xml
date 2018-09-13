@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <Button
+        android:id="@+id/btn_create_float_window"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="创建系统悬浮窗"
+        android:textColor="#000000" />
+
+</LinearLayout>
