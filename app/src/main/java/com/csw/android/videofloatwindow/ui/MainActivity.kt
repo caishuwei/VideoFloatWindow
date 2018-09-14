@@ -45,8 +45,6 @@ class MainActivity : AppCompatActivity() {
                 }
             })
         }
-
-
         ContextCompat.startForegroundService(this@MainActivity, Intent(this@MainActivity, VideoService::class.java))
         bindService(Intent(this@MainActivity, VideoService::class.java), conn, Service.BIND_AUTO_CREATE)
     }
