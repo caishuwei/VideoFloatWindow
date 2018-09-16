@@ -42,6 +42,8 @@ class VideoFloatWindow : FrameLayout {
         }
     }
 
+
+
     fun isShowing(): Boolean {
         return parent != null
     }
