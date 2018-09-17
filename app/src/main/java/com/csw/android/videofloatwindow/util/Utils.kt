@@ -6,12 +6,6 @@ import com.csw.android.videofloatwindow.app.MyApplication
 
 class Utils {
     companion object {
-        /**
-         * 判断App是否处于调试状态
-         */
-        fun isAppInDebug(): Boolean {
-            return MyApplication.instance.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
-        }
 
         /**
          * 判断两个可空变量都不为空之后调用run

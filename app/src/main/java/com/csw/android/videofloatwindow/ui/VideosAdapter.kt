@@ -8,7 +8,6 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.TextView
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.entities.VideoInfo
@@ -43,7 +42,8 @@ class VideosAdapter : RecyclerView.Adapter<MyViewHolder>() {
 
 }
 
-class MyViewHolder constructor(itemView: View) : RecyclerView.ViewHolder(itemView) {
+class MyViewHolder : RecyclerView.ViewHolder {
+
     companion object {
         val thumbColumns = Array<String>(1) {
             MediaStore.Video.Thumbnails._ID
@@ -54,6 +54,15 @@ class MyViewHolder constructor(itemView: View) : RecyclerView.ViewHolder(itemVie
     private val name: TextView = itemView.findViewById(R.id.tv_name)
     private val desc: TextView = itemView.findViewById(R.id.tv_desc)
     private var videoInfo: VideoInfo? = null
+
+    constructor(itemView: View) : super(itemView) {
+        itemView.setOnClickListener { v ->
+            videoInfo?.let {
+                FullScreenActivity.openActivity(v.context, it)
+            }
+        }
+    }
+
 
     fun updateView(videoInfo: VideoInfo) {
         this.videoInfo = videoInfo
@@ -71,7 +80,7 @@ class MyViewHolder constructor(itemView: View) : RecyclerView.ViewHolder(itemVie
             image.tag = null
         }
         //加载当前图片
-        val videoDbId = videoInfo.id
+        val videoDbId = videoInfo.mediaDbId
         image.tag = Observable.create<Bitmap> {
             val bitmap = MediaStore.Video.Thumbnails.getThumbnail(
                     image.context.contentResolver,

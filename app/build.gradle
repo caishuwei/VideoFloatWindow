@@ -1,8 +1,8 @@
 apply plugin: 'com.android.application'
-
 apply plugin: 'kotlin-android'
-
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'org.greenrobot.greendao'
+
 
 android {
     compileSdkVersion 28
@@ -22,11 +22,32 @@ android {
     }
 }
 
+greendao {
+    schemaVersion 1//数据库版本号
+    daoPackage 'com.csw.android.videofloatwindow.greendao'//设置DaoMaster、DaoSession、Dao包名
+    targetGenDir 'src/main/java'//设置DaoMaster、DaoSession、Dao目录
+    //targetGenDirTest：设置生成单元测试目录
+    //generateTests：设置自动生成单元测试用例
+}
+
+configurations.all {
+    //强制让所有模块都用相同的支持库版本(multidex的版本号规律不一样，= =!)
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        def requested = details.requested
+        if (requested.group == 'com.android.support') {
+            if (!requested.name.startsWith("multidex")) {
+                details.useVersion '28.0.0-rc02'
+            }
+        }
+    }
+}
+
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'com.android.support:appcompat-v7:28.0.0-rc02'
     implementation 'com.android.support:design:28.0.0-rc02'
+    implementation 'com.android.support:cardview-v7:28.0.0-rc02'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
@@ -35,4 +56,9 @@ dependencies {
     // 基于RxJava框架的动态权限申请(已经内置RxJava依赖了)
     implementation 'com.tbruyelle.rxpermissions2:rxpermissions:0.9.5@aar'
     api 'io.reactivex.rxjava2:rxkotlin:2.3.0'
+    //exo播放器，谷歌亲儿子，流畅程度甩MediaPlay10条街，支持更多的格式，甚至可以自定义视屏解码
+    implementation 'com.google.android.exoplayer:exoplayer:2.8.2'
+    //数据库框架 可以将一张表映射为java对象，可以对对象执行添加 删除 更新操作
+    implementation 'org.greenrobot:greendao:3.2.2'
+    implementation 'org.greenrobot:greendao-generator:3.2.2'
 }

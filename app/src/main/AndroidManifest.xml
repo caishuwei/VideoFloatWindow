@@ -23,6 +23,10 @@
 
         <activity android:name=".ui.LocalVideosActivity" />
 
+        <activity
+            android:name=".ui.FullScreenActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden|keyboard|screenLayout" />
+
         <service
             android:name=".services.video.VideoService"
             android:exported="false" />

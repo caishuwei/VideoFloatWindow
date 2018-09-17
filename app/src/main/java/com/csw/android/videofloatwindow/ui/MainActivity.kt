@@ -10,6 +10,7 @@ import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import com.csw.android.videofloatwindow.IVideoServiceInterface
 import com.csw.android.videofloatwindow.R
+import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.services.video.VideoService
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -31,17 +32,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        btn_create_float_window.setOnClickListener { v ->
-            //            SystemAlertWindowPermission.request(this, object : SystemAlertWindowPermission.OnRequestResultListener {
-//                override fun onResult(isGranted: Boolean) {
-//                    if (isGranted) {
-//                        Snackbar.make(btn_create_float_window, "已授予系统悬浮框权限", Snackbar.LENGTH_SHORT).show()
-//                        videoServiceInterface?.playInFloatWindow()
-//                    } else {
-//                        Snackbar.make(btn_create_float_window, "未授予系统悬浮框权限", Snackbar.LENGTH_SHORT).show()
-//                    }
-//                }
-//            })
+        btn_create_float_window.setOnClickListener {
             startActivity(Intent(this@MainActivity, LocalVideosActivity::class.java))
         }
         ContextCompat.startForegroundService(this@MainActivity, Intent(this@MainActivity, VideoService::class.java))
