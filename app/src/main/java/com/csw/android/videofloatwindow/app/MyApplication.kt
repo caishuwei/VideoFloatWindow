@@ -4,6 +4,7 @@ import android.app.Application
 import android.database.sqlite.SQLiteDatabase
 import com.csw.android.videofloatwindow.greendao.DaoMaster
 import com.csw.android.videofloatwindow.greendao.DaoSession
+import com.csw.android.videofloatwindow.player.PlayerHelper
 
 class MyApplication : Application() {
 
@@ -14,6 +15,10 @@ class MyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         MyApplication.instance = this
+    }
+
+    val playerHelper: PlayerHelper by lazy {
+        PlayerHelper(this)
     }
 
     val dbHelper: DaoMaster.DevOpenHelper by lazy {

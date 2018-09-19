@@ -28,7 +28,8 @@
             style="@style/ExoMediaButton"
             android:padding="12dp"
             android:scaleType="fitCenter"
-            android:src="@drawable/icon_sidemenu_back" />
+            android:src="@drawable/icon_sidemenu_back"
+            tools:ignore="contentDescription" />
 
         <TextView
             android:id="@+id/tv_title"
@@ -47,7 +48,7 @@
 
 
     <LinearLayout
-        android:id="@+id/time_and_progress"
+        android:id="@+id/v_time_and_progress"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
@@ -67,7 +68,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:typeface="monospace"
-            tools:text="00:00"/>
+            tools:text="00:00" />
 
         <com.google.android.exoplayer2.ui.DefaultTimeBar
             android:id="@id/exo_progress"
@@ -86,41 +87,64 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:typeface="monospace"
-            tools:text="00:01"/>
+            tools:text="00:01" />
 
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/v_play_buttons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@id/time_and_progress"
+        android:layout_above="@id/v_time_and_progress"
         android:background="#CC000000"
         android:gravity="center"
         android:orientation="horizontal"
         android:paddingTop="4dp">
 
         <ImageButton
-            android:id="@id/exo_rew"
-            style="@style/ExoMediaButton.Rewind" />
+            android:id="@+id/v_previous"
+            style="@style/ExoMediaButton.Previous"
+            tools:ignore="contentDescription" />
+
+        <!--<ImageButton-->
+        <!--android:id="@id/exo_rew"-->
+        <!--style="@style/ExoMediaButton.Rewind" />-->
 
         <ImageButton
             android:id="@id/exo_play"
-            style="@style/ExoMediaButton.Play" />
+            style="@style/ExoMediaButton.Play"
+            tools:ignore="contentDescription" />
 
         <ImageButton
             android:id="@id/exo_pause"
-            style="@style/ExoMediaButton.Pause" />
+            style="@style/ExoMediaButton.Pause"
+            android:visibility="gone"
+            tools:ignore="contentDescription" />
+
+        <!--<ImageButton-->
+        <!--android:id="@id/exo_ffwd"-->
+        <!--style="@style/ExoMediaButton.FastForward" />-->
 
         <ImageButton
-            android:id="@id/exo_ffwd"
-            style="@style/ExoMediaButton.FastForward" />
+            android:id="@+id/v_next"
+            style="@style/ExoMediaButton.Next"
+            tools:ignore="contentDescription" />
 
         <ImageButton
             android:id="@+id/v_full_screen"
             style="@style/ExoMediaButton"
             android:padding="12dp"
             android:scaleType="fitCenter"
-            android:src="@drawable/icon_full_screen" />
+            android:src="@drawable/icon_full_screen"
+            tools:ignore="contentDescription" />
+
+        <ImageButton
+            android:id="@+id/v_float_window"
+            style="@style/ExoMediaButton"
+            android:padding="12dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/icon_float_window"
+            tools:ignore="contentDescription" />
     </LinearLayout>
 
 

@@ -23,9 +23,12 @@
 
         <activity android:name=".ui.LocalVideosActivity" />
 
+        <!--全屏播放界面，为实现在其他应用中小窗口与全屏模式切换，此Activity运行在特定Activity栈中-->
         <activity
             android:name=".ui.FullScreenActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|keyboard|screenLayout" />
+            android:configChanges="orientation|screenSize|keyboardHidden|keyboard|screenLayout"
+            android:launchMode="singleInstance"
+            android:taskAffinity=":fullscreenTask" />
 
         <service
             android:name=".services.video.VideoService"

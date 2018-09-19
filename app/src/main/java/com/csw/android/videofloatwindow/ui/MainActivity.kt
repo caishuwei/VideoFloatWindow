@@ -10,7 +10,6 @@ import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import com.csw.android.videofloatwindow.IVideoServiceInterface
 import com.csw.android.videofloatwindow.R
-import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.services.video.VideoService
 import kotlinx.android.synthetic.main.activity_main.*
 

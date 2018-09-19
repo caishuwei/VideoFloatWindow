@@ -10,18 +10,12 @@ import android.view.View
 import android.view.WindowManager
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.entities.VideoInfo
-import com.csw.android.videofloatwindow.view.VideoView
 import kotlinx.android.synthetic.main.activity_full_screen.*
 
 
 class FullScreenActivity : AppCompatActivity() {
 
     companion object {
-
-        fun openActivity(videoView: VideoView) {
-
-        }
-
         fun openActivity(context: Context, videoInfo: VideoInfo) {
             val intent = Intent(context, FullScreenActivity::class.java)
             intent.putExtra("VideoInfo", videoInfo)
@@ -30,25 +24,33 @@ class FullScreenActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
         setFullScreen(true)
+        super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_full_screen)
-        videoView.vBack.setOnClickListener {
-            finish()
-        }
-        videoView.vFullScreen.visibility = View.GONE
+        initData(intent)
+    }
 
-        val videoInfo = intent.getSerializableExtra("VideoInfo")
-        if (videoInfo != null && videoInfo is VideoInfo) {
-            requestedOrientation = if (videoInfo.getWHRatio() > 1) ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            videoView.setVideoInfo(videoInfo)
-            videoView.play()
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        initData(intent)
+    }
+
+    private fun initData(intent: Intent?) {
+        if (intent != null) {
+            val videoInfo = intent.getSerializableExtra("VideoInfo")
+            if (videoInfo != null && videoInfo is VideoInfo) {
+                requestedOrientation = if (videoInfo.whRatio > 1) ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                videoContainer.setVideoInfo(videoInfo).bindPlayer().play()
+            }
+        } else {
+            videoContainer.setVideoInfo(null)
         }
     }
 
     override fun onDestroy() {
-        videoView.release()
+        videoContainer.unBindPlayer()
         super.onDestroy()
     }
 

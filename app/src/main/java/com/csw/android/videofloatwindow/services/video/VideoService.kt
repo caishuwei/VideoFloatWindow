@@ -18,10 +18,13 @@ class VideoService : Service() {
     companion object {
         const val FOREGROUND_ID: Int = 1
         const val NOTIFICATION_CHANNEL_ID: String = "NOTIFICATION_CHANNEL_ID"
+
+        lateinit var instance: VideoService
     }
 
     private lateinit var mNotification: Notification
-    private lateinit var videoFloatWindow: VideoFloatWindow
+    lateinit var videoFloatWindow: VideoFloatWindow
+        private set
     private val stub = object : IVideoServiceInterface.Stub() {
         override fun playInFloatWindow() {
             videoFloatWindow.show()
@@ -31,6 +34,7 @@ class VideoService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        VideoService.instance = this
         createNotification()
         startForeground(VideoService.FOREGROUND_ID, mNotification)
         videoFloatWindow = VideoFloatWindow(this)

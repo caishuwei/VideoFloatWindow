@@ -8,6 +8,8 @@ import android.util.AttributeSet
 import android.view.*
 import android.widget.FrameLayout
 import com.csw.android.videofloatwindow.R
+import com.csw.android.videofloatwindow.entities.VideoInfo
+import com.csw.android.videofloatwindow.player.AreaUtils
 import com.csw.android.videofloatwindow.util.ScreenInfo
 
 /**
@@ -16,13 +18,18 @@ import com.csw.android.videofloatwindow.util.ScreenInfo
 class VideoFloatWindow : FrameLayout {
     private var isAddToWindow = false
     private val windowManager: WindowManager
+    private val areaUtils: AreaUtils
+
+    private val videoContainer: FloatWindowVideoContainer
 
     constructor(context: Context) : this(context, null)
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        areaUtils = AreaUtils()
         windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val view = LayoutInflater.from(context).inflate(R.layout.view_video_float_window, this, false)
-        addView(view, LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        super.addView(view, LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        videoContainer = findViewById(R.id.videoContainer)
         setOnClickListener { hide() }
     }
 
@@ -41,7 +48,6 @@ class VideoFloatWindow : FrameLayout {
             }
         }
     }
-
 
 
     fun isShowing(): Boolean {
@@ -65,7 +71,7 @@ class VideoFloatWindow : FrameLayout {
         params.x = 0
         params.y = 0
 
-        params.width = ScreenInfo.WIDTH
+        params.width = WindowManager.LayoutParams.WRAP_CONTENT
         params.height = WindowManager.LayoutParams.WRAP_CONTENT
         params.dimAmount = 0f  //去除对话框的半透明背景
 
@@ -81,9 +87,20 @@ class VideoFloatWindow : FrameLayout {
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        
-
         return super.onTouchEvent(event) || true
+    }
+
+    fun setVideoInfo(videoInfo: VideoInfo) {
+        videoContainer.setVideoInfo(videoInfo).bindPlayer().play()
+        areaUtils.calcVideoWH(videoInfo.whRatio) { w, h ->
+            videoContainer.layoutParams.width = w
+            videoContainer.layoutParams.height = h
+            videoContainer.layoutParams = videoContainer.layoutParams
+        }
+    }
+
+    fun setVideoList(videoList: ArrayList<VideoInfo>) {
+        videoContainer.setVideoList(videoList)
     }
 
 }

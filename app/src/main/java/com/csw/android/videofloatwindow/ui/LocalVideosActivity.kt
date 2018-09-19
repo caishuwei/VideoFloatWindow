@@ -10,6 +10,7 @@ import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.entities.VideoInfo
+import com.csw.android.videofloatwindow.services.video.VideoService
 import com.tbruyelle.rxpermissions2.RxPermissions
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
@@ -44,6 +45,7 @@ class LocalVideosActivity : AppCompatActivity() {
                 .subscribe(
                         {
                             adapter.setNewData(it)
+                            VideoService.instance.videoFloatWindow.setVideoList(it)
                         },
                         {
                             Snackbar.make(recyclerView, it.message
@@ -91,7 +93,7 @@ class LocalVideosActivity : AppCompatActivity() {
                         0f
                     }
                     when (rotation) {
-                        90f, -90f -> {
+                        90f, -90f, 270f -> {
                             height = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.WIDTH))
                             width = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.HEIGHT))
                         }
