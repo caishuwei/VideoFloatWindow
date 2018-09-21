@@ -22,8 +22,9 @@ class PlayerHelper(context: Application) {
     private val none = VideoInfo()
     private val view: View
     private val playerView: PlayerView
-    private val tvTitle: TextView
     private val vBack: View
+    private val tvTitle: TextView
+    private var vClose: View
     private val vFullScreen: View
     private val vFloatWindow: View
     private val vPrevious: View
@@ -37,11 +38,13 @@ class PlayerHelper(context: Application) {
     private var currVideoInfo: VideoInfo = none
 
 
+
     init {
         view = LayoutInflater.from(context).inflate(R.layout.view_player, null, false)
         playerView = view.findViewById(R.id.player_view)
         vBack = playerView.findViewById(R.id.v_back)
         tvTitle = playerView.findViewById(R.id.tv_title)
+        vClose = playerView.findViewById(R.id.v_close)
         vPrevious = playerView.findViewById(R.id.v_previous)
         vPrevious.isEnabled = true
         vNext = playerView.findViewById(R.id.v_next)
@@ -123,7 +126,9 @@ class PlayerHelper(context: Application) {
 
     private fun resetBind() {
         playerBindHelper.setBackClickListener(null)
+                .setBackClickListener(null)
                 .setTitle("")
+                .setCloseClickListener(null)
                 .setPreviousClickListener(null)
                 .setNextClickListener(null)
                 .setFullScreenClickListener(null)
@@ -145,6 +150,13 @@ class PlayerHelper(context: Application) {
         fun setTitle(titleStr: String): PlayerBindHelper {
             tvTitle.text = titleStr
             return this
+        }
+
+        /**
+         * 设置关闭按钮事件
+         */
+        fun setCloseClickListener(listener: View.OnClickListener?): PlayerBindHelper {
+            return setClickListener(vClose, listener)
         }
 
         /**

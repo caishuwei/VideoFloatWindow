@@ -25,17 +25,16 @@
 
         <ImageButton
             android:id="@+id/v_back"
-            style="@style/ExoMediaButton"
-            android:padding="12dp"
-            android:scaleType="fitCenter"
+            style="@style/PlayerButton"
             android:src="@drawable/icon_sidemenu_back"
             tools:ignore="contentDescription" />
 
         <TextView
             android:id="@+id/tv_title"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
+            android:layout_weight="1"
             android:ellipsize="marquee"
             android:focusable="true"
             android:focusableInTouchMode="true"
@@ -43,6 +42,12 @@
             android:textColor="@color/white"
             android:textSize="22sp"
             tools:text="1234ABCD一二三四" />
+
+        <ImageButton
+            android:id="@+id/v_close"
+            style="@style/PlayerButton"
+            android:src="@drawable/icon_close"
+            tools:ignore="contentDescription" />
 
     </LinearLayout>
 
@@ -103,46 +108,38 @@
 
         <ImageButton
             android:id="@+id/v_previous"
-            style="@style/ExoMediaButton.Previous"
+            style="@style/PlayerButton"
+            android:src="@drawable/exo_controls_previous"
             tools:ignore="contentDescription" />
-
-        <!--<ImageButton-->
-        <!--android:id="@id/exo_rew"-->
-        <!--style="@style/ExoMediaButton.Rewind" />-->
 
         <ImageButton
             android:id="@id/exo_play"
-            style="@style/ExoMediaButton.Play"
+            style="@style/PlayerButton"
+            android:src="@drawable/exo_controls_play"
             tools:ignore="contentDescription" />
 
         <ImageButton
             android:id="@id/exo_pause"
-            style="@style/ExoMediaButton.Pause"
+            style="@style/PlayerButton"
+            android:src="@drawable/exo_controls_pause"
             android:visibility="gone"
             tools:ignore="contentDescription" />
 
-        <!--<ImageButton-->
-        <!--android:id="@id/exo_ffwd"-->
-        <!--style="@style/ExoMediaButton.FastForward" />-->
-
         <ImageButton
             android:id="@+id/v_next"
-            style="@style/ExoMediaButton.Next"
+            style="@style/PlayerButton"
+            android:src="@drawable/exo_controls_next"
             tools:ignore="contentDescription" />
 
         <ImageButton
             android:id="@+id/v_full_screen"
-            style="@style/ExoMediaButton"
-            android:padding="12dp"
-            android:scaleType="fitCenter"
+            style="@style/PlayerButton"
             android:src="@drawable/icon_full_screen"
             tools:ignore="contentDescription" />
 
         <ImageButton
             android:id="@+id/v_float_window"
-            style="@style/ExoMediaButton"
-            android:padding="12dp"
-            android:scaleType="fitCenter"
+            style="@style/PlayerButton"
             android:src="@drawable/icon_float_window"
             tools:ignore="contentDescription" />
     </LinearLayout>

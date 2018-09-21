@@ -19,6 +19,9 @@ class FloatWindowVideoContainer : VideoContainer {
         videoInfo?.let {
             playerBindHelper.setBackClickListener(null)
                     .setTitle(it.fileName)
+                    .setCloseClickListener(OnClickListener {
+                        VideoService.instance.videoFloatWindow.hide()
+                    })
                     .setFullScreenClickListener(OnClickListener {
                         playInFullScreen()
                     })

@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.IBinder
 import android.support.v4.app.NotificationCompat
+import android.support.v4.app.NotificationManagerCompat
 import com.csw.android.videofloatwindow.IVideoServiceInterface
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.view.VideoFloatWindow
