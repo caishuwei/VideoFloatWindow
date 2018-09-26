@@ -3,9 +3,8 @@ package com.csw.android.videofloatwindow.view
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View.OnClickListener
-import com.csw.android.videofloatwindow.entities.VideoInfo
+import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.player.PlayerHelper
-import com.csw.android.videofloatwindow.services.video.VideoService
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
 
 class FloatWindowVideoContainer : VideoContainer {
@@ -16,76 +15,54 @@ class FloatWindowVideoContainer : VideoContainer {
 
     override fun onBindPlayer(playerBindHelper: PlayerHelper.PlayerBindHelper) {
         super.onBindPlayer(playerBindHelper)
-        videoInfo?.let {
+        videoInfo?.let { it ->
             playerBindHelper.setBackClickListener(null)
                     .setTitle(it.fileName)
-                    .setCloseClickListener(OnClickListener {
-                        VideoService.instance.videoFloatWindow.hide()
+                    .setCloseClickListener(OnClickListener { _ ->
+                        MyApplication.instance.playerHelper.hideFloatWindow()
                     })
-                    .setFullScreenClickListener(OnClickListener {
+                    .setFullScreenClickListener(OnClickListener { _ ->
                         playInFullScreen()
                     })
-                    .setPreviousClickListener(OnClickListener {
-                        playPre()
-                    })
-                    .setNextClickListener(OnClickListener {
-                        playNext()
-                    })
+                    .setPreviousClickListener(
+                            if (MyApplication.instance.playerHelper.hasPrevious()) {
+                                OnClickListener { _ ->
+                                    playPre()
+                                }
+                            } else {
+                                null
+                            }
+                    )
+                    .setNextClickListener(
+                            if (MyApplication.instance.playerHelper.hasNext()) {
+                                OnClickListener { _ ->
+                                    playNext()
+                                }
+                            } else {
+                                null
+                            }
+                    )
         }
     }
 
     private fun playNext() {
-        if (!videoList.isEmpty()) {
-            var vi: VideoInfo? = null
-            videoInfo?.let {
-                var preVI: VideoInfo? = null
-                for (vi2 in videoList) {
-                    if (preVI != null && preVI.filePath == it.filePath) {
-                        vi = vi2
-                        break
-                    }
-                    preVI = vi2
-                }
-            }
-            if (vi == null) vi = videoList[0]
-            vi?.let { vi4 ->
-                VideoService.instance.videoFloatWindow.setVideoInfo(vi4)
-            }
+        val nextVideo = MyApplication.instance.playerHelper.getNext()
+        if (nextVideo != null) {
+            MyApplication.instance.playerHelper.playInFloatWindow(nextVideo)
         }
     }
 
     private fun playPre() {
-        if (!videoList.isEmpty()) {
-            var vi: VideoInfo? = null
-            videoInfo?.let {
-                var preVI: VideoInfo? = null
-                for (vi2 in videoList) {
-                    if (vi2.filePath == it.filePath) {
-                        vi = preVI
-                        break
-                    }
-                    preVI = vi2
-                }
-            }
-            if (vi == null) vi = videoList[0]
-            vi?.let { vi4 ->
-                VideoService.instance.videoFloatWindow.setVideoInfo(vi4)
-            }
+        val preVideo = MyApplication.instance.playerHelper.getPrevious()
+        if (preVideo != null) {
+            MyApplication.instance.playerHelper.playInFloatWindow(preVideo)
         }
     }
 
     private fun playInFullScreen() {
         videoInfo?.let {
             FullScreenActivity.openActivity(context, it)
-            VideoService.instance.videoFloatWindow.hide()
         }
-    }
-
-    private val videoList = ArrayList<VideoInfo>()
-
-    fun setVideoList(videoList: ArrayList<VideoInfo>) {
-        this.videoList.clear()
-        this.videoList.addAll(videoList)
     }
 
 }

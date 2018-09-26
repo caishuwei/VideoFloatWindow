@@ -5,9 +5,9 @@ import android.content.Context
 import android.support.design.widget.Snackbar
 import android.util.AttributeSet
 import android.view.View.OnClickListener
+import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.permission.SystemAlertWindowPermission
 import com.csw.android.videofloatwindow.player.PlayerHelper
-import com.csw.android.videofloatwindow.services.video.VideoService
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
 
 class FullScreenVideoContainer : VideoContainer {
@@ -27,8 +27,40 @@ class FullScreenVideoContainer : VideoContainer {
                     .setFloatWindowClickListener(OnClickListener { _ ->
                         playInWindow()
                     })
+                    .setPreviousClickListener(
+                            if (MyApplication.instance.playerHelper.hasPrevious()) {
+                                OnClickListener { _ ->
+                                    playPre()
+                                }
+                            } else {
+                                null
+                            }
+                    )
+                    .setNextClickListener(
+                            if (MyApplication.instance.playerHelper.hasNext()) {
+                                OnClickListener { _ ->
+                                    playNext()
+                                }
+                            } else {
+                                null
+                            }
+                    )
         }
 
+    }
+
+    private fun playNext() {
+        val nextVideo = MyApplication.instance.playerHelper.getNext()
+        if (nextVideo != null) {
+            setVideoInfo(nextVideo).bindPlayer().play()
+        }
+    }
+
+    private fun playPre() {
+        val preVideo = MyApplication.instance.playerHelper.getPrevious()
+        if (preVideo != null) {
+            setVideoInfo(preVideo).bindPlayer().play()
+        }
     }
 
     private fun finishActivity() {
@@ -45,8 +77,7 @@ class FullScreenVideoContainer : VideoContainer {
                 override fun onResult(isGranted: Boolean) {
                     if (isGranted) {
                         videoInfo?.let {
-                            VideoService.instance.videoFloatWindow.setVideoInfo(it)
-                            VideoService.instance.videoFloatWindow.show()
+                            MyApplication.instance.playerHelper.playInFloatWindow(it)
                             finishActivity()
                         }
                     } else {

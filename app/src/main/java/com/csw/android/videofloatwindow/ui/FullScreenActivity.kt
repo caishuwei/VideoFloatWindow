@@ -9,6 +9,7 @@ import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.view.WindowManager
 import com.csw.android.videofloatwindow.R
+import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import kotlinx.android.synthetic.main.activity_full_screen.*
 
@@ -37,6 +38,7 @@ class FullScreenActivity : AppCompatActivity() {
     }
 
     private fun initData(intent: Intent?) {
+        MyApplication.instance.playerHelper.hideFloatWindow()
         if (intent != null) {
             val videoInfo = intent.getSerializableExtra("VideoInfo")
             if (videoInfo != null && videoInfo is VideoInfo) {

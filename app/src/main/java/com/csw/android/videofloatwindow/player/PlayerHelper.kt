@@ -7,20 +7,26 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import com.csw.android.videofloatwindow.R
+import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
-import com.google.android.exoplayer2.ExoPlayerFactory
-import com.google.android.exoplayer2.SimpleExoPlayer
+import com.csw.android.videofloatwindow.ui.FullScreenActivity
+import com.csw.android.videofloatwindow.view.VideoContainer
+import com.csw.android.videofloatwindow.view.VideoFloatWindow
+import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.source.ExtractorMediaSource
+import com.google.android.exoplayer2.source.TrackGroupArray
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
+import java.util.*
 
 class PlayerHelper(context: Application) {
     private val none = VideoInfo()
-    private val view: View
+    private val view: View = LayoutInflater.from(context).inflate(R.layout.view_player, null, false)
     private val playerView: PlayerView
     private val vBack: View
     private val tvTitle: TextView
@@ -37,10 +43,16 @@ class PlayerHelper(context: Application) {
 
     private var currVideoInfo: VideoInfo = none
 
+    private var videoFloatWindow: VideoFloatWindow? = null
+
+    var playList: ArrayList<VideoInfo>? = null
+
+    private val componentListener: ComponentListener
+
+    private val playerListenerMap: WeakHashMap<PlayerListener, Any> = WeakHashMap()
 
 
     init {
-        view = LayoutInflater.from(context).inflate(R.layout.view_player, null, false)
         playerView = view.findViewById(R.id.player_view)
         vBack = playerView.findViewById(R.id.v_back)
         tvTitle = playerView.findViewById(R.id.tv_title)
@@ -64,6 +76,8 @@ class PlayerHelper(context: Application) {
                 Util.getUserAgent(context, context.getString(R.string.app_name)),
                 bandwidthMeter)
         playerView.player = player
+        componentListener = ComponentListener()
+        player.addListener(componentListener)
     }
 
     /**
@@ -93,8 +107,18 @@ class PlayerHelper(context: Application) {
         }
         resetBind()
         executeBind(playerBindHelper)
+
+        val keys = playerListenerMap.keys
+        if (!keys.isEmpty()) {
+            for (key in keys) {
+                key?.onVideoInfoChanged(currVideoInfo)
+            }
+        }
     }
 
+    /**
+     * 解绑播发器
+     */
     fun unBindPlayer(container: ViewGroup, videoInfo: VideoInfo) {
         if (isCurrVideo(videoInfo) && view.parent === container) {
             container.removeView(view)
@@ -120,6 +144,171 @@ class PlayerHelper(context: Application) {
         }
     }
 
+    /**
+     * 尝试播放下一个
+     */
+    fun tryPlayNext(): Boolean {
+        return tryPlay(getNext())
+    }
+
+    /**
+     * 尝试播放上一个
+     */
+    fun tryPlayPrevious(): Boolean {
+        return tryPlay(getPrevious())
+    }
+
+    /**
+     * 尝试播放当前视频
+     */
+    fun tryPlayCurr(): Boolean {
+        if (currVideoInfo != none) {
+            return tryPlay(currVideoInfo)
+        }
+        return false
+    }
+
+    /**
+     * 停止当前正在播放的视频
+     */
+    fun tryPauseCurr(): Boolean {
+        if (currVideoInfo != none) {
+            player.playWhenReady = false
+        }
+        return false
+    }
+
+    private fun tryPlay(newVideoInfo: VideoInfo?): Boolean {
+        newVideoInfo?.let { videoInfo ->
+            view.parent?.let { viewParent ->
+                if (viewParent is View) {
+                    viewParent.tag?.let {
+                        if (it is VideoContainer) {
+                            it.setVideoInfo(videoInfo).bindPlayer().play()
+                            return true
+                        }
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+
+    fun tryPlayInFullScreen(): Boolean {
+        if (currVideoInfo != none) {
+            FullScreenActivity.openActivity(MyApplication.instance, currVideoInfo)
+            return true
+        }
+        return false
+    }
+
+
+    fun tryPlayInFloatWindow(): Boolean {
+        if (currVideoInfo != none) {
+            return playInFloatWindow(currVideoInfo)
+        }
+        return false
+    }
+
+
+    /**
+     * 在悬浮窗中播放
+     * @return true 悬浮窗显示并播放视频 else 悬浮窗播放失败
+     */
+    fun playInFloatWindow(videoInfo: VideoInfo = currVideoInfo): Boolean {
+        val currWindow = videoFloatWindow
+        return if (currWindow != null) {
+            currWindow.setVideoInfo(videoInfo)
+            showFloatWindow()
+            true
+        } else {
+            false
+        }
+    }
+
+    /**
+     * 显示悬浮窗
+     */
+    fun showFloatWindow() {
+        videoFloatWindow?.let {
+            if (!it.isShowing()) {
+                it.show()
+                componentListener.onFloatWindowVisibilityChanged(true)
+            }
+        }
+    }
+
+    /**
+     * 隐藏悬浮窗
+     */
+    fun hideFloatWindow() {
+        videoFloatWindow?.let {
+            if (it.isShowing()) {
+                it.hide()
+                componentListener.onFloatWindowVisibilityChanged(false)
+            }
+        }
+    }
+
+    /**
+     * 有上一曲
+     */
+    fun hasPrevious(): Boolean {
+        return getPrevious() != null
+    }
+
+    /**
+     * 获取上一个
+     */
+    fun getPrevious(): VideoInfo? {
+        playList?.let {
+            for ((index, vi) in it.withIndex()) {
+                if (isCurrVideo(vi)) {
+                    if (index - 1 >= 0) {
+                        return it[index - 1]
+                    }
+                }
+            }
+        }
+        return null
+    }
+
+    /**
+     * 有下一曲
+     */
+    fun hasNext(): Boolean {
+        return getNext() != null
+    }
+
+    /**
+     * 获取下一个
+     */
+    fun getNext(): VideoInfo? {
+        playList?.let {
+            for ((index, vi) in it.withIndex()) {
+                if (isCurrVideo(vi)) {
+                    if (index + 1 < it.size) {
+                        return it[index + 1]
+                    }
+                }
+            }
+        }
+        return null
+    }
+
+    /**
+     * 设置悬浮窗
+     */
+    fun setVideoFloatWindow(value: VideoFloatWindow?) {
+        val old = videoFloatWindow
+        if (old === value) {
+            return
+        }
+        old?.hide()
+        videoFloatWindow = value
+    }
+
     private fun isCurrVideo(videoInfo: VideoInfo): Boolean {
         return videoInfo !== none && videoInfo.filePath == currVideoInfo.filePath
     }
@@ -135,7 +324,16 @@ class PlayerHelper(context: Application) {
                 .setFloatWindowClickListener(null)
     }
 
-    inner class PlayerBindHelper() {
+    fun addPlayerListener(listener: PlayerListener) {
+        playerListenerMap[listener] = null
+    }
+
+    fun removePlayerListener(listener: PlayerListener) {
+        playerListenerMap.remove(listener)
+    }
+
+
+    inner class PlayerBindHelper {
 
         /**
          * 设置返回按钮事件
@@ -194,5 +392,136 @@ class PlayerHelper(context: Application) {
         }
 
     }
+
+    private inner class ComponentListener : PlayerListener() {
+
+        override fun onVideoInfoChanged(newVideoInfo: VideoInfo) {
+            super.onVideoInfoChanged(newVideoInfo)
+            val keys = playerListenerMap.keys
+            if (!keys.isEmpty()) {
+                for (key in keys) {
+                    key?.onVideoInfoChanged(newVideoInfo)
+                }
+            }
+        }
+
+        override fun onFloatWindowVisibilityChanged(isVisibility: Boolean) {
+            super.onFloatWindowVisibilityChanged(isVisibility)
+            val keys = playerListenerMap.keys
+            if (!keys.isEmpty()) {
+                for (key in keys) {
+                    key?.onFloatWindowVisibilityChanged(isVisibility)
+                }
+            }
+        }
+
+        override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters?) {
+            val keys = playerListenerMap.keys
+            if (!keys.isEmpty()) {
+                for (key in keys) {
+                    key?.onPlaybackParametersChanged(playbackParameters)
+                }
+            }
+        }
+
+        override fun onSeekProcessed() {
+            val keys = playerListenerMap.keys
+            if (!keys.isEmpty()) {
+                for (key in keys) {
+                    key?.onSeekProcessed()
+                }
+            }
+        }
+
+        override fun onTracksChanged(trackGroups: TrackGroupArray?, trackSelections: TrackSelectionArray?) {
+            val keys = playerListenerMap.keys
+            if (!keys.isEmpty()) {
+                for (key in keys) {
+                    key?.onTracksChanged(trackGroups, trackSelections)
+                }
+            }
+        }
+
+        override fun onPlayerError(error: ExoPlaybackException?) {
+            val keys = playerListenerMap.keys
+            if (!keys.isEmpty()) {
+                for (key in keys) {
+                    key?.onPlayerError(error)
+                }
+            }
+        }
+
+        override fun onLoadingChanged(isLoading: Boolean) {
+            val keys = playerListenerMap.keys
+            if (!keys.isEmpty()) {
+                for (key in keys) {
+                    key?.onLoadingChanged(isLoading)
+                }
+            }
+        }
+
+        override fun onPositionDiscontinuity(reason: Int) {
+            val keys = playerListenerMap.keys
+            if (!keys.isEmpty()) {
+                for (key in keys) {
+                    key?.onPositionDiscontinuity(reason)
+                }
+            }
+        }
+
+        override fun onRepeatModeChanged(repeatMode: Int) {
+            val keys = playerListenerMap.keys
+            if (!keys.isEmpty()) {
+                for (key in keys) {
+                    key?.onRepeatModeChanged(repeatMode)
+                }
+            }
+        }
+
+        override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+            val keys = playerListenerMap.keys
+            if (!keys.isEmpty()) {
+                for (key in keys) {
+                    key?.onShuffleModeEnabledChanged(shuffleModeEnabled)
+                }
+            }
+        }
+
+        override fun onTimelineChanged(timeline: Timeline?, manifest: Any?, reason: Int) {
+            val keys = playerListenerMap.keys
+            if (!keys.isEmpty()) {
+                for (key in keys) {
+                    key?.onTimelineChanged(timeline, manifest, reason)
+                }
+            }
+        }
+
+        override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
+            val keys = playerListenerMap.keys
+            if (!keys.isEmpty()) {
+                for (key in keys) {
+                    key?.onPlayerStateChanged(playWhenReady, playbackState)
+                }
+            }
+
+            //自动播放下一个视频
+            when (playbackState) {
+                Player.STATE_IDLE -> {
+                }
+                Player.STATE_BUFFERING -> {
+                }
+                Player.STATE_READY -> {
+                    view.keepScreenOn = playWhenReady
+                }
+                Player.STATE_ENDED -> {
+                    view.keepScreenOn = false
+                    tryPlayNext()
+
+                }
+            }
+        }
+    }
+
+
 }
 

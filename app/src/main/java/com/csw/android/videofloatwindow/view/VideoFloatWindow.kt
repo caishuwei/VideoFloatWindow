@@ -10,7 +10,6 @@ import android.widget.FrameLayout
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.AreaUtils
-import com.csw.android.videofloatwindow.util.ScreenInfo
 
 /**
  * 视频悬浮窗口
@@ -73,7 +72,7 @@ class VideoFloatWindow : FrameLayout {
 
         params.width = WindowManager.LayoutParams.WRAP_CONTENT
         params.height = WindowManager.LayoutParams.WRAP_CONTENT
-        params.dimAmount = 0f  //去除对话框的半透明背景
+        params.dimAmount = 0f
 
         windowManager.addView(this, params)
         isAddToWindow = true
@@ -97,10 +96,6 @@ class VideoFloatWindow : FrameLayout {
             videoContainer.layoutParams.height = h
             videoContainer.layoutParams = videoContainer.layoutParams
         }
-    }
-
-    fun setVideoList(videoList: ArrayList<VideoInfo>) {
-        videoContainer.setVideoList(videoList)
     }
 
 }

@@ -26,6 +26,7 @@ open class VideoContainer : FrameLayout {
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
         videoContainer = FrameLayout(context)
+        videoContainer.tag = this
         super.addView(videoContainer, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
         super.setBackgroundColor(0xFF000000.toInt())
     }

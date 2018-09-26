@@ -9,6 +9,7 @@ import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import com.csw.android.videofloatwindow.R
+import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.services.video.VideoService
 import com.tbruyelle.rxpermissions2.RxPermissions
@@ -45,7 +46,7 @@ class LocalVideosActivity : AppCompatActivity() {
                 .subscribe(
                         {
                             adapter.setNewData(it)
-                            VideoService.instance.videoFloatWindow.setVideoList(it)
+                            MyApplication.instance.playerHelper.playList = it
                         },
                         {
                             Snackbar.make(recyclerView, it.message

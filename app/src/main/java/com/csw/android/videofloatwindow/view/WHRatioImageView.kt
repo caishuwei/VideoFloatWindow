@@ -5,7 +5,7 @@ import android.util.AttributeSet
 import android.widget.ImageView
 import com.csw.android.videofloatwindow.util.Utils
 
-class WHRatioImageView : ImageView {
+open class WHRatioImageView : ImageView {
 
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
