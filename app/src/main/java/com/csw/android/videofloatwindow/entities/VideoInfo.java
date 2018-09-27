@@ -1,13 +1,60 @@
 package com.csw.android.videofloatwindow.entities;
 
+import android.database.Cursor;
+import android.media.MediaMetadataRetriever;
+import android.os.Build;
+import android.provider.MediaStore;
+
 import org.greenrobot.greendao.annotation.Entity;
+import org.greenrobot.greendao.annotation.Generated;
 import org.greenrobot.greendao.annotation.Id;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
-import org.greenrobot.greendao.annotation.Generated;
 
 @Entity
 public class VideoInfo implements Serializable {
+
+    public static VideoInfo readFromCursor(@NotNull Cursor cursor) {
+        String filePath = cursor.getString(cursor.getColumnIndex(MediaStore.Video.Media.DATA));
+        String rotationStr = "0";
+        int rotation;
+        int height;
+        int width;
+        MediaMetadataRetriever metaData = new MediaMetadataRetriever();
+        metaData.setDataSource(filePath);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            rotationStr = metaData.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+        }
+        try {
+            rotation = Integer.parseInt(rotationStr);
+        } catch (Exception e) {
+            rotation = 0;
+        }
+        switch (rotation) {
+            case 90:
+            case -90:
+            case 270:
+                height = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.WIDTH));
+                width = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.HEIGHT));
+                break;
+            default:
+                width = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.WIDTH));
+                height = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.HEIGHT));
+                break;
+        }
+
+        return new VideoInfo(
+                filePath,
+                cursor.getLong(cursor.getColumnIndex(MediaStore.Video.Media.DURATION)),
+                cursor.getLong(cursor.getColumnIndex(MediaStore.Video.Media.SIZE)),
+                cursor.getString(cursor.getColumnIndex(MediaStore.Video.Media.DISPLAY_NAME)),
+                cursor.getLong(cursor.getColumnIndex(MediaStore.Video.Media._ID)),
+                width,
+                height,
+                cursor.getString(cursor.getColumnIndex(MediaStore.Video.Media.RESOLUTION))
+        );
+    }
 
     public static final long serialVersionUID = 1;
 

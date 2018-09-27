@@ -28,8 +28,15 @@
         <activity
             android:name=".ui.FullScreenActivity"
             android:configChanges="orientation|screenSize|keyboardHidden|keyboard|screenLayout"
-            android:launchMode="singleInstance"
-            android:taskAffinity=":fullscreenTask" />
+            android:launchMode="singleInstance">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data
+                    android:mimeType="video/*"
+                    android:scheme="content" />
+            </intent-filter>
+        </activity>
 
         <service
             android:name=".services.video.VideoService"

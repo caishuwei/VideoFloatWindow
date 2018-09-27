@@ -11,6 +11,7 @@ import android.view.WindowManager
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
+import com.csw.android.videofloatwindow.util.Utils
 import kotlinx.android.synthetic.main.activity_full_screen.*
 
 
@@ -41,10 +42,12 @@ class FullScreenActivity : AppCompatActivity() {
         MyApplication.instance.playerHelper.hideFloatWindow()
         if (intent != null) {
             val videoInfo = intent.getSerializableExtra("VideoInfo")
+            val uri = intent.data
             if (videoInfo != null && videoInfo is VideoInfo) {
-                requestedOrientation = if (videoInfo.whRatio > 1) ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
                 videoContainer.setVideoInfo(videoInfo).bindPlayer().play()
+            } else if (uri != null && "content" == uri.scheme) {
+                videoContainer.setVideoInfo(Utils.getVideoInfo(contentResolver, uri)).bindPlayer().play()
             }
         } else {
             videoContainer.setVideoInfo(null)

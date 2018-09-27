@@ -449,6 +449,9 @@ class PlayerHelper(context: Application) {
                     key?.onPlayerError(error)
                 }
             }
+
+            //播放遇到错误了，尝试播放下一个
+            tryPlayNext()
         }
 
         override fun onLoadingChanged(isLoading: Boolean) {

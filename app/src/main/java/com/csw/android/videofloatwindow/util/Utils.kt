@@ -1,11 +1,25 @@
 package com.csw.android.videofloatwindow.util
 
-import android.content.pm.ApplicationInfo
+import android.content.ContentResolver
+import android.database.Cursor
+import android.net.Uri
 import android.view.View
-import com.csw.android.videofloatwindow.app.MyApplication
+import com.csw.android.videofloatwindow.entities.VideoInfo
 
 class Utils {
     companion object {
+        fun getVideoInfo(contentResolver: ContentResolver, uri: Uri): VideoInfo? {
+            var cursor: Cursor? = null
+            try {
+                cursor = contentResolver.query(uri, null, null, null, null)
+                if (cursor.moveToFirst()) {
+                    return VideoInfo.readFromCursor(cursor)
+                }
+            } finally {
+                cursor?.close()
+            }
+            return null
+        }
 
         /**
          * 判断两个可空变量都不为空之后调用run

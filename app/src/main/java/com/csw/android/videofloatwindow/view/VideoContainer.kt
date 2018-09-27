@@ -1,11 +1,13 @@
 package com.csw.android.videofloatwindow.view
 
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.PlayerHelper
+import com.csw.android.videofloatwindow.ui.FullScreenActivity
 import com.csw.android.videofloatwindow.util.Utils
 
 open class VideoContainer : FrameLayout {
@@ -80,7 +82,17 @@ open class VideoContainer : FrameLayout {
             unBindPlayer();
         }
         this.videoInfo = videoInfo
+        tryRotateScreen()
         return this
+    }
+
+    private fun tryRotateScreen() {
+        Utils.runIfNotNull(context, videoInfo) { c, v ->
+            if (c is FullScreenActivity) {
+                c.requestedOrientation = if (v.whRatio > 1) ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            }
+        }
     }
 
 }
