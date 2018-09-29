@@ -309,6 +309,14 @@ class PlayerHelper(context: Application) {
         videoFloatWindow = value
     }
 
+    fun moveFloatWindowBy(x: Float, y: Float) {
+        videoFloatWindow?.moveBy(x, y)
+    }
+
+    fun moveFloatWindowTo(x: Float, y: Float) {
+        videoFloatWindow?.moveTo(x,y)
+    }
+
     private fun isCurrVideo(videoInfo: VideoInfo): Boolean {
         return videoInfo !== none && videoInfo.filePath == currVideoInfo.filePath
     }

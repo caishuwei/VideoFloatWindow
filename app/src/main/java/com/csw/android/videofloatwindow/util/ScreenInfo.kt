@@ -8,7 +8,7 @@ import android.util.TypedValue.COMPLEX_UNIT_SP
 class ScreenInfo {
     companion object {
         val WIDTH = Resources.getSystem().displayMetrics.widthPixels
-        val HEIGHT = Resources.getSystem().displayMetrics.widthPixels
+        val HEIGHT = Resources.getSystem().displayMetrics.heightPixels
         val DENSITY = Resources.getSystem().displayMetrics.density
         val SCALED_DENSITY = Resources.getSystem().displayMetrics.scaledDensity
 

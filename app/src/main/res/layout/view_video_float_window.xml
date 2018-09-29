@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
 
     <com.csw.android.videofloatwindow.view.FloatWindowVideoContainer
         android:id="@+id/videoContainer"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/recyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="144dp"
-        android:background="#FFFFFFFF"
-        android:visibility="gone" />
+    <com.csw.android.videofloatwindow.view.FloatWindowMoveView
+        android:id="@+id/moveView"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignLeft="@+id/videoContainer"
+        android:layout_alignTop="@+id/videoContainer" />
 
-</LinearLayout>
+</RelativeLayout>

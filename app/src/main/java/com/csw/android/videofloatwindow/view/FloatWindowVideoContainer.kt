@@ -2,15 +2,17 @@ package com.csw.android.videofloatwindow.view
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.Gravity
 import android.view.View.OnClickListener
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.player.PlayerHelper
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
+import com.csw.android.videofloatwindow.util.ScreenInfo
 
 class FloatWindowVideoContainer : VideoContainer {
 
-    constructor(context: Context) : super(context)
-    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
+    constructor(context: Context) : this(context,null)
+    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs,0)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
     override fun onBindPlayer(playerBindHelper: PlayerHelper.PlayerBindHelper) {
