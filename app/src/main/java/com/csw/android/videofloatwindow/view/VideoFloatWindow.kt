@@ -70,57 +70,35 @@ class VideoFloatWindow : FrameLayout {
         return super.onInterceptTouchEvent(ev)
     }
 
-    private var preX = 0f
-    private var preY = 0f
+    private var startX = 0
+    private var startY = 0
+    private var downX = 0f
+    private var downY = 0f
 
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         event?.let {
             when (it.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    val params = layoutParams as WindowManager.LayoutParams
-                    preX = it.x + params.x
-                    preY = it.y + params.y
-
-                    enterEditMode(it.x, it.y)
+                    val params = this.layoutParams as WindowManager.LayoutParams
+                    startX = params.x
+                    startY = params.y
+                    downX = it.rawX
+                    downY = it.rawY
                 }
                 MotionEvent.ACTION_MOVE -> {
                     if (moveView.isInMoving()) {
-                        setPadding(it.x.toInt() - dp24, it.y.toInt() - dp24, 0, 0)
+                        moveTo(startX + it.rawX - downX, startY + it.rawY - downY)
                     }
                 }
                 MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
                     if (moveView.isInMoving()) {
                         moveView.setInMoving(false)
                     }
-                    exitEditMode()
                 }
             }
         }
         return super.onTouchEvent(event) or true
-    }
-
-    private fun exitEditMode() {
-        val params = layoutParams as WindowManager.LayoutParams
-        //将padding转为窗口偏移量
-        params.x = paddingLeft
-        params.y = paddingTop
-        setPadding(0, 0, 0, 0)
-        params.width = WindowManager.LayoutParams.WRAP_CONTENT
-        params.height = WindowManager.LayoutParams.WRAP_CONTENT
-        windowManager.updateViewLayout(this, params)
-    }
-
-    private fun enterEditMode(x: Float, y: Float) {
-        val params = layoutParams as WindowManager.LayoutParams
-        //將窗口偏移量转为Padding
-        setPadding(params.x + x.toInt() - dp24, params.y + y.toInt() - dp24, 0, 0)
-        //设置窗口全屏
-        params.x = 0
-        params.y = 0
-        params.width = ScreenInfo.WIDTH
-        params.height = ScreenInfo.HEIGHT
-        windowManager.updateViewLayout(this, params)
     }
 
     fun hide() {
@@ -175,7 +153,7 @@ class VideoFloatWindow : FrameLayout {
 
     fun moveTo(x: Float, y: Float) {
         val params = this.layoutParams as WindowManager.LayoutParams
-//        params.x = x.toInt()
+        params.x = x.toInt()
         params.y = y.toInt()
         windowManager.updateViewLayout(this, params)
     }
