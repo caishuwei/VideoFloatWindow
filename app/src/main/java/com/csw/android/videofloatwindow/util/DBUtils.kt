@@ -6,6 +6,7 @@ import com.csw.android.videofloatwindow.entities.PlaySheetVideo
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.greendao.PlaySheetDao
 import com.csw.android.videofloatwindow.greendao.PlaySheetVideoDao
+import com.csw.android.videofloatwindow.greendao.VideoInfoDao
 
 class DBUtils {
     companion object {
@@ -36,13 +37,31 @@ class DBUtils {
         }
 
         fun insetPlaySheetVideo(playSheetId: Long, videoInfoId: Long) {
-            playSheetVideoDao.insert(PlaySheetVideo(playSheetId, videoInfoId))
+            if (!isVideoInPlaySheet(playSheetId, videoInfoId)) {
+                playSheetVideoDao.insert(PlaySheetVideo(playSheetId, videoInfoId))
+            }
         }
 
         fun insertVideoInfo(videoInfo: VideoInfo) {
+            val exitsRow = videoInfoDao.queryBuilder().where(VideoInfoDao.Properties.MediaDbId.eq(videoInfo.mediaDbId)).build().unique()
+            exitsRow?.let {
+                videoInfo.id = it.id
+                return
+            }
             val id = videoInfoDao.insert(videoInfo)
             videoInfo.id = id
         }
 
+        fun getVideosByPlaySheetId(playSheetId: Long): ArrayList<VideoInfo> {
+            MyApplication.instance.daoSession.clear()
+            val result = arrayListOf<VideoInfo>()
+            val playSheet = playSheetDao.queryBuilder().where(PlaySheetDao.Properties.Id.eq(playSheetId)).build().unique()
+            playSheet?.let {
+                for (playSheetVideo in it.playSheetVideos) {
+                    result.add(playSheetVideo.videoInfo)
+                }
+            }
+            return result
+        }
     }
 }

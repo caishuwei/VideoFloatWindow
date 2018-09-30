@@ -23,6 +23,7 @@
         </activity>
 
         <activity android:name=".ui.list.LocalVideosActivity" />
+        <activity android:name=".ui.list.PlaySheetVideosActivity" />
 
         <!--全屏播放界面，为实现在其他应用中小窗口与全屏模式切换，此Activity运行在特定Activity栈中-->
         <activity

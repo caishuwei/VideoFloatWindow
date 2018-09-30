@@ -24,10 +24,12 @@ public class PlaySheetDao extends AbstractDao<PlaySheet, Long> {
      * Can be used for QueryBuilder and for referencing column names.
      */
     public static class Properties {
-        public final static Property Id = new Property(0, long.class, "id", true, "_id");
+        public final static Property Id = new Property(0, Long.class, "id", true, "_id");
         public final static Property Name = new Property(1, String.class, "name", false, "NAME");
         public final static Property CreateTime = new Property(2, long.class, "createTime", false, "CREATE_TIME");
     }
+
+    private DaoSession daoSession;
 
 
     public PlaySheetDao(DaoConfig config) {
@@ -36,13 +38,14 @@ public class PlaySheetDao extends AbstractDao<PlaySheet, Long> {
     
     public PlaySheetDao(DaoConfig config, DaoSession daoSession) {
         super(config, daoSession);
+        this.daoSession = daoSession;
     }
 
     /** Creates the underlying database table. */
     public static void createTable(Database db, boolean ifNotExists) {
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"PLAY_SHEET\" (" + //
-                "\"_id\" INTEGER PRIMARY KEY NOT NULL ," + // 0: id
+                "\"_id\" INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: id
                 "\"NAME\" TEXT UNIQUE ," + // 1: name
                 "\"CREATE_TIME\" INTEGER NOT NULL );"); // 2: createTime
     }
@@ -56,7 +59,11 @@ public class PlaySheetDao extends AbstractDao<PlaySheet, Long> {
     @Override
     protected final void bindValues(DatabaseStatement stmt, PlaySheet entity) {
         stmt.clearBindings();
-        stmt.bindLong(1, entity.getId());
+ 
+        Long id = entity.getId();
+        if (id != null) {
+            stmt.bindLong(1, id);
+        }
  
         String name = entity.getName();
         if (name != null) {
@@ -68,7 +75,11 @@ public class PlaySheetDao extends AbstractDao<PlaySheet, Long> {
     @Override
     protected final void bindValues(SQLiteStatement stmt, PlaySheet entity) {
         stmt.clearBindings();
-        stmt.bindLong(1, entity.getId());
+ 
+        Long id = entity.getId();
+        if (id != null) {
+            stmt.bindLong(1, id);
+        }
  
         String name = entity.getName();
         if (name != null) {
@@ -78,14 +89,20 @@ public class PlaySheetDao extends AbstractDao<PlaySheet, Long> {
     }
 
     @Override
+    protected final void attachEntity(PlaySheet entity) {
+        super.attachEntity(entity);
+        entity.__setDaoSession(daoSession);
+    }
+
+    @Override
     public Long readKey(Cursor cursor, int offset) {
-        return cursor.getLong(offset + 0);
+        return cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0);
     }    
 
     @Override
     public PlaySheet readEntity(Cursor cursor, int offset) {
         PlaySheet entity = new PlaySheet( //
-            cursor.getLong(offset + 0), // id
+            cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // id
             cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1), // name
             cursor.getLong(offset + 2) // createTime
         );
@@ -94,7 +111,7 @@ public class PlaySheetDao extends AbstractDao<PlaySheet, Long> {
      
     @Override
     public void readEntity(Cursor cursor, PlaySheet entity, int offset) {
-        entity.setId(cursor.getLong(offset + 0));
+        entity.setId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
         entity.setName(cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1));
         entity.setCreateTime(cursor.getLong(offset + 2));
      }
@@ -116,7 +133,7 @@ public class PlaySheetDao extends AbstractDao<PlaySheet, Long> {
 
     @Override
     public boolean hasKey(PlaySheet entity) {
-        throw new UnsupportedOperationException("Unsupported for entities with a non-null key");
+        return entity.getId() != null;
     }
 
     @Override

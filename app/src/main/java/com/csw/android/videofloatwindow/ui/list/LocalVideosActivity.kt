@@ -25,6 +25,7 @@ import com.csw.android.videofloatwindow.entities.PlaySheet
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
 import com.csw.android.videofloatwindow.util.DBUtils
+import com.csw.android.videofloatwindow.view.SpaceLineItemDecoration
 import com.tbruyelle.rxpermissions2.RxPermissions
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
@@ -107,6 +108,11 @@ class LocalVideosActivity : AppCompatActivity() {
         val popupWindow = PopupWindow()
         val recyclerView = RecyclerView(view.context)
         recyclerView.layoutManager = LinearLayoutManager(view.context, LinearLayoutManager.VERTICAL, false)
+        recyclerView.addItemDecoration(object : SpaceLineItemDecoration(0, 1, 0, 0, Color.GRAY) {
+            override fun skipDraw(position: Int): Boolean {
+                return position == 0
+            }
+        })
         val popupWindowPlaySheetAdapter = PopupWindowPlaySheetAdapter(getPlaySheets())
         popupWindowPlaySheetAdapter.setOnItemClickListener { _, view, position ->
             val item = popupWindowPlaySheetAdapter.getItem(position)

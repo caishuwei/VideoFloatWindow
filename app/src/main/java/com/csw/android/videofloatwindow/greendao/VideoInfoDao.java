@@ -24,7 +24,7 @@ public class VideoInfoDao extends AbstractDao<VideoInfo, Long> {
      * Can be used for QueryBuilder and for referencing column names.
      */
     public static class Properties {
-        public final static Property Id = new Property(0, long.class, "id", true, "_id");
+        public final static Property Id = new Property(0, Long.class, "id", true, "_id");
         public final static Property FilePath = new Property(1, String.class, "filePath", false, "FILE_PATH");
         public final static Property Duration = new Property(2, long.class, "duration", false, "DURATION");
         public final static Property FileSize = new Property(3, long.class, "fileSize", false, "FILE_SIZE");
@@ -35,6 +35,8 @@ public class VideoInfoDao extends AbstractDao<VideoInfo, Long> {
         public final static Property Resolution = new Property(8, String.class, "resolution", false, "RESOLUTION");
     }
 
+    private DaoSession daoSession;
+
 
     public VideoInfoDao(DaoConfig config) {
         super(config);
@@ -42,13 +44,14 @@ public class VideoInfoDao extends AbstractDao<VideoInfo, Long> {
     
     public VideoInfoDao(DaoConfig config, DaoSession daoSession) {
         super(config, daoSession);
+        this.daoSession = daoSession;
     }
 
     /** Creates the underlying database table. */
     public static void createTable(Database db, boolean ifNotExists) {
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"VIDEO_INFO\" (" + //
-                "\"_id\" INTEGER PRIMARY KEY NOT NULL ," + // 0: id
+                "\"_id\" INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: id
                 "\"FILE_PATH\" TEXT," + // 1: filePath
                 "\"DURATION\" INTEGER NOT NULL ," + // 2: duration
                 "\"FILE_SIZE\" INTEGER NOT NULL ," + // 3: fileSize
@@ -68,7 +71,11 @@ public class VideoInfoDao extends AbstractDao<VideoInfo, Long> {
     @Override
     protected final void bindValues(DatabaseStatement stmt, VideoInfo entity) {
         stmt.clearBindings();
-        stmt.bindLong(1, entity.getId());
+ 
+        Long id = entity.getId();
+        if (id != null) {
+            stmt.bindLong(1, id);
+        }
  
         String filePath = entity.getFilePath();
         if (filePath != null) {
@@ -94,7 +101,11 @@ public class VideoInfoDao extends AbstractDao<VideoInfo, Long> {
     @Override
     protected final void bindValues(SQLiteStatement stmt, VideoInfo entity) {
         stmt.clearBindings();
-        stmt.bindLong(1, entity.getId());
+ 
+        Long id = entity.getId();
+        if (id != null) {
+            stmt.bindLong(1, id);
+        }
  
         String filePath = entity.getFilePath();
         if (filePath != null) {
@@ -118,14 +129,20 @@ public class VideoInfoDao extends AbstractDao<VideoInfo, Long> {
     }
 
     @Override
+    protected final void attachEntity(VideoInfo entity) {
+        super.attachEntity(entity);
+        entity.__setDaoSession(daoSession);
+    }
+
+    @Override
     public Long readKey(Cursor cursor, int offset) {
-        return cursor.getLong(offset + 0);
+        return cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0);
     }    
 
     @Override
     public VideoInfo readEntity(Cursor cursor, int offset) {
         VideoInfo entity = new VideoInfo( //
-            cursor.getLong(offset + 0), // id
+            cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // id
             cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1), // filePath
             cursor.getLong(offset + 2), // duration
             cursor.getLong(offset + 3), // fileSize
@@ -140,7 +157,7 @@ public class VideoInfoDao extends AbstractDao<VideoInfo, Long> {
      
     @Override
     public void readEntity(Cursor cursor, VideoInfo entity, int offset) {
-        entity.setId(cursor.getLong(offset + 0));
+        entity.setId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
         entity.setFilePath(cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1));
         entity.setDuration(cursor.getLong(offset + 2));
         entity.setFileSize(cursor.getLong(offset + 3));
@@ -168,7 +185,7 @@ public class VideoInfoDao extends AbstractDao<VideoInfo, Long> {
 
     @Override
     public boolean hasKey(VideoInfo entity) {
-        throw new UnsupportedOperationException("Unsupported for entities with a non-null key");
+        return entity.getId() != null;
     }
 
     @Override

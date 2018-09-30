@@ -1,13 +1,21 @@
 package com.csw.android.videofloatwindow.greendao;
 
+import java.util.List;
+import java.util.ArrayList;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteStatement;
 
 import org.greenrobot.greendao.AbstractDao;
 import org.greenrobot.greendao.Property;
+import org.greenrobot.greendao.internal.SqlUtils;
 import org.greenrobot.greendao.internal.DaoConfig;
 import org.greenrobot.greendao.database.Database;
 import org.greenrobot.greendao.database.DatabaseStatement;
+import org.greenrobot.greendao.query.Query;
+import org.greenrobot.greendao.query.QueryBuilder;
+
+import com.csw.android.videofloatwindow.entities.PlaySheet;
+import com.csw.android.videofloatwindow.entities.VideoInfo;
 
 import com.csw.android.videofloatwindow.entities.PlaySheetVideo;
 
@@ -24,11 +32,15 @@ public class PlaySheetVideoDao extends AbstractDao<PlaySheetVideo, Long> {
      * Can be used for QueryBuilder and for referencing column names.
      */
     public static class Properties {
-        public final static Property Id = new Property(0, long.class, "id", true, "_id");
+        public final static Property Id = new Property(0, Long.class, "id", true, "_id");
         public final static Property PlaySheetId = new Property(1, long.class, "playSheetId", false, "PLAY_SHEET_ID");
         public final static Property VideoInfoId = new Property(2, long.class, "videoInfoId", false, "VIDEO_INFO_ID");
     }
 
+    private DaoSession daoSession;
+
+    private Query<PlaySheetVideo> playSheet_PlaySheetVideosQuery;
+    private Query<PlaySheetVideo> videoInfo_PlaySheetVideosQuery;
 
     public PlaySheetVideoDao(DaoConfig config) {
         super(config);
@@ -36,13 +48,14 @@ public class PlaySheetVideoDao extends AbstractDao<PlaySheetVideo, Long> {
     
     public PlaySheetVideoDao(DaoConfig config, DaoSession daoSession) {
         super(config, daoSession);
+        this.daoSession = daoSession;
     }
 
     /** Creates the underlying database table. */
     public static void createTable(Database db, boolean ifNotExists) {
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"PLAY_SHEET_VIDEO\" (" + //
-                "\"_id\" INTEGER PRIMARY KEY NOT NULL ," + // 0: id
+                "\"_id\" INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: id
                 "\"PLAY_SHEET_ID\" INTEGER NOT NULL ," + // 1: playSheetId
                 "\"VIDEO_INFO_ID\" INTEGER NOT NULL );"); // 2: videoInfoId
     }
@@ -56,7 +69,11 @@ public class PlaySheetVideoDao extends AbstractDao<PlaySheetVideo, Long> {
     @Override
     protected final void bindValues(DatabaseStatement stmt, PlaySheetVideo entity) {
         stmt.clearBindings();
-        stmt.bindLong(1, entity.getId());
+ 
+        Long id = entity.getId();
+        if (id != null) {
+            stmt.bindLong(1, id);
+        }
         stmt.bindLong(2, entity.getPlaySheetId());
         stmt.bindLong(3, entity.getVideoInfoId());
     }
@@ -64,20 +81,30 @@ public class PlaySheetVideoDao extends AbstractDao<PlaySheetVideo, Long> {
     @Override
     protected final void bindValues(SQLiteStatement stmt, PlaySheetVideo entity) {
         stmt.clearBindings();
-        stmt.bindLong(1, entity.getId());
+ 
+        Long id = entity.getId();
+        if (id != null) {
+            stmt.bindLong(1, id);
+        }
         stmt.bindLong(2, entity.getPlaySheetId());
         stmt.bindLong(3, entity.getVideoInfoId());
     }
 
     @Override
+    protected final void attachEntity(PlaySheetVideo entity) {
+        super.attachEntity(entity);
+        entity.__setDaoSession(daoSession);
+    }
+
+    @Override
     public Long readKey(Cursor cursor, int offset) {
-        return cursor.getLong(offset + 0);
+        return cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0);
     }    
 
     @Override
     public PlaySheetVideo readEntity(Cursor cursor, int offset) {
         PlaySheetVideo entity = new PlaySheetVideo( //
-            cursor.getLong(offset + 0), // id
+            cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // id
             cursor.getLong(offset + 1), // playSheetId
             cursor.getLong(offset + 2) // videoInfoId
         );
@@ -86,7 +113,7 @@ public class PlaySheetVideoDao extends AbstractDao<PlaySheetVideo, Long> {
      
     @Override
     public void readEntity(Cursor cursor, PlaySheetVideo entity, int offset) {
-        entity.setId(cursor.getLong(offset + 0));
+        entity.setId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
         entity.setPlaySheetId(cursor.getLong(offset + 1));
         entity.setVideoInfoId(cursor.getLong(offset + 2));
      }
@@ -108,7 +135,7 @@ public class PlaySheetVideoDao extends AbstractDao<PlaySheetVideo, Long> {
 
     @Override
     public boolean hasKey(PlaySheetVideo entity) {
-        throw new UnsupportedOperationException("Unsupported for entities with a non-null key");
+        return entity.getId() != null;
     }
 
     @Override
@@ -116,4 +143,134 @@ public class PlaySheetVideoDao extends AbstractDao<PlaySheetVideo, Long> {
         return true;
     }
     
+    /** Internal query to resolve the "playSheetVideos" to-many relationship of PlaySheet. */
+    public List<PlaySheetVideo> _queryPlaySheet_PlaySheetVideos(long playSheetId) {
+        synchronized (this) {
+            if (playSheet_PlaySheetVideosQuery == null) {
+                QueryBuilder<PlaySheetVideo> queryBuilder = queryBuilder();
+                queryBuilder.where(Properties.PlaySheetId.eq(null));
+                playSheet_PlaySheetVideosQuery = queryBuilder.build();
+            }
+        }
+        Query<PlaySheetVideo> query = playSheet_PlaySheetVideosQuery.forCurrentThread();
+        query.setParameter(0, playSheetId);
+        return query.list();
+    }
+
+    /** Internal query to resolve the "playSheetVideos" to-many relationship of VideoInfo. */
+    public List<PlaySheetVideo> _queryVideoInfo_PlaySheetVideos(long videoInfoId) {
+        synchronized (this) {
+            if (videoInfo_PlaySheetVideosQuery == null) {
+                QueryBuilder<PlaySheetVideo> queryBuilder = queryBuilder();
+                queryBuilder.where(Properties.VideoInfoId.eq(null));
+                videoInfo_PlaySheetVideosQuery = queryBuilder.build();
+            }
+        }
+        Query<PlaySheetVideo> query = videoInfo_PlaySheetVideosQuery.forCurrentThread();
+        query.setParameter(0, videoInfoId);
+        return query.list();
+    }
+
+    private String selectDeep;
+
+    protected String getSelectDeep() {
+        if (selectDeep == null) {
+            StringBuilder builder = new StringBuilder("SELECT ");
+            SqlUtils.appendColumns(builder, "T", getAllColumns());
+            builder.append(',');
+            SqlUtils.appendColumns(builder, "T0", daoSession.getPlaySheetDao().getAllColumns());
+            builder.append(',');
+            SqlUtils.appendColumns(builder, "T1", daoSession.getVideoInfoDao().getAllColumns());
+            builder.append(" FROM PLAY_SHEET_VIDEO T");
+            builder.append(" LEFT JOIN PLAY_SHEET T0 ON T.\"PLAY_SHEET_ID\"=T0.\"_id\"");
+            builder.append(" LEFT JOIN VIDEO_INFO T1 ON T.\"VIDEO_INFO_ID\"=T1.\"_id\"");
+            builder.append(' ');
+            selectDeep = builder.toString();
+        }
+        return selectDeep;
+    }
+    
+    protected PlaySheetVideo loadCurrentDeep(Cursor cursor, boolean lock) {
+        PlaySheetVideo entity = loadCurrent(cursor, 0, lock);
+        int offset = getAllColumns().length;
+
+        PlaySheet playSheet = loadCurrentOther(daoSession.getPlaySheetDao(), cursor, offset);
+         if(playSheet != null) {
+            entity.setPlaySheet(playSheet);
+        }
+        offset += daoSession.getPlaySheetDao().getAllColumns().length;
+
+        VideoInfo videoInfo = loadCurrentOther(daoSession.getVideoInfoDao(), cursor, offset);
+         if(videoInfo != null) {
+            entity.setVideoInfo(videoInfo);
+        }
+
+        return entity;    
+    }
+
+    public PlaySheetVideo loadDeep(Long key) {
+        assertSinglePk();
+        if (key == null) {
+            return null;
+        }
+
+        StringBuilder builder = new StringBuilder(getSelectDeep());
+        builder.append("WHERE ");
+        SqlUtils.appendColumnsEqValue(builder, "T", getPkColumns());
+        String sql = builder.toString();
+        
+        String[] keyArray = new String[] { key.toString() };
+        Cursor cursor = db.rawQuery(sql, keyArray);
+        
+        try {
+            boolean available = cursor.moveToFirst();
+            if (!available) {
+                return null;
+            } else if (!cursor.isLast()) {
+                throw new IllegalStateException("Expected unique result, but count was " + cursor.getCount());
+            }
+            return loadCurrentDeep(cursor, true);
+        } finally {
+            cursor.close();
+        }
+    }
+    
+    /** Reads all available rows from the given cursor and returns a list of new ImageTO objects. */
+    public List<PlaySheetVideo> loadAllDeepFromCursor(Cursor cursor) {
+        int count = cursor.getCount();
+        List<PlaySheetVideo> list = new ArrayList<PlaySheetVideo>(count);
+        
+        if (cursor.moveToFirst()) {
+            if (identityScope != null) {
+                identityScope.lock();
+                identityScope.reserveRoom(count);
+            }
+            try {
+                do {
+                    list.add(loadCurrentDeep(cursor, false));
+                } while (cursor.moveToNext());
+            } finally {
+                if (identityScope != null) {
+                    identityScope.unlock();
+                }
+            }
+        }
+        return list;
+    }
+    
+    protected List<PlaySheetVideo> loadDeepAllAndCloseCursor(Cursor cursor) {
+        try {
+            return loadAllDeepFromCursor(cursor);
+        } finally {
+            cursor.close();
+        }
+    }
+    
+
+    /** A raw-style query where you can pass any WHERE clause and arguments. */
+    public List<PlaySheetVideo> queryDeep(String where, String... selectionArg) {
+        Cursor cursor = db.rawQuery(getSelectDeep() + where, selectionArg);
+        return loadDeepAllAndCloseCursor(cursor);
+    }
+ 
 }
