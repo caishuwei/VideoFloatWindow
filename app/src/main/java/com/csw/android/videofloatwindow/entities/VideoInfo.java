@@ -8,6 +8,7 @@ import android.provider.MediaStore;
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Generated;
 import org.greenrobot.greendao.annotation.Id;
+import org.greenrobot.greendao.annotation.Unique;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -61,14 +62,15 @@ public class VideoInfo implements Serializable {
     @Id
     private long id;
 
-    private String filePath;
-    private long duration;
-    private long fileSize;
-    private String fileName;
-    private long mediaDbId;
-    private int width;
-    private int height;
-    private String resolution;
+    private String filePath;//文件路径
+    private long duration;//视频长度（毫秒）
+    private long fileSize;//文件大小（字节）
+    private String fileName;//文件名称
+    @Unique
+    private long mediaDbId;//媒体库id
+    private int width;//视频宽
+    private int height;//视频高
+    private String resolution;//视频分辨率字符串
 
     public VideoInfo(String filePath, long duration, long fileSize, String fileName, long mediaDbId, int width, int height, String resolution) {
         this.filePath = filePath;

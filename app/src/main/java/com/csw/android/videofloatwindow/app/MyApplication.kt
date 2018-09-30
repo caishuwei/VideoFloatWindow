@@ -5,11 +5,24 @@ import android.database.sqlite.SQLiteDatabase
 import com.csw.android.videofloatwindow.greendao.DaoMaster
 import com.csw.android.videofloatwindow.greendao.DaoSession
 import com.csw.android.videofloatwindow.player.PlayerHelper
+import com.scwang.smartrefresh.layout.SmartRefreshLayout
+import com.scwang.smartrefresh.layout.footer.ClassicsFooter
+import com.scwang.smartrefresh.layout.header.BezierRadarHeader
 
 class MyApplication : Application() {
 
     companion object {
         lateinit var instance: MyApplication
+
+        init {
+            SmartRefreshLayout.setDefaultRefreshHeaderCreator { context, layout ->
+                return@setDefaultRefreshHeaderCreator BezierRadarHeader(context)
+            }
+
+            SmartRefreshLayout.setDefaultRefreshFooterCreator { context, layout ->
+                return@setDefaultRefreshFooterCreator ClassicsFooter(context).setDrawableSize(20f)
+            }
+        }
     }
 
     override fun onCreate() {

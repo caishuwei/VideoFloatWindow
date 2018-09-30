@@ -61,4 +61,8 @@ dependencies {
     //数据库框架 可以将一张表映射为java对象，可以对对象执行添加 删除 更新操作
     implementation 'org.greenrobot:greendao:3.2.2'
     implementation 'org.greenrobot:greendao-generator:3.2.2'
+    //下拉刷新和上拉加载更多框架，目前网上用的比较多，很强大的框架，支持自定义
+    api 'com.scwang.smartrefresh:SmartRefreshLayout:1.0.5.1'
+    // 第三方封装的RecyclerView适配器
+    api 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.28'
 }

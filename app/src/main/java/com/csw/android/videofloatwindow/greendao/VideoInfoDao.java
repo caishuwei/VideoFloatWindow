@@ -53,7 +53,7 @@ public class VideoInfoDao extends AbstractDao<VideoInfo, Long> {
                 "\"DURATION\" INTEGER NOT NULL ," + // 2: duration
                 "\"FILE_SIZE\" INTEGER NOT NULL ," + // 3: fileSize
                 "\"FILE_NAME\" TEXT," + // 4: fileName
-                "\"MEDIA_DB_ID\" INTEGER NOT NULL ," + // 5: mediaDbId
+                "\"MEDIA_DB_ID\" INTEGER NOT NULL UNIQUE ," + // 5: mediaDbId
                 "\"WIDTH\" INTEGER NOT NULL ," + // 6: width
                 "\"HEIGHT\" INTEGER NOT NULL ," + // 7: height
                 "\"RESOLUTION\" TEXT);"); // 8: resolution
