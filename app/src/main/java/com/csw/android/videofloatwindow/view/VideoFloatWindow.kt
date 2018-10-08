@@ -132,6 +132,7 @@ class VideoFloatWindow : FrameLayout {
         val p = parent
         p?.let {
             windowManager.removeView(this)
+            videoContainer.unBindPlayer()
         }
     }
 

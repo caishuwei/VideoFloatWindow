@@ -38,18 +38,14 @@ open class VideoContainer : FrameLayout {
 
 
     open fun bindPlayer(): VideoContainer {
-        videoInfo?.let {
-            MyApplication.instance.playerHelper.bindPlayer(videoContainer, it) {
-                onBindPlayer(it)
-            }
+        MyApplication.instance.playerHelper.bindPlayer(videoContainer) {
+            onBindPlayer(it)
         }
         return this
     }
 
     open fun unBindPlayer(): VideoContainer {
-        videoInfo?.let {
-            MyApplication.instance.playerHelper.unBindPlayer(videoContainer, it)
-        }
+        MyApplication.instance.playerHelper.unBindPlayer(videoContainer)
         return this
     }
 

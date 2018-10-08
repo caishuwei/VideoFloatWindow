@@ -83,14 +83,7 @@ class PlayerHelper(context: Application) {
     /**
      * 绑定播放器
      */
-    fun bindPlayer(container: ViewGroup, videoInfo: VideoInfo, executeBind: (playerBindHelper: PlayerBindHelper) -> (Unit)) {
-        //更换播放源
-        if (videoInfo.filePath != currVideoInfo.filePath) {
-            val mediaSource = ExtractorMediaSource.Factory(mediaDataSourceFactory)
-                    .createMediaSource(Uri.parse(videoInfo.filePath))
-            player.prepare(mediaSource, true, true)
-        }
-        currVideoInfo = videoInfo
+    fun bindPlayer(container: ViewGroup, executeBind: (playerBindHelper: PlayerBindHelper) -> (Unit)) {
         //更换显示容器
         val currVideoParent = view.parent
         if (currVideoParent !== container) {
@@ -107,20 +100,13 @@ class PlayerHelper(context: Application) {
         }
         resetBind()
         executeBind(playerBindHelper)
-
-        val keys = playerListenerMap.keys
-        if (!keys.isEmpty()) {
-            for (key in keys) {
-                key?.onVideoInfoChanged(currVideoInfo)
-            }
-        }
     }
 
     /**
      * 解绑播发器
      */
-    fun unBindPlayer(container: ViewGroup, videoInfo: VideoInfo) {
-        if (isCurrVideo(videoInfo) && view.parent === container) {
+    fun unBindPlayer(container: ViewGroup) {
+        if (view.parent === container) {
             container.removeView(view)
             resetBind()
         }
@@ -139,9 +125,7 @@ class PlayerHelper(context: Application) {
      * 开始播放
      */
     fun play(videoInfo: VideoInfo = currVideoInfo) {
-        if (isCurrVideo(videoInfo)) {
-            player.playWhenReady = true
-        }
+        tryPlay(videoInfo)
     }
 
     /**
@@ -174,22 +158,52 @@ class PlayerHelper(context: Application) {
     fun tryPauseCurr(): Boolean {
         if (currVideoInfo != none) {
             player.playWhenReady = false
+            return true
         }
         return false
     }
 
     private fun tryPlay(newVideoInfo: VideoInfo?): Boolean {
         newVideoInfo?.let { videoInfo ->
+            var isVideochanged = false
+            if (!isCurrVideo(newVideoInfo)) {
+                //更新播放源
+                val mediaSource = ExtractorMediaSource.Factory(mediaDataSourceFactory)
+                        .createMediaSource(Uri.parse(videoInfo.filePath))
+                player.prepare(mediaSource, true, true)
+                currVideoInfo = videoInfo
+                isVideochanged = true
+            } else {
+                //仍旧是当前的视频，如果当前视频已经播放完毕，那么我们跳到视频开头，重新播放
+                when (player.playbackState) {
+                    Player.STATE_ENDED -> {
+                        player.seekTo(0)
+                    }
+                }
+            }
+            player.playWhenReady = true
+
+            //VideoContainer 更新videoInfo 并且重新绑定Player
             view.parent?.let { viewParent ->
                 if (viewParent is View) {
                     viewParent.tag?.let {
                         if (it is VideoContainer) {
-                            it.setVideoInfo(videoInfo).bindPlayer().play()
-                            return true
+                            it.setVideoInfo(videoInfo).bindPlayer()
                         }
                     }
                 }
             }
+
+            //通知播放的视频已经发生改变
+            if (isVideochanged) {
+                val keys = playerListenerMap.keys
+                if (!keys.isEmpty()) {
+                    for (key in keys) {
+                        key?.onVideoInfoChanged(currVideoInfo)
+                    }
+                }
+            }
+            return true
         }
         return false
     }
@@ -230,7 +244,7 @@ class PlayerHelper(context: Application) {
     /**
      * 显示悬浮窗
      */
-    fun showFloatWindow() {
+    private fun showFloatWindow() {
         videoFloatWindow?.let {
             if (!it.isShowing()) {
                 it.show()
@@ -307,14 +321,6 @@ class PlayerHelper(context: Application) {
         }
         old?.hide()
         videoFloatWindow = value
-    }
-
-    fun moveFloatWindowBy(x: Float, y: Float) {
-        videoFloatWindow?.moveBy(x, y)
-    }
-
-    fun moveFloatWindowTo(x: Float, y: Float) {
-        videoFloatWindow?.moveTo(x,y)
     }
 
     private fun isCurrVideo(videoInfo: VideoInfo): Boolean {
