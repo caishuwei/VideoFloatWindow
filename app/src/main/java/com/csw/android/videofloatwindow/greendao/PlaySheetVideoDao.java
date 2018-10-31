@@ -39,8 +39,8 @@ public class PlaySheetVideoDao extends AbstractDao<PlaySheetVideo, Long> {
 
     private DaoSession daoSession;
 
-    private Query<PlaySheetVideo> videoInfo_PlaySheetVideosQuery;
     private Query<PlaySheetVideo> playSheet_PlaySheetVideosQuery;
+    private Query<PlaySheetVideo> videoInfo_PlaySheetVideosQuery;
 
     public PlaySheetVideoDao(DaoConfig config) {
         super(config);
@@ -143,20 +143,6 @@ public class PlaySheetVideoDao extends AbstractDao<PlaySheetVideo, Long> {
         return true;
     }
     
-    /** Internal query to resolve the "playSheetVideos" to-many relationship of VideoInfo. */
-    public List<PlaySheetVideo> _queryVideoInfo_PlaySheetVideos(long videoInfoId) {
-        synchronized (this) {
-            if (videoInfo_PlaySheetVideosQuery == null) {
-                QueryBuilder<PlaySheetVideo> queryBuilder = queryBuilder();
-                queryBuilder.where(Properties.VideoInfoId.eq(null));
-                videoInfo_PlaySheetVideosQuery = queryBuilder.build();
-            }
-        }
-        Query<PlaySheetVideo> query = videoInfo_PlaySheetVideosQuery.forCurrentThread();
-        query.setParameter(0, videoInfoId);
-        return query.list();
-    }
-
     /** Internal query to resolve the "playSheetVideos" to-many relationship of PlaySheet. */
     public List<PlaySheetVideo> _queryPlaySheet_PlaySheetVideos(long playSheetId) {
         synchronized (this) {
@@ -168,6 +154,20 @@ public class PlaySheetVideoDao extends AbstractDao<PlaySheetVideo, Long> {
         }
         Query<PlaySheetVideo> query = playSheet_PlaySheetVideosQuery.forCurrentThread();
         query.setParameter(0, playSheetId);
+        return query.list();
+    }
+
+    /** Internal query to resolve the "playSheetVideos" to-many relationship of VideoInfo. */
+    public List<PlaySheetVideo> _queryVideoInfo_PlaySheetVideos(long videoInfoId) {
+        synchronized (this) {
+            if (videoInfo_PlaySheetVideosQuery == null) {
+                QueryBuilder<PlaySheetVideo> queryBuilder = queryBuilder();
+                queryBuilder.where(Properties.VideoInfoId.eq(null));
+                videoInfo_PlaySheetVideosQuery = queryBuilder.build();
+            }
+        }
+        Query<PlaySheetVideo> query = videoInfo_PlaySheetVideosQuery.forCurrentThread();
+        query.setParameter(0, videoInfoId);
         return query.list();
     }
 

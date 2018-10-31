@@ -2,6 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'org.greenrobot.greendao'
+apply plugin: 'kotlin-kapt'
 
 
 android {
@@ -36,7 +37,7 @@ configurations.all {
         def requested = details.requested
         if (requested.group == 'com.android.support') {
             if (!requested.name.startsWith("multidex")) {
-                details.useVersion '28.0.0-rc02'
+                details.useVersion '28.0.0'
             }
         }
     }
@@ -45,9 +46,9 @@ configurations.all {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'com.android.support:appcompat-v7:28.0.0-rc02'
-    implementation 'com.android.support:design:28.0.0-rc02'
-    implementation 'com.android.support:cardview-v7:28.0.0-rc02'
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support:design:28.0.0'
+    implementation 'com.android.support:cardview-v7:28.0.0'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
@@ -64,5 +65,12 @@ dependencies {
     //下拉刷新和上拉加载更多框架，目前网上用的比较多，很强大的框架，支持自定义
     api 'com.scwang.smartrefresh:SmartRefreshLayout:1.0.5.1'
     // 第三方封装的RecyclerView适配器
-    api 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.28'
+    api 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.30'
+
+    //dagger2 依赖注入
+    api 'com.google.dagger:dagger-android:2.15'
+    api 'com.google.dagger:dagger-android-support:2.15'
+    kapt  'com.google.dagger:dagger-android-processor:2.15'
+    kapt 'com.google.dagger:dagger-compiler:2.15'
+
 }

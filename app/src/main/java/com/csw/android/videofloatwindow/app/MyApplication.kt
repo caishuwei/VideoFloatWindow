@@ -13,6 +13,7 @@ class MyApplication : Application() {
 
     companion object {
         lateinit var instance: MyApplication
+        lateinit var appComponent: AppComponent
 
         init {
             SmartRefreshLayout.setDefaultRefreshHeaderCreator { context, layout ->
@@ -28,6 +29,7 @@ class MyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         MyApplication.instance = this
+        appComponent = DaggerAppComponent.builder().setMyApplication(this).build()
     }
 
     val playerHelper: PlayerHelper by lazy {
