@@ -9,11 +9,11 @@ import com.csw.android.videofloatwindow.dagger.base.IBaseView
 interface LocalVideosContract {
 
 
-    interface Presenter:IBasePresenter{
+    interface Presenter : IBasePresenter {
 
     }
 
-    interface View:IBaseView<Presenter>{
+    interface View : IBaseView {
 
     }
 }

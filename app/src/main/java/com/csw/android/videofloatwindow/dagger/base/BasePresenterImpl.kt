@@ -1,9 +1,9 @@
 package com.csw.android.videofloatwindow.dagger.base
 
-open class BasePresenterImpl<P : IBasePresenter, V : IBaseView<P>> : IBasePresenter {
+open class BasePresenterImpl : IBasePresenter {
 
-    constructor(view: V) {
-        view.setPresenter(this as P)
+    constructor(view: IBaseView) {
+        view.setBasePresenter(this)
     }
 
     override fun onUIEnterForeground() {

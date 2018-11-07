@@ -13,6 +13,7 @@ import com.csw.android.videofloatwindow.ui.list.LocalVideosActivity
 import com.csw.android.videofloatwindow.ui.list.PlaySheetVideosActivity
 import com.csw.android.videofloatwindow.util.DBUtils
 import com.csw.android.videofloatwindow.view.SpaceLineItemDecoration
+import com.tencent.bugly.crashreport.CrashReport
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -29,6 +30,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.activity_main)
         ContextCompat.startForegroundService(
                 this@MainActivity,

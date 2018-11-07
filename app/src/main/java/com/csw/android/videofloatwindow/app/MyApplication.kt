@@ -1,6 +1,7 @@
 package com.csw.android.videofloatwindow.app
 
 import android.app.Application
+import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import com.csw.android.videofloatwindow.greendao.DaoMaster
 import com.csw.android.videofloatwindow.greendao.DaoSession
@@ -8,6 +9,10 @@ import com.csw.android.videofloatwindow.player.PlayerHelper
 import com.scwang.smartrefresh.layout.SmartRefreshLayout
 import com.scwang.smartrefresh.layout.footer.ClassicsFooter
 import com.scwang.smartrefresh.layout.header.BezierRadarHeader
+import com.tencent.bugly.crashreport.CrashReport
+import android.support.multidex.MultiDex
+
+
 
 class MyApplication : Application() {
 
@@ -30,6 +35,12 @@ class MyApplication : Application() {
         super.onCreate()
         MyApplication.instance = this
         appComponent = DaggerAppComponent.builder().setMyApplication(this).build()
+        CrashReport.initCrashReport(getApplicationContext(), "eb0b86c8af", false);
+    }
+
+    override fun attachBaseContext(base: Context?) {
+        super.attachBaseContext(base)
+        MultiDex.install(this)
     }
 
     val playerHelper: PlayerHelper by lazy {

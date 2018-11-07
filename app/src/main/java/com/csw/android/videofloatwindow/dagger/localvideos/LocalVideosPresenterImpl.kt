@@ -9,9 +9,7 @@ import javax.inject.Inject
  * Inject注解，将本类的实例构建方式注入Dagger框架中
  */
 class LocalVideosPresenterImpl @Inject constructor(view: LocalVideosContract.View) :
-        BasePresenterImpl<LocalVideosContract.Presenter, LocalVideosContract.View>(view),
+        BasePresenterImpl(view),
         LocalVideosContract.Presenter {
-
-
 
 }
