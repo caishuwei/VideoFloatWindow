@@ -8,7 +8,6 @@ import android.provider.MediaStore
 import android.support.design.widget.Snackbar
 import android.support.v4.widget.PopupWindowCompat
 import android.support.v7.app.AlertDialog
-import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.AppCompatEditText
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
@@ -24,6 +23,7 @@ import com.csw.android.videofloatwindow.entities.AddItem
 import com.csw.android.videofloatwindow.entities.PlaySheet
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
+import com.csw.android.videofloatwindow.ui.base.BaseActivity
 import com.csw.android.videofloatwindow.util.DBUtils
 import com.csw.android.videofloatwindow.view.SpaceLineItemDecoration
 import com.tbruyelle.rxpermissions2.RxPermissions
@@ -31,18 +31,32 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_local_videos.*
 
-class LocalVideosActivity : AppCompatActivity() {
+class LocalVideosActivity : BaseActivity() {
 
     private lateinit var videosAdapter: VideosAdapter
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_local_videos)
+
+    override fun getContentViewID(): Int {
+        return R.layout.activity_local_videos;
+    }
+
+    override fun initView(rootView: View, savedInstanceState: Bundle?) {
+        super.initView(rootView, savedInstanceState)
         recyclerView.layoutManager = LinearLayoutManager(
                 this,
                 LinearLayoutManager.VERTICAL,
                 false)
+
+    }
+
+    override fun initAdapter() {
+        super.initAdapter()
         videosAdapter = VideosAdapter()
+        recyclerView.adapter = videosAdapter
+    }
+
+    override fun initListener() {
+        super.initListener()
         videosAdapter.setOnItemClickListener { _, view, position ->
             val videoInfo = videosAdapter.getItem(position)
             videoInfo?.let {
@@ -57,33 +71,51 @@ class LocalVideosActivity : AppCompatActivity() {
             }
             return@setOnItemLongClickListener false
         }
-        recyclerView.adapter = videosAdapter
-
-        RxPermissions(this)
-                .request(Manifest.permission.READ_EXTERNAL_STORAGE)
-                .map {
-                    if (it) {
-                        return@map getLocalVideos()
-                    } else {
-                        Snackbar.make(recyclerView, "SD卡文件读取权限被拒绝", Snackbar.LENGTH_SHORT).show()
-                        return@map arrayListOf<VideoInfo>()
-                    }
-                }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        {
-                            videosAdapter.setNewData(it)
-                            MyApplication.instance.playerHelper.playList = it
-                        },
-                        {
-                            Snackbar.make(recyclerView, it.message
-                                    ?: "未知异常", Snackbar.LENGTH_SHORT).show()
-                        })
-
+        smartRefreshLayout.isEnableRefresh = true
+        smartRefreshLayout.isEnableLoadMore = false
+        smartRefreshLayout.setOnRefreshListener {
+            videosAdapter.setNewData(null)
+            requestLocalVideos()
+        }
     }
 
+    override fun initData() {
+        super.initData()
+        smartRefreshLayout.autoRefresh()
+    }
 
+    private fun requestLocalVideos() {
+        addLifecycleTask(
+                RxPermissions(this)
+                        .request(Manifest.permission.READ_EXTERNAL_STORAGE)
+                        .map {
+                            if (it) {
+                                return@map getLocalVideos()
+                            } else {
+                                Snackbar.make(recyclerView, "SD卡文件读取权限被拒绝", Snackbar.LENGTH_SHORT).show()
+                                return@map arrayListOf<VideoInfo>()
+                            }
+                        }
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                {
+                                    smartRefreshLayout.finishRefresh()
+                                    videosAdapter.setNewData(it)
+                                    MyApplication.instance.playerHelper.playList = it
+                                },
+                                {
+                                    smartRefreshLayout.finishRefresh()
+                                    Snackbar.make(recyclerView, it.message
+                                            ?: "未知异常", Snackbar.LENGTH_SHORT).show()
+                                }
+                        )
+        );
+    }
+
+    /**
+     * 查询设备媒体库获取所有视频文件数据记录，数据量大的时候耗时较长
+     */
     private fun getLocalVideos(): ArrayList<VideoInfo> {
         val data = arrayListOf<VideoInfo>()
         val cursor = contentResolver.query(
@@ -162,9 +194,12 @@ class LocalVideosActivity : AppCompatActivity() {
         popupWindow.contentView = recyclerView
         popupWindow.width = WindowManager.LayoutParams.MATCH_PARENT
         popupWindow.height = WindowManager.LayoutParams.WRAP_CONTENT
-        popupWindow.isOutsideTouchable = true
-        popupWindow.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        PopupWindowCompat.showAsDropDown(popupWindow, view, 0, 0, Gravity.CENTER);
+        popupWindow.isFocusable = true//窗口如果不取得焦点，点击外部时弹窗消失，但点击事件仍会被外部控件响应
+        popupWindow.isTouchable = true//设置窗口可以响应触摸事件
+        popupWindow.isOutsideTouchable = true//设置窗口外部可以响应触摸事件
+        popupWindow.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))//设置背景了，窗口外部才可以响应触摸事件
+        PopupWindowCompat.setOverlapAnchor(popupWindow, true)//设置窗体位置覆盖在View上
+        PopupWindowCompat.showAsDropDown(popupWindow, view, 0, 0, Gravity.CENTER);//显示窗体
     }
 
     private fun getPlaySheets(): ArrayList<MultiItemEntity> {

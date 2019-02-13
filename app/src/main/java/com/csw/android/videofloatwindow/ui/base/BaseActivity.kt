@@ -5,11 +5,16 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.view.WindowManager
+import io.reactivex.disposables.Disposable
+import java.util.*
 
 /**
  * Activity基类
  */
 abstract class BaseActivity : AppCompatActivity(), IUICreator {
+
+    //只在生命周期中执行的任务
+    private val lifecycleTasks: WeakHashMap<Disposable, Any> = WeakHashMap()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +37,15 @@ abstract class BaseActivity : AppCompatActivity(), IUICreator {
     override fun initData() {
     }
 
+    override fun onDestroy() {
+        clearLifecycleTask()
+        super.onDestroy()
+    }
+
+
+    /**
+     * 设置全屏
+     */
     fun setFullScreen(fullScreen: Boolean) {
         //ActionBar设置
         supportActionBar?.let {
@@ -59,6 +73,22 @@ abstract class BaseActivity : AppCompatActivity(), IUICreator {
             } else if (Build.VERSION.SDK_INT >= 19) {
                 window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
             }
+        }
+    }
+
+    /**
+     * 添加只在界面生命周期中执行的任务，当界面销毁时取消任务
+     */
+    fun addLifecycleTask(task: Disposable) {
+        if (!task.isDisposed) {
+            lifecycleTasks[task] = null
+        }
+    }
+
+    private fun clearLifecycleTask() {
+        val keys = lifecycleTasks.keys
+        for (key in keys) {
+            key.dispose()
         }
     }
 }

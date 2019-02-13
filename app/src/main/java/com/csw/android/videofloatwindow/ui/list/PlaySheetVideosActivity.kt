@@ -5,19 +5,21 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.support.design.widget.Snackbar
-import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
+import android.view.View
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
+import com.csw.android.videofloatwindow.ui.base.BaseActivity
 import com.csw.android.videofloatwindow.util.DBUtils
 import com.tbruyelle.rxpermissions2.RxPermissions
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_local_videos.*
 
-class PlaySheetVideosActivity : AppCompatActivity() {
+class PlaySheetVideosActivity : BaseActivity() {
+
     private lateinit var videosAdapter: VideosAdapter
 
     companion object {
@@ -28,24 +30,39 @@ class PlaySheetVideosActivity : AppCompatActivity() {
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_local_videos)
+    override fun getContentViewID(): Int {
+        return R.layout.activity_local_videos
+    }
+
+    override fun initView(rootView: View, savedInstanceState: Bundle?) {
+        super.initView(rootView, savedInstanceState)
         recyclerView.layoutManager = LinearLayoutManager(
                 this,
                 LinearLayoutManager.VERTICAL,
                 false)
+    }
+
+    override fun initAdapter() {
+        super.initAdapter()
         videosAdapter = VideosAdapter()
+        recyclerView.adapter = videosAdapter
+    }
+
+    override fun initListener() {
+        super.initListener()
         videosAdapter.setOnItemClickListener { _, view, position ->
             val videoInfo = videosAdapter.getItem(position)
             videoInfo?.let {
                 FullScreenActivity.openActivity(view.context, it)
             }
         }
-        recyclerView.adapter = videosAdapter
+    }
+
+    override fun initData() {
+        super.initData()
         val playSheetId = intent.getLongExtra("playSheetId", 0)
         if (playSheetId > 0) {
-            RxPermissions(this)
+            addLifecycleTask(RxPermissions(this)
                     .request(Manifest.permission.READ_EXTERNAL_STORAGE)
                     .map {
                         if (it) {
@@ -65,7 +82,9 @@ class PlaySheetVideosActivity : AppCompatActivity() {
                             {
                                 Snackbar.make(recyclerView, it.message
                                         ?: "未知异常", Snackbar.LENGTH_SHORT).show()
-                            })
+                            }
+                    )
+            )
         }
     }
 

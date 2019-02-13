@@ -17,6 +17,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <com.csw.android.videofloatwindow.player.base.VolumeAndBrightnessControlView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
     <LinearLayout
         android:id="@+id/v_title_and_back"
         android:layout_width="match_parent"
@@ -143,6 +147,5 @@
             android:src="@drawable/icon_float_window"
             tools:ignore="contentDescription" />
     </LinearLayout>
-
 
 </RelativeLayout>

@@ -1,4 +1,4 @@
-package com.csw.android.videofloatwindow.view
+package com.csw.android.videofloatwindow.player.base
 
 import android.content.Context
 import android.content.pm.ActivityInfo
@@ -73,7 +73,7 @@ open class VideoContainer : FrameLayout {
     }
 
 
-    fun setVideoInfo(videoInfo: VideoInfo?): VideoContainer {
+    open fun setVideoInfo(videoInfo: VideoInfo?): VideoContainer {
         if (this.videoInfo != videoInfo) {
             unBindPlayer();
         }
@@ -82,6 +82,9 @@ open class VideoContainer : FrameLayout {
         return this
     }
 
+    /**
+     * 根据视频的比例，在全屏播放的情况下，长的视频设置为竖屏播放，宽的视频设置为横屏播放
+     */
     private fun tryRotateScreen() {
         Utils.runIfNotNull(context, videoInfo) { c, v ->
             if (c is FullScreenActivity) {

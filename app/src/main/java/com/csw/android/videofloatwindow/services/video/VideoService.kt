@@ -10,8 +10,8 @@ import android.view.View
 import com.csw.android.videofloatwindow.IVideoServiceInterface
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
-import com.csw.android.videofloatwindow.player.PlayerListener
-import com.csw.android.videofloatwindow.view.VideoFloatWindow
+import com.csw.android.videofloatwindow.player.base.PlayerListener
+import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
 import com.google.android.exoplayer2.Player
 
 class VideoService : Service() {

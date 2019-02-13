@@ -1,4 +1,4 @@
-package com.csw.android.videofloatwindow.player
+package com.csw.android.videofloatwindow.player.base
 
 import android.view.LayoutInflater
 import android.view.View

@@ -1,14 +1,18 @@
 package com.csw.android.videofloatwindow.permission
 
+import android.content.Context
 import android.content.Intent
+import android.graphics.PixelFormat
 import android.net.Uri
 import android.os.Build
-import android.os.Handler
 import android.provider.Settings
 import android.support.annotation.RequiresApi
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentActivity
 import android.support.v4.app.FragmentManager
+import android.view.Gravity
+import android.view.View
+import android.view.WindowManager
 import com.csw.android.videofloatwindow.util.Utils
 
 /**
@@ -57,26 +61,12 @@ class SystemAlertWindowPermission : Fragment() {
 
     private var listener: OnRequestResultListener? = null
     private var requestActivity: FragmentActivity? = null
-    private val mainHandler = Handler()
-    private val delayTask = Runnable {
-        Utils.runIfNotNull(activity, listener) { v1, v2 ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                v2.onResult(Settings.canDrawOverlays(v1))
-            } else {
-                v2.onResult(true)
-            }
-        }
-        listener = null
-        requestActivity = null
-    }
-
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun requestManageOverlayPermission(activity: FragmentActivity, listener: OnRequestResultListener) {
-        //存在还未回调的任务，移除并直接执行
+        //存在还未回调的任务
         Utils.runIfNotNull(activity, listener) { _, _ ->
-            mainHandler.removeCallbacks(delayTask)
-            delayTask.run()
+            callback()
         }
         //请求权限
         this.requestActivity = activity
@@ -89,8 +79,51 @@ class SystemAlertWindowPermission : Fragment() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == SystemAlertWindowPermission.REQUEST_CODE) {
-            //由于Settings.canDrawOverlays与修改悬浮框权限结果不同步问题，延迟一段时间后再判断回调结果
-            mainHandler.postDelayed(delayTask, 2000)
+            callback()
+        }
+    }
+
+    private fun callback() {
+        Utils.runIfNotNull(activity, listener) { v1, v2 ->
+            when {
+                Build.VERSION.SDK_INT == Build.VERSION_CODES.O ->
+                    //8.0bug 由于Settings.canDrawOverlays与修改悬浮框权限结果不同步问题，大概需要两秒的时间才能获取修改后的结果
+                    //这里直接通过添加悬浮窗进行判断
+                    v2.onResult(canAddWindow(v1))
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> v2.onResult(Settings.canDrawOverlays(v1))
+                else -> v2.onResult(true)
+            }
+        }
+        listener = null
+        requestActivity = null
+    }
+
+    private fun canAddWindow(context: Context): Boolean {
+        try {
+            val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+            val view = View(context)
+            val params = WindowManager.LayoutParams()
+            //设置窗口类型， android 8.0以上只能设置TYPE_APPLICATION_OVERLAY
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                params.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            } else {
+                params.type = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT
+            }
+            //设置像素格式 但为什么用的是RGBA 而不是ARGB
+            params.format = PixelFormat.RGBA_8888
+            //设置不取得焦点
+            params.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+            params.gravity = Gravity.START or Gravity.TOP
+            params.x = 0
+            params.y = 0
+            params.width = 40
+            params.height = 40
+            params.dimAmount = 0f
+            windowManager.addView(view, params)
+            windowManager.removeView(view)
+            return true
+        } catch (e: Exception) {
+            return false
         }
     }
 }

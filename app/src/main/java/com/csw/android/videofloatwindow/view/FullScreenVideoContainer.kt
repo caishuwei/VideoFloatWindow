@@ -8,6 +8,7 @@ import android.view.View.OnClickListener
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.permission.SystemAlertWindowPermission
 import com.csw.android.videofloatwindow.player.PlayerHelper
+import com.csw.android.videofloatwindow.player.base.VideoContainer
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
 
 class FullScreenVideoContainer : VideoContainer {

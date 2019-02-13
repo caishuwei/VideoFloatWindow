@@ -2,23 +2,20 @@ package com.csw.android.videofloatwindow.player
 
 import android.app.Application
 import android.net.Uri
-import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
+import com.csw.android.videofloatwindow.player.base.PlayerListener
+import com.csw.android.videofloatwindow.player.base.VideoContainer
+import com.csw.android.videofloatwindow.player.video.CustomVideoView
+import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
-import com.csw.android.videofloatwindow.view.VideoContainer
-import com.csw.android.videofloatwindow.view.VideoFloatWindow
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.source.ExtractorMediaSource
 import com.google.android.exoplayer2.source.TrackGroupArray
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray
-import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
@@ -26,16 +23,7 @@ import java.util.*
 
 class PlayerHelper(context: Application) {
     private val none = VideoInfo()
-    private val view: View = LayoutInflater.from(context).inflate(R.layout.view_player, null, false)
-    private val playerView: PlayerView
-    private val vBack: View
-    private val tvTitle: TextView
-    private var vClose: View
-    private val vFullScreen: View
-    private val vFloatWindow: View
-    private val vPrevious: View
-    private val vNext: View
-
+    private val view: CustomVideoView = CustomVideoView(MyApplication.instance)
     private val player: SimpleExoPlayer
     private val mediaDataSourceFactory: DefaultDataSourceFactory
 
@@ -53,31 +41,16 @@ class PlayerHelper(context: Application) {
 
 
     init {
-        playerView = view.findViewById(R.id.player_view)
-        vBack = playerView.findViewById(R.id.v_back)
-        tvTitle = playerView.findViewById(R.id.tv_title)
-        vClose = playerView.findViewById(R.id.v_close)
-        vPrevious = playerView.findViewById(R.id.v_previous)
-        vPrevious.isEnabled = true
-        vNext = playerView.findViewById(R.id.v_next)
-        vNext.isEnabled = true
-        vFullScreen = playerView.findViewById(R.id.v_full_screen)
-        vFloatWindow = playerView.findViewById(R.id.v_float_window)
+        view.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        player = view.player
+        componentListener = ComponentListener()
+        player.addListener(componentListener)
         playerBindHelper = PlayerBindHelper()
         val bandwidthMeter = DefaultBandwidthMeter()
-        //        val window = Timeline.Window()
-        val videoTrackSelectionFactory = AdaptiveTrackSelection.Factory(bandwidthMeter)
-        val trackSelector = DefaultTrackSelector(videoTrackSelectionFactory)
-        player = ExoPlayerFactory.newSimpleInstance(
-                context,
-                trackSelector)
         mediaDataSourceFactory = DefaultDataSourceFactory(
                 context,
                 Util.getUserAgent(context, context.getString(R.string.app_name)),
                 bandwidthMeter)
-        playerView.player = player
-        componentListener = ComponentListener()
-        player.addListener(componentListener)
     }
 
     /**
@@ -176,6 +149,11 @@ class PlayerHelper(context: Application) {
             } else {
                 //仍旧是当前的视频，如果当前视频已经播放完毕，那么我们跳到视频开头，重新播放
                 when (player.playbackState) {
+                    Player.STATE_IDLE -> {
+                        val mediaSource = ExtractorMediaSource.Factory(mediaDataSourceFactory)
+                                .createMediaSource(Uri.parse(videoInfo.filePath))
+                        player.prepare(mediaSource, true, true)
+                    }
                     Player.STATE_ENDED -> {
                         player.seekTo(0)
                     }
@@ -233,8 +211,8 @@ class PlayerHelper(context: Application) {
     fun playInFloatWindow(videoInfo: VideoInfo = currVideoInfo): Boolean {
         val currWindow = videoFloatWindow
         return if (currWindow != null) {
-            currWindow.setVideoInfo(videoInfo)
             showFloatWindow()
+            currWindow.setVideoInfo(videoInfo)
             true
         } else {
             false
@@ -353,14 +331,14 @@ class PlayerHelper(context: Application) {
          * 设置返回按钮事件
          */
         fun setBackClickListener(listener: View.OnClickListener?): PlayerBindHelper {
-            return setClickListener(vBack, listener)
+            return setClickListener(view.vBack, listener)
         }
 
         /**
          * 设置标题
          */
         fun setTitle(titleStr: String): PlayerBindHelper {
-            tvTitle.text = titleStr
+            view.tvTitle.text = titleStr
             return this
         }
 
@@ -368,35 +346,35 @@ class PlayerHelper(context: Application) {
          * 设置关闭按钮事件
          */
         fun setCloseClickListener(listener: View.OnClickListener?): PlayerBindHelper {
-            return setClickListener(vClose, listener)
+            return setClickListener(view.vClose, listener)
         }
 
         /**
          * 设置上一首事件
          */
         fun setPreviousClickListener(listener: View.OnClickListener?): PlayerBindHelper {
-            return setClickListener(vPrevious, listener)
+            return setClickListener(view.vPrevious, listener)
         }
 
         /**
          * 设置上一首事件
          */
         fun setNextClickListener(listener: View.OnClickListener?): PlayerBindHelper {
-            return setClickListener(vNext, listener)
+            return setClickListener(view.vNext, listener)
         }
 
         /**
          * 设置全屏按钮事件
          */
         fun setFullScreenClickListener(listener: View.OnClickListener?): PlayerBindHelper {
-            return setClickListener(vFullScreen, listener)
+            return setClickListener(view.vFullScreen, listener)
         }
 
         /**
          * 设置小窗口播放按钮事件
          */
         fun setFloatWindowClickListener(listener: View.OnClickListener?): PlayerBindHelper {
-            return setClickListener(vFloatWindow, listener)
+            return setClickListener(view.vFloatWindow, listener)
         }
 
         private fun setClickListener(view: View, listener: View.OnClickListener?): PlayerBindHelper {
@@ -533,7 +511,6 @@ class PlayerHelper(context: Application) {
                 Player.STATE_ENDED -> {
                     view.keepScreenOn = false
                     tryPlayNext()
-
                 }
             }
         }

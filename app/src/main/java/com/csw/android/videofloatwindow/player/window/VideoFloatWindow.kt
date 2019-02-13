@@ -1,4 +1,4 @@
-package com.csw.android.videofloatwindow.view
+package com.csw.android.videofloatwindow.player.window
 
 import android.content.Context
 import android.graphics.PixelFormat
@@ -9,14 +9,13 @@ import android.view.*
 import android.widget.FrameLayout
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.entities.VideoInfo
-import com.csw.android.videofloatwindow.player.AreaUtils
+import com.csw.android.videofloatwindow.player.base.AreaUtils
 import com.csw.android.videofloatwindow.util.ScreenInfo
 
 /**
  * 视频悬浮窗口
  */
 class VideoFloatWindow : FrameLayout {
-    private var isAddToWindow = false
     private val windowManager: WindowManager
     private val areaUtils: AreaUtils
 
@@ -32,6 +31,7 @@ class VideoFloatWindow : FrameLayout {
         val view = LayoutInflater.from(context).inflate(R.layout.view_video_float_window, this, false)
         super.addView(view, LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         videoContainer = findViewById(R.id.videoContainer)
+        videoContainer.videoFloatWindow = this
         moveView = findViewById(R.id.moveView)
 
         val params = WindowManager.LayoutParams()
@@ -125,7 +125,6 @@ class VideoFloatWindow : FrameLayout {
     private fun addToWindow() {
         removeFromWindow()
         windowManager.addView(this, layoutParams)
-        isAddToWindow = true
     }
 
     private fun removeFromWindow() {
@@ -145,11 +144,6 @@ class VideoFloatWindow : FrameLayout {
 
     fun setVideoInfo(videoInfo: VideoInfo) {
         videoContainer.setVideoInfo(videoInfo).bindPlayer().play()
-        areaUtils.calcVideoWH(videoInfo.whRatio) { w, h ->
-            videoContainer.layoutParams.width = w
-            videoContainer.layoutParams.height = h
-            videoContainer.layoutParams = videoContainer.layoutParams
-        }
     }
 
     fun moveTo(x: Float, y: Float) {
@@ -157,6 +151,21 @@ class VideoFloatWindow : FrameLayout {
         params.x = x.toInt()
         params.y = y.toInt()
         windowManager.updateViewLayout(this, params)
+    }
+
+    fun updateWindowWH(it: VideoInfo) {
+        areaUtils.calcVideoWH(it.whRatio) { w, h ->
+            videoContainer.layoutParams.width = w
+            videoContainer.layoutParams.height = h
+            videoContainer.layoutParams = videoContainer.layoutParams
+
+            val params = this.layoutParams as WindowManager.LayoutParams
+            params.width = w
+            params.height = h
+            if (isShowing()) {
+                windowManager.updateViewLayout(this, params)
+            }
+        }
     }
 
     interface FloatWindowController {

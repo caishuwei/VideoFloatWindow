@@ -25,17 +25,19 @@ public class VideoInfo implements Serializable {
 
     public static VideoInfo readFromCursor(@NotNull Cursor cursor) {
         String filePath = cursor.getString(cursor.getColumnIndex(MediaStore.Video.Media.DATA));
-        String rotationStr = "0";
         int rotation;
         int height;
         int width;
-        MediaMetadataRetriever metaData = new MediaMetadataRetriever();
-        metaData.setDataSource(filePath);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            rotationStr = metaData.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
-        }
-        metaData.release();
         try {
+            String rotationStr = "0";
+            MediaMetadataRetriever metaData = new MediaMetadataRetriever();
+            //setDataSource遇到损坏的视频文件抛出异常
+            //java.lang.RuntimeException: setDataSource failed: status = 0xFFFFFFEA
+            metaData.setDataSource(filePath);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                rotationStr = metaData.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+            }
+            metaData.release();
             rotation = Integer.parseInt(rotationStr);
         } catch (Exception e) {
             rotation = 0;

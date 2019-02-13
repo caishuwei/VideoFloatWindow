@@ -1,4 +1,4 @@
-package com.csw.android.videofloatwindow.player
+package com.csw.android.videofloatwindow.player.base
 
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.google.android.exoplayer2.ExoPlaybackException

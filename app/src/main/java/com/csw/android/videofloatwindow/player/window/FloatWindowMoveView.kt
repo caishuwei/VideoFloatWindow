@@ -1,4 +1,4 @@
-package com.csw.android.videofloatwindow.view
+package com.csw.android.videofloatwindow.player.window
 
 import android.content.Context
 import android.graphics.Color
