@@ -3,10 +3,12 @@ package com.csw.android.videofloatwindow.ui
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.MotionEvent
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.ui.base.BaseActivity
+import com.csw.android.videofloatwindow.util.LogUtils
 import com.csw.android.videofloatwindow.util.Utils
 import kotlinx.android.synthetic.main.activity_full_screen.*
 
@@ -60,4 +62,10 @@ class FullScreenActivity : BaseActivity() {
         videoContainer.unBindPlayer()
         super.onDestroy()
     }
+
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        LogUtils.e(msg = "Activity__>${event?.action}___>${super.onTouchEvent(event)}");
+        return super.onTouchEvent(event)
+    }
+
 }

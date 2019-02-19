@@ -1,10 +1,10 @@
 package com.csw.android.videofloatwindow.player.video
 
+import android.app.Activity
 import android.content.Context
 import android.os.Bundle
 import android.util.AttributeSet
-import android.view.LayoutInflater
-import android.view.View
+import android.view.*
 import android.view.View.OnClickListener
 import android.widget.FrameLayout
 import android.widget.RelativeLayout
@@ -19,6 +19,7 @@ import com.csw.android.videofloatwindow.player.video.view.ErrorHintViewHolder
 import com.csw.android.videofloatwindow.player.video.view.HintViewHolder
 import com.csw.android.videofloatwindow.player.video.view.LoadingHintViewHolder
 import com.csw.android.videofloatwindow.ui.base.IUICreator
+import com.csw.android.videofloatwindow.util.LogUtils
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.source.TrackGroupArray
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection
@@ -27,6 +28,15 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
 
+/**
+ * 自定义VideoView对播放器进行封装
+ * <br/>
+ * 实现事件提醒
+ * <br/>
+ * 实现点击切换播放器控制器状态
+ * 实现滑动控制屏幕亮度与音量
+ * 嵌套滑动分发
+ */
 class CustomVideoView : RelativeLayout, IUICreator {
     //播放器相关视图
     lateinit var playerView: PlayerView
@@ -53,6 +63,9 @@ class CustomVideoView : RelativeLayout, IUICreator {
     //播放器
     lateinit var player: SimpleExoPlayer
         private set
+
+
+    private var isControllerVisible: Boolean = false//播放控制器当前是否可见
 
     constructor(context: Context?) : this(context, null)
     constructor(context: Context?, attrs: AttributeSet?) : this(context, attrs, 0)
@@ -115,6 +128,7 @@ class CustomVideoView : RelativeLayout, IUICreator {
     override fun initAdapter() {
 
     }
+
 
     override fun initListener() {
         MyApplication.instance.brightnessController.addListener(object : BrightnessController.BrightnessChangeListener {
@@ -197,9 +211,136 @@ class CustomVideoView : RelativeLayout, IUICreator {
                 }
             }
         })
+        playerView.setControllerVisibilityListener {
+            isControllerVisible = (it == View.VISIBLE)
+        }
+        playerView.hideController()
     }
 
+    private var scaledTouchSlop: Int = 0
+    private var handleGesture: Int = 0//是否处理手势 -1不处理 0待判断 1处理
+    private var downX: Float = 0f
+    private var downY: Float = 0f
+    private var gestureHandler: GestureHandler? = null
+    private val volumeGestureHandler = VolumeGestureHandler()
+    private val brightnessGestureHandler = BrightnessGestureHandler()
+    private var downTime = 0L
+    private var isSingleTap = false
     override fun initData() {
+        scaledTouchSlop = ViewConfiguration.get(context).scaledTouchSlop
     }
 
+
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        super.onTouchEvent(event)
+        event?.let {
+            when (it.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    downTime = System.currentTimeMillis()
+                    isSingleTap = true
+                    downX = it.x
+                    downY = it.y
+                }
+                MotionEvent.ACTION_POINTER_DOWN -> {
+                    isSingleTap = false
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    if (handleGesture == 0) {
+                        val dx = Math.abs(downX - it.x)
+                        val dy = Math.abs(downY - it.y)
+                        if (dx > scaledTouchSlop || dy > scaledTouchSlop) {//用户目的是滑动
+                            isSingleTap = false
+                            if (dy > dx) {//竖直方向的滑动
+                                if (downX >= width / 2) {
+                                    gestureHandler = volumeGestureHandler
+                                } else {
+                                    gestureHandler = brightnessGestureHandler
+                                }
+                                gestureHandler?.startHandle(downY)
+                                handleGesture = 1
+                            } else {
+                                handleGesture = -1
+                            }
+                        }
+                    }
+                    if (handleGesture == 1) {
+                        gestureHandler?.onNewPosReceive(it.y)
+                    }
+                }
+                MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
+                    if (isSingleTap) {
+                        LogUtils.e(msg = "${ViewConfiguration.getTapTimeout()}")
+                        if ((System.currentTimeMillis() - downTime) <= ViewConfiguration.getTapTimeout()) {
+                            if (isControllerVisible) {
+                                playerView.hideController()
+                            } else {
+                                playerView.showController()
+                            }
+                        }
+                    }
+                    downX = 0f
+                    downY = 0f
+                    handleGesture = 0
+                    gestureHandler = null
+                }
+                else -> {
+                }
+            }
+        }
+        return true
+    }
+
+    //------------------------------------------ inner class ---------------------------------------
+    private abstract inner class GestureHandler {
+        private var startY: Float = 0f
+
+        open fun startHandle(startY: Float) {
+            this@GestureHandler.startY = startY
+        }
+
+        fun onNewPosReceive(y: Float) {
+            val percentChanged = (startY - y) / height
+            onPercentChanged(percentChanged)
+        }
+
+        abstract fun onPercentChanged(percentChanged: Float)
+    }
+
+    private inner class VolumeGestureHandler : GestureHandler() {
+        private var startValue: Int = 0
+        override fun startHandle(startY: Float) {
+            super.startHandle(startY)
+            startValue = MyApplication.instance.volumeController.getValue()
+        }
+
+        override fun onPercentChanged(percentChanged: Float) {
+            MyApplication.instance.volumeController.setValue((MyApplication.instance.volumeController.deviceMaxVolume * percentChanged + startValue).toInt())
+        }
+    }
+
+    private inner class BrightnessGestureHandler : GestureHandler() {
+        private var startValue: Int = 0
+        override fun startHandle(startY: Float) {
+            super.startHandle(startY)
+            startValue = MyApplication.instance.brightnessController.getValue(getWindow(this@CustomVideoView))
+        }
+
+        override fun onPercentChanged(percentChanged: Float) {
+            MyApplication.instance.brightnessController.setValue(getWindow(this@CustomVideoView), (100 * percentChanged + startValue).toInt())
+        }
+
+        private fun getWindow(view: View): Window? {
+            val context = view.context
+            if (context is Activity) {
+                return context.window
+            } else {
+                val parent = view.parent
+                if (parent is View) {
+                    return getWindow(parent)
+                } else {
+                    return null
+                }
+            }
+        }
+    }
 }

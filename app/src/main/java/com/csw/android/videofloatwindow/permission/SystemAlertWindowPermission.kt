@@ -2,6 +2,7 @@ package com.csw.android.videofloatwindow.permission
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.PixelFormat
 import android.net.Uri
 import android.os.Build
@@ -86,10 +87,10 @@ class SystemAlertWindowPermission : Fragment() {
     private fun callback() {
         Utils.runIfNotNull(activity, listener) { v1, v2 ->
             when {
-                Build.VERSION.SDK_INT == Build.VERSION_CODES.O ->
-                    //8.0bug 由于Settings.canDrawOverlays与修改悬浮框权限结果不同步问题，大概需要两秒的时间才能获取修改后的结果
-                    //这里直接通过添加悬浮窗进行判断
-                    v2.onResult(canAddWindow(v1))
+//                Build.VERSION.SDK_INT == Build.VERSION_CODES.O ->
+//                    //8.0bug 由于Settings.canDrawOverlays与修改悬浮框权限结果不同步问题，大概需要两秒的时间才能获取修改后的结果
+//                    //这里直接通过添加悬浮窗进行判断
+//                    v2.onResult(canAddWindow(v1))
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> v2.onResult(Settings.canDrawOverlays(v1))
                 else -> v2.onResult(true)
             }
@@ -102,6 +103,7 @@ class SystemAlertWindowPermission : Fragment() {
         try {
             val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
             val view = View(context)
+            view.setBackgroundColor(Color.RED)
             val params = WindowManager.LayoutParams()
             //设置窗口类型， android 8.0以上只能设置TYPE_APPLICATION_OVERLAY
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
