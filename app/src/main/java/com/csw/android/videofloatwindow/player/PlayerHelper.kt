@@ -290,6 +290,16 @@ class PlayerHelper(context: Application) {
     }
 
     /**
+     * 获取上一个
+     */
+    fun getCurrent(): VideoInfo? {
+        if (isCurrVideo(currVideoInfo)) {
+            return currVideoInfo
+        }
+        return null
+    }
+
+    /**
      * 设置悬浮窗
      */
     fun setVideoFloatWindow(value: VideoFloatWindow?) {
@@ -314,6 +324,7 @@ class PlayerHelper(context: Application) {
                 .setNextClickListener(null)
                 .setFullScreenClickListener(null)
                 .setFloatWindowClickListener(null)
+                .enableVolumeAndBrightnessController(false)
     }
 
     fun addPlayerListener(listener: PlayerListener) {
@@ -375,6 +386,11 @@ class PlayerHelper(context: Application) {
          */
         fun setFloatWindowClickListener(listener: View.OnClickListener?): PlayerBindHelper {
             return setClickListener(view.vFloatWindow, listener)
+        }
+
+        fun enableVolumeAndBrightnessController(enable: Boolean): PlayerBindHelper {
+            view.enableVolumeAndBrightnessController = enable
+            return this
         }
 
         private fun setClickListener(view: View, listener: View.OnClickListener?): PlayerBindHelper {

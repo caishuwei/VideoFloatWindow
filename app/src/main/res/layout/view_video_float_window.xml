@@ -12,7 +12,7 @@
         android:id="@+id/moveView"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_alignLeft="@+id/videoContainer"
-        android:layout_alignTop="@+id/videoContainer" />
+        android:layout_alignRight="@+id/videoContainer"
+        android:layout_alignBottom="@+id/videoContainer" />
 
 </RelativeLayout>

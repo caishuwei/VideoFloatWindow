@@ -3,6 +3,9 @@ package com.csw.android.videofloatwindow.player.video
 import android.app.Activity
 import android.content.Context
 import android.os.Bundle
+import android.support.v4.view.NestedScrollingChild
+import android.support.v4.view.NestedScrollingChildHelper
+import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
 import android.view.*
 import android.view.View.OnClickListener
@@ -37,7 +40,7 @@ import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
  * 实现滑动控制屏幕亮度与音量
  * 嵌套滑动分发
  */
-class CustomVideoView : RelativeLayout, IUICreator {
+class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
     //播放器相关视图
     lateinit var playerView: PlayerView
         private set
@@ -64,6 +67,8 @@ class CustomVideoView : RelativeLayout, IUICreator {
     lateinit var player: SimpleExoPlayer
         private set
 
+    //启用音量与亮度控制器
+    var enableVolumeAndBrightnessController = false
 
     private var isControllerVisible: Boolean = false//播放控制器当前是否可见
 
@@ -128,7 +133,6 @@ class CustomVideoView : RelativeLayout, IUICreator {
     override fun initAdapter() {
 
     }
-
 
     override fun initListener() {
         MyApplication.instance.brightnessController.addListener(object : BrightnessController.BrightnessChangeListener {
@@ -218,9 +222,11 @@ class CustomVideoView : RelativeLayout, IUICreator {
     }
 
     private var scaledTouchSlop: Int = 0
-    private var handleGesture: Int = 0//是否处理手势 -1不处理 0待判断 1处理
+    private var handleGesture: Int = 0//是否处理手势 -1不处理 0待判断 1亮度与音量处理 2嵌套滑动处理
     private var downX: Float = 0f
     private var downY: Float = 0f
+    private var preX: Float = 0f
+    private var preY: Float = 0f
     private var gestureHandler: GestureHandler? = null
     private val volumeGestureHandler = VolumeGestureHandler()
     private val brightnessGestureHandler = BrightnessGestureHandler()
@@ -228,6 +234,7 @@ class CustomVideoView : RelativeLayout, IUICreator {
     private var isSingleTap = false
     override fun initData() {
         scaledTouchSlop = ViewConfiguration.get(context).scaledTouchSlop
+        nestedScrollingChildHelper.isNestedScrollingEnabled = true
     }
 
 
@@ -238,38 +245,58 @@ class CustomVideoView : RelativeLayout, IUICreator {
                 MotionEvent.ACTION_DOWN -> {
                     downTime = System.currentTimeMillis()
                     isSingleTap = true
-                    downX = it.x
-                    downY = it.y
+                    downX = it.rawX
+                    downY = it.rawY
                 }
                 MotionEvent.ACTION_POINTER_DOWN -> {
                     isSingleTap = false
                 }
                 MotionEvent.ACTION_MOVE -> {
                     if (handleGesture == 0) {
-                        val dx = Math.abs(downX - it.x)
-                        val dy = Math.abs(downY - it.y)
+                        val dx = Math.abs(downX - it.rawX)
+                        val dy = Math.abs(downY - it.rawY)
                         if (dx > scaledTouchSlop || dy > scaledTouchSlop) {//用户目的是滑动
                             isSingleTap = false
-                            if (dy > dx) {//竖直方向的滑动
+                            val axes = if (dx > dy) ViewCompat.SCROLL_AXIS_HORIZONTAL else ViewCompat.SCROLL_AXIS_VERTICAL
+                            if (enableVolumeAndBrightnessController && dy > dx) {
+                                //启用音量与亮度控制的情况下 竖直方向的滑动，我们自己处理
                                 if (downX >= width / 2) {
                                     gestureHandler = volumeGestureHandler
                                 } else {
                                     gestureHandler = brightnessGestureHandler
                                 }
                                 gestureHandler?.startHandle(downY)
+                                gestureHandler?.onNewPosReceive(it.rawY)
                                 handleGesture = 1
                             } else {
-                                handleGesture = -1
+                                if (nestedScrollingChildHelper.startNestedScroll(axes)) {
+                                    dispatchScroll((it.rawX - downX).toInt(), (it.rawY - downY).toInt());
+                                    preX = it.rawX
+                                    preY = it.rawY
+                                    handleGesture = 2
+                                } else {
+                                    handleGesture = -1
+                                }
                             }
+                        } else {
+                            //为判断出用户意图，不用处理
                         }
-                    }
-                    if (handleGesture == 1) {
-                        gestureHandler?.onNewPosReceive(it.y)
+                    } else if (handleGesture == 1) {
+                        if (enableVolumeAndBrightnessController) {
+                            gestureHandler?.onNewPosReceive(it.rawY)
+                        } else {
+
+                        }
+                    } else if (handleGesture == 2) {// handleGesture == -1 已经判断不用自己处理，将所有滑动都分发出去
+                        dispatchScroll((it.rawX - preX).toInt(), (it.rawY - preY).toInt());
+                        preX = it.rawX
+                        preY = it.rawY
+                    } else {
+
                     }
                 }
                 MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
                     if (isSingleTap) {
-                        LogUtils.e(msg = "${ViewConfiguration.getTapTimeout()}")
                         if ((System.currentTimeMillis() - downTime) <= ViewConfiguration.getTapTimeout()) {
                             if (isControllerVisible) {
                                 playerView.hideController()
@@ -277,6 +304,9 @@ class CustomVideoView : RelativeLayout, IUICreator {
                                 playerView.showController()
                             }
                         }
+                    }
+                    if (handleGesture == 2) {
+                        nestedScrollingChildHelper.stopNestedScroll()
                     }
                     downX = 0f
                     downY = 0f
@@ -288,6 +318,54 @@ class CustomVideoView : RelativeLayout, IUICreator {
             }
         }
         return true
+    }
+
+    private fun dispatchScroll(dx: Int, dy: Int) {
+        val consumed = IntArray(2)
+        LogUtils.e(msg = "dispatchScroll dx = $dx,dy = $dy")
+        nestedScrollingChildHelper.dispatchNestedPreScroll(dx, dy, consumed, null)
+        nestedScrollingChildHelper.dispatchNestedScroll(consumed[0], consumed[1], dx - consumed[0], dy - consumed[1], null)
+    }
+
+    //--------------------------- 作为子视图拦截触摸事件后向父视图分发嵌套滑动 -----------------------
+
+    private val nestedScrollingChildHelper = NestedScrollingChildHelper(this)
+
+    override fun setNestedScrollingEnabled(enabled: Boolean) {
+        super.setNestedScrollingEnabled(enabled)
+        nestedScrollingChildHelper.isNestedScrollingEnabled = enabled
+    }
+
+    override fun isNestedScrollingEnabled(): Boolean {
+        return nestedScrollingChildHelper.isNestedScrollingEnabled
+    }
+
+    override fun startNestedScroll(axes: Int): Boolean {
+        return nestedScrollingChildHelper.startNestedScroll(axes)
+    }
+
+    override fun stopNestedScroll() {
+        nestedScrollingChildHelper.stopNestedScroll()
+    }
+
+    override fun hasNestedScrollingParent(): Boolean {
+        return nestedScrollingChildHelper.hasNestedScrollingParent()
+    }
+
+    override fun dispatchNestedPreScroll(dx: Int, dy: Int, consumed: IntArray?, offsetInWindow: IntArray?): Boolean {
+        return nestedScrollingChildHelper.dispatchNestedPreScroll(dx, dy, consumed, offsetInWindow)
+    }
+
+    override fun dispatchNestedScroll(dxConsumed: Int, dyConsumed: Int, dxUnconsumed: Int, dyUnconsumed: Int, offsetInWindow: IntArray?): Boolean {
+        return nestedScrollingChildHelper.dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, offsetInWindow)
+    }
+
+    override fun dispatchNestedPreFling(velocityX: Float, velocityY: Float): Boolean {
+        return nestedScrollingChildHelper.dispatchNestedPreFling(velocityX, velocityY)
+    }
+
+    override fun dispatchNestedFling(velocityX: Float, velocityY: Float, consumed: Boolean): Boolean {
+        return nestedScrollingChildHelper.dispatchNestedFling(velocityX, velocityY, consumed)
     }
 
     //------------------------------------------ inner class ---------------------------------------

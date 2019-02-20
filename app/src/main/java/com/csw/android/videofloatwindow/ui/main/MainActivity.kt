@@ -10,7 +10,8 @@ import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.entities.PlaySheet
 import com.csw.android.videofloatwindow.services.video.VideoService
 import com.csw.android.videofloatwindow.ui.base.BaseActivity
-import com.csw.android.videofloatwindow.ui.list.LocalVideosActivity
+import com.csw.android.videofloatwindow.ui.base.CommonActivity
+import com.csw.android.videofloatwindow.ui.list.LocalVideosFragment
 import com.csw.android.videofloatwindow.ui.list.PlaySheetVideosActivity
 import com.csw.android.videofloatwindow.util.DBUtils
 import com.csw.android.videofloatwindow.view.SpaceLineItemDecoration
@@ -54,7 +55,8 @@ class MainActivity : BaseActivity() {
             val playSheet = playSheetAdapter.getItem(position)
             playSheet?.let {
                 if (it.id == LOCAL_VIDEO_PLAY_SHEET_ID) {
-                    startActivity(Intent(this@MainActivity, LocalVideosActivity::class.java))
+                    CommonActivity.openActivity(this@MainActivity, LocalVideosFragment::class.java, null)
+//                    startActivity(Intent(this@MainActivity, LocalVideosActivity::class.java))
                 } else {
                     PlaySheetVideosActivity.openActivity(this@MainActivity, playSheet.id)
                 }

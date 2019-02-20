@@ -38,6 +38,7 @@
                     android:scheme="content" />
             </intent-filter>
         </activity>
+        <activity android:name=".ui.base.CommonActivity" />
 
         <service
             android:name=".services.video.VideoService"

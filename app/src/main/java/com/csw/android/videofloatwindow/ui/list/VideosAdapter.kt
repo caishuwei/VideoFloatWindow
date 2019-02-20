@@ -15,9 +15,11 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 
-class VideosAdapter : BaseQuickAdapter<VideoInfo, BaseViewHolder> {
+open class VideosAdapter : BaseQuickAdapter<VideoInfo, BaseViewHolder> {
 
-    constructor() : super(R.layout.item_video)
+    constructor() : this(R.layout.item_video)
+    constructor(layoutResId: Int) : super(layoutResId)
+
 
     override fun convert(helper: BaseViewHolder?, item: VideoInfo?) {
         Utils.runIfNotNull(helper, item) { h, i ->
@@ -27,7 +29,7 @@ class VideosAdapter : BaseQuickAdapter<VideoInfo, BaseViewHolder> {
         }
     }
 
-    private fun loadVideoPreviewImage(view: WHRatioImageView?, videoInfo: VideoInfo) {
+    fun loadVideoPreviewImage(view: WHRatioImageView?, videoInfo: VideoInfo) {
         view?.let { image ->
             image.whRatio = videoInfo.whRatio
             image.setImageDrawable(null)//置空图片

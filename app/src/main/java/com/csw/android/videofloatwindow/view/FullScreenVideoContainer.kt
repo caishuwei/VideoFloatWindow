@@ -46,6 +46,7 @@ class FullScreenVideoContainer : VideoContainer {
                                 null
                             }
                     )
+                    .enableVolumeAndBrightnessController(true)
         }
 
     }

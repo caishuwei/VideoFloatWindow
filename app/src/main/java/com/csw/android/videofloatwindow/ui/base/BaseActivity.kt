@@ -81,7 +81,7 @@ abstract class BaseActivity : AppCompatActivity(), IUICreator {
      */
     fun addLifecycleTask(task: Disposable) {
         if (!task.isDisposed) {
-            lifecycleTasks[task] = null
+            lifecycleTasks[task] = task
         }
     }
 

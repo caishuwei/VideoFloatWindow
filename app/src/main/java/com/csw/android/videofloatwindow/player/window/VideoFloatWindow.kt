@@ -4,18 +4,24 @@ import android.content.Context
 import android.graphics.PixelFormat
 import android.os.Build
 import android.provider.Settings
+import android.support.v4.view.NestedScrollingParent
+import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
 import android.view.*
 import android.widget.FrameLayout
 import com.csw.android.videofloatwindow.R
+import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.base.AreaUtils
+import com.csw.android.videofloatwindow.util.LogUtils
 import com.csw.android.videofloatwindow.util.ScreenInfo
 
 /**
  * 视频悬浮窗口
+ * <br/>
+ * 嵌套滚动用于处理手指在视频上滑动时移动窗口位置
  */
-class VideoFloatWindow : FrameLayout {
+class VideoFloatWindow : FrameLayout, NestedScrollingParent {
     private val windowManager: WindowManager
     private val areaUtils: AreaUtils
 
@@ -70,35 +76,47 @@ class VideoFloatWindow : FrameLayout {
         return super.onInterceptTouchEvent(ev)
     }
 
-    private var startX = 0
-    private var startY = 0
-    private var downX = 0f
-    private var downY = 0f
-
-
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         event?.let {
             when (it.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    val params = this.layoutParams as WindowManager.LayoutParams
-                    startX = params.x
-                    startY = params.y
-                    downX = it.rawX
-                    downY = it.rawY
                 }
                 MotionEvent.ACTION_MOVE -> {
                     if (moveView.isInMoving()) {
-                        moveTo(startX + it.rawX - downX, startY + it.rawY - downY)
+                        updateWindowSizeByRB(it.rawX, it.rawY)
                     }
                 }
                 MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
                     if (moveView.isInMoving()) {
+                        updateWindowSizeByRB(it.rawX, it.rawY)
                         moveView.setInMoving(false)
                     }
                 }
             }
         }
         return super.onTouchEvent(event) or true
+    }
+
+    private fun updateWindowSizeByRB(r: Float, b: Float) {
+        val params = this.layoutParams as WindowManager.LayoutParams
+        if (params.width > 0 && params.height > 0) {
+            MyApplication.instance.playerHelper.getCurrent()?.let {
+                val ratioWH = it.whRatio
+                val areaFillW = (r - params.x) * (r - params.x) / ratioWH
+                val areaFillH = (b - params.y) * (b - params.y) * ratioWH
+                if (areaFillW > areaFillH) {
+                    params.width = ((b - params.y) * ratioWH).toInt()
+                    params.height = (b - params.y).toInt()
+                } else {
+                    params.width = (r - params.x).toInt()
+                    params.height = ((r - params.x) / ratioWH).toInt()
+                }
+                areaUtils.suggestArea = params.width * params.height
+                anchorPosX = params.x + params.width / 2
+                anchorPosY = params.y + params.height / 2
+                updateWindowPosition(anchorPosX, anchorPosY)
+            }
+        }
     }
 
     fun hide() {
@@ -135,22 +153,9 @@ class VideoFloatWindow : FrameLayout {
         }
     }
 
-    fun moveBy(x: Float, y: Float) {
-        val params = this.layoutParams as WindowManager.LayoutParams
-        params.x = (params.x + x).toInt()
-        params.y = (params.y + y).toInt()
-        windowManager.updateViewLayout(this, params)
-    }
 
     fun setVideoInfo(videoInfo: VideoInfo) {
         videoContainer.setVideoInfo(videoInfo).bindPlayer().play()
-    }
-
-    fun moveTo(x: Float, y: Float) {
-        val params = this.layoutParams as WindowManager.LayoutParams
-        params.x = x.toInt()
-        params.y = y.toInt()
-        windowManager.updateViewLayout(this, params)
     }
 
     fun updateWindowWH(it: VideoInfo) {
@@ -159,23 +164,72 @@ class VideoFloatWindow : FrameLayout {
             videoContainer.layoutParams.height = h
             videoContainer.layoutParams = videoContainer.layoutParams
 
-            val params = this.layoutParams as WindowManager.LayoutParams
-            params.width = w
-            params.height = h
-            if (isShowing()) {
-                windowManager.updateViewLayout(this, params)
-            }
+            this.layoutParams.width = w
+            this.layoutParams.height = h
+            updateWindowPosition(anchorPosX, anchorPosY)
         }
     }
 
-    interface FloatWindowController {
 
-        fun enterEditMode()
+    private var anchorPosX = 0
+    private var anchorPosY = 0
+    private fun updateWindowPosition(x: Int, y: Int) {
+        anchorPosX = Math.min(Math.max(x, 0), ScreenInfo.WIDTH)
+        anchorPosY = Math.min(Math.max(y, 0), ScreenInfo.HEIGHT)
+        val params = this.layoutParams as WindowManager.LayoutParams
+        params.x = anchorPosX - params.width / 2
+        params.y = anchorPosY - params.height / 2
+        if (isShowing()) {
+            windowManager.updateViewLayout(this, params)
+        }
+    }
 
-        fun moveVideoView(x: Float, y: Float)
+    //----------------------------------- 处理嵌套滚动的情况 -----------------------------------------
 
-        fun exitEditMode()
+    override fun getNestedScrollAxes(): Int {
+        return ViewCompat.SCROLL_AXIS_VERTICAL
+    }
 
+    override fun onStartNestedScroll(child: View, target: View, nestedScrollAxes: Int): Boolean {
+        //不管哪个方向的嵌套滑动，我们都要
+        LogUtils.e("onStartNestedScroll", "nestedScrollAxes = ${nestedScrollAxes}")
+        return true
+    }
+
+    override fun onNestedScrollAccepted(child: View, target: View, axes: Int) {
+        super.onNestedScrollAccepted(child, target, axes)
+        //绑定滚动的轴
+        LogUtils.e("onNestedScrollAccepted", "axes = ${axes}")
+    }
+
+    override fun onStopNestedScroll(child: View) {
+        super.onStopNestedScroll(child)
+
+    }
+
+    /**
+     * 优先于子视图先消耗滚动量，这里不需要，父方法继续向上分发
+     */
+    override fun onNestedPreScroll(target: View, dx: Int, dy: Int, consumed: IntArray) {
+        super.onNestedPreScroll(target, dx, dy, consumed)
+    }
+
+    /**
+     * 执行滚动
+     */
+    override fun onNestedScroll(target: View, dxConsumed: Int, dyConsumed: Int, dxUnconsumed: Int, dyUnconsumed: Int) {
+        //将剩下的滚动量消耗掉
+        LogUtils.e("onNestedScroll", "dxUnconsumed = ${dxUnconsumed},dyUnconsumed = ${dyUnconsumed}")
+        updateWindowPosition(anchorPosX + dxUnconsumed, anchorPosY + dyUnconsumed)
+        super.onNestedScroll(target, dxConsumed + dxUnconsumed, dyConsumed + dyUnconsumed, 0, 0)
+    }
+
+    override fun onNestedPreFling(target: View, velocityX: Float, velocityY: Float): Boolean {
+        return super.onNestedPreFling(target, velocityX, velocityY)
+    }
+
+    override fun onNestedFling(target: View, velocityX: Float, velocityY: Float, consumed: Boolean): Boolean {
+        return super.onNestedFling(target, velocityX, velocityY, consumed)
     }
 
 }
