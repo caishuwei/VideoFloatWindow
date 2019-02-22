@@ -124,14 +124,12 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
     }
 
     fun show() {
-        if (parent == null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (Settings.canDrawOverlays(context)) {
-                    addToWindow()
-                }
-            } else {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (Settings.canDrawOverlays(context)) {
                 addToWindow()
             }
+        } else {
+            addToWindow()
         }
     }
 
@@ -141,21 +139,22 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
     }
 
     private fun addToWindow() {
-        removeFromWindow()
-        windowManager.addView(this, layoutParams)
-    }
-
-    private fun removeFromWindow() {
-        val p = parent
-        p?.let {
-            windowManager.removeView(this)
-            videoContainer.unBindPlayer()
+        if (parent == null) {
+            windowManager.addView(this, layoutParams)
+            MyApplication.instance.playerHelper.dispatchFloatWindowVisibleChanged(true)
         }
     }
 
+    private fun removeFromWindow() {
+        if (parent != null) {
+            windowManager.removeView(this)
+            videoContainer.unBindPlayer()
+            MyApplication.instance.playerHelper.dispatchFloatWindowVisibleChanged(false)
+        }
+    }
 
     fun setVideoInfo(videoInfo: VideoInfo) {
-        videoContainer.setVideoInfo(videoInfo).bindPlayer().play()
+        videoContainer.setVideoInfo(videoInfo).play().bindPlayer()
     }
 
     fun updateWindowWH(it: VideoInfo) {

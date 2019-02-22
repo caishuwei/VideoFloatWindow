@@ -2,6 +2,9 @@ package com.csw.android.videofloatwindow.player
 
 import android.app.Application
 import android.net.Uri
+import android.os.Debug
+import android.os.Environment
+import android.os.Environment.DIRECTORY_DOWNLOADS
 import android.view.View
 import android.view.ViewGroup
 import com.csw.android.videofloatwindow.R
@@ -12,6 +15,7 @@ import com.csw.android.videofloatwindow.player.base.VideoContainer
 import com.csw.android.videofloatwindow.player.video.CustomVideoView
 import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
+import com.csw.android.videofloatwindow.util.LogUtils
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.source.ExtractorMediaSource
 import com.google.android.exoplayer2.source.TrackGroupArray
@@ -20,6 +24,7 @@ import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import java.util.*
+import kotlin.collections.HashMap
 
 class PlayerHelper(context: Application) {
     private val none = VideoInfo()
@@ -31,9 +36,26 @@ class PlayerHelper(context: Application) {
 
     private var currVideoInfo: VideoInfo = none
 
-    private var videoFloatWindow: VideoFloatWindow? = null
+    private val videoFloatWindow: VideoFloatWindow = VideoFloatWindow(MyApplication.instance)
 
+    private var maxIndex = 0
+    private var currIndex = Int.MIN_VALUE
+    private var videoPos = HashMap<String, Int>()
     var playList: ArrayList<VideoInfo>? = null
+        set(value) {
+            field = value
+            videoPos.clear()
+            if (value != null) {
+                maxIndex = value.size - 1
+                for ((i, vi) in value.withIndex()) {
+                    videoPos[vi.filePath] = i
+                }
+                updateCurrIndex()
+            } else {
+                maxIndex = -1
+                currIndex = Int.MIN_VALUE
+            }
+        }
 
     private val componentListener: ComponentListener
 
@@ -61,7 +83,12 @@ class PlayerHelper(context: Application) {
         val currVideoParent = view.parent
         if (currVideoParent !== container) {
             if (currVideoParent is ViewGroup) {
-                currVideoParent.removeView(view)
+                val tag = currVideoParent.tag
+                if (tag is VideoContainer) {
+                    tag.unBindPlayer()
+                } else {
+                    currVideoParent.removeView(view)
+                }
             }
             container.addView(
                     view,
@@ -80,8 +107,12 @@ class PlayerHelper(context: Application) {
      */
     fun unBindPlayer(container: ViewGroup) {
         if (view.parent === container) {
-            container.removeView(view)
+//            Debug.startMethodTracing(Environment.getExternalStoragePublicDirectory(DIRECTORY_DOWNLOADS).absolutePath + "/shixintrace.trace")
+            val start = System.currentTimeMillis()
             resetBind()
+            container.removeView(view)
+            LogUtils.e(msg = "bindPlayerTime->${System.currentTimeMillis() - start}")
+//            Debug.stopMethodTracing()
         }
     }
 
@@ -138,14 +169,14 @@ class PlayerHelper(context: Application) {
 
     private fun tryPlay(newVideoInfo: VideoInfo?): Boolean {
         newVideoInfo?.let { videoInfo ->
-            var isVideochanged = false
+            var isVideoChanged = false
             if (!isCurrVideo(newVideoInfo)) {
                 //更新播放源
                 val mediaSource = ExtractorMediaSource.Factory(mediaDataSourceFactory)
                         .createMediaSource(Uri.parse(videoInfo.filePath))
                 player.prepare(mediaSource, true, true)
                 currVideoInfo = videoInfo
-                isVideochanged = true
+                isVideoChanged = true
             } else {
                 //仍旧是当前的视频，如果当前视频已经播放完毕，那么我们跳到视频开头，重新播放
                 when (player.playbackState) {
@@ -161,19 +192,9 @@ class PlayerHelper(context: Application) {
             }
             player.playWhenReady = true
 
-            //VideoContainer 更新videoInfo 并且重新绑定Player
-            view.parent?.let { viewParent ->
-                if (viewParent is View) {
-                    viewParent.tag?.let {
-                        if (it is VideoContainer) {
-                            it.setVideoInfo(videoInfo).bindPlayer()
-                        }
-                    }
-                }
-            }
-
             //通知播放的视频已经发生改变
-            if (isVideochanged) {
+            if (isVideoChanged) {
+                updateCurrIndex()
                 val keys = playerListenerMap.keys
                 if (!keys.isEmpty()) {
                     for (key in keys) {
@@ -186,6 +207,14 @@ class PlayerHelper(context: Application) {
         return false
     }
 
+    private fun updateCurrIndex() {
+        val ci = videoPos[currVideoInfo.filePath]
+        currIndex = if (ci == null) {
+            Int.MIN_VALUE
+        } else {
+            ci
+        }
+    }
 
     fun tryPlayInFullScreen(): Boolean {
         if (currVideoInfo != none) {
@@ -209,10 +238,9 @@ class PlayerHelper(context: Application) {
      * @return true 悬浮窗显示并播放视频 else 悬浮窗播放失败
      */
     fun playInFloatWindow(videoInfo: VideoInfo = currVideoInfo): Boolean {
-        val currWindow = videoFloatWindow
-        return if (currWindow != null) {
-            showFloatWindow()
-            currWindow.setVideoInfo(videoInfo)
+        videoFloatWindow.show()
+        return if (videoFloatWindow.isShowing()) {
+            videoFloatWindow.setVideoInfo(videoInfo)
             true
         } else {
             false
@@ -220,27 +248,10 @@ class PlayerHelper(context: Application) {
     }
 
     /**
-     * 显示悬浮窗
-     */
-    private fun showFloatWindow() {
-        videoFloatWindow?.let {
-            if (!it.isShowing()) {
-                it.show()
-                componentListener.onFloatWindowVisibilityChanged(true)
-            }
-        }
-    }
-
-    /**
      * 隐藏悬浮窗
      */
     fun hideFloatWindow() {
-        videoFloatWindow?.let {
-            if (it.isShowing()) {
-                it.hide()
-                componentListener.onFloatWindowVisibilityChanged(false)
-            }
-        }
+        videoFloatWindow.hide()
     }
 
     /**
@@ -255,12 +266,8 @@ class PlayerHelper(context: Application) {
      */
     fun getPrevious(): VideoInfo? {
         playList?.let {
-            for ((index, vi) in it.withIndex()) {
-                if (isCurrVideo(vi)) {
-                    if (index - 1 >= 0) {
-                        return it[index - 1]
-                    }
-                }
+            if (currIndex - 1 >= 0 && currIndex - 1 <= maxIndex) {
+                return it[currIndex - 1]
             }
         }
         return null
@@ -278,12 +285,8 @@ class PlayerHelper(context: Application) {
      */
     fun getNext(): VideoInfo? {
         playList?.let {
-            for ((index, vi) in it.withIndex()) {
-                if (isCurrVideo(vi)) {
-                    if (index + 1 < it.size) {
-                        return it[index + 1]
-                    }
-                }
+            if (currIndex + 1 >= 0 && currIndex + 1 <= maxIndex) {
+                return it[currIndex + 1]
             }
         }
         return null
@@ -299,18 +302,6 @@ class PlayerHelper(context: Application) {
         return null
     }
 
-    /**
-     * 设置悬浮窗
-     */
-    fun setVideoFloatWindow(value: VideoFloatWindow?) {
-        val old = videoFloatWindow
-        if (old === value) {
-            return
-        }
-        old?.hide()
-        videoFloatWindow = value
-    }
-
     private fun isCurrVideo(videoInfo: VideoInfo): Boolean {
         return videoInfo !== none && videoInfo.filePath == currVideoInfo.filePath
     }
@@ -324,7 +315,8 @@ class PlayerHelper(context: Application) {
                 .setNextClickListener(null)
                 .setFullScreenClickListener(null)
                 .setFloatWindowClickListener(null)
-                .enableVolumeAndBrightnessController(false)
+                .setVolumeAndBrightnessControllerEnable(false)
+                .setOnVideoPlayListener(null)
     }
 
     fun addPlayerListener(listener: PlayerListener) {
@@ -335,8 +327,12 @@ class PlayerHelper(context: Application) {
         playerListenerMap.remove(listener)
     }
 
+    fun dispatchFloatWindowVisibleChanged(visible: Boolean) {
+        componentListener.onFloatWindowVisibilityChanged(visible)
+    }
 
     inner class PlayerBindHelper {
+        var onVideoPlayListener: OnVideoPlayListener? = null
 
         /**
          * 设置返回按钮事件
@@ -388,8 +384,16 @@ class PlayerHelper(context: Application) {
             return setClickListener(view.vFloatWindow, listener)
         }
 
-        fun enableVolumeAndBrightnessController(enable: Boolean): PlayerBindHelper {
+        /**
+         * 启用音量与亮度控制
+         */
+        fun setVolumeAndBrightnessControllerEnable(enable: Boolean): PlayerBindHelper {
             view.enableVolumeAndBrightnessController = enable
+            return this
+        }
+
+        fun setOnVideoPlayListener(listener: OnVideoPlayListener?): PlayerBindHelper {
+            onVideoPlayListener = listener
             return this
         }
 
@@ -398,7 +402,17 @@ class PlayerHelper(context: Application) {
             view.visibility = if (listener == null) View.GONE else View.VISIBLE
             return this
         }
+    }
 
+    /**
+     * 视频播放监听
+     */
+    interface OnVideoPlayListener {
+        /**
+         * 视频播放结束
+         * @return true 表示自己处理播放结束后的事件，false 默认处理（尝试播放下一个）
+         */
+        fun onVideoPlayCompleted(videoInfo: VideoInfo): Boolean
     }
 
     private inner class ComponentListener : PlayerListener() {
@@ -457,9 +471,6 @@ class PlayerHelper(context: Application) {
                     key?.onPlayerError(error)
                 }
             }
-
-            //播放遇到错误了，尝试播放下一个
-            tryPlayNext()
         }
 
         override fun onLoadingChanged(isLoading: Boolean) {
@@ -526,7 +537,11 @@ class PlayerHelper(context: Application) {
                 }
                 Player.STATE_ENDED -> {
                     view.keepScreenOn = false
-                    tryPlayNext()
+                    val listener = playerBindHelper.onVideoPlayListener
+                    if (listener == null
+                            || !listener.onVideoPlayCompleted(currVideoInfo)) {
+                        tryPlayNext()
+                    }
                 }
             }
         }

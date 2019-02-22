@@ -11,7 +11,7 @@ import com.csw.android.videofloatwindow.IVideoServiceInterface
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.base.PlayerListener
-import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
+import com.csw.android.videofloatwindow.util.LogUtils
 import com.google.android.exoplayer2.Player
 
 class VideoService : Service() {
@@ -27,8 +27,6 @@ class VideoService : Service() {
         const val ACTION_FLOAT_WINDOW: String = "float_window"
     }
 
-    lateinit var videoFloatWindow: VideoFloatWindow
-        private set
     private val stub = object : IVideoServiceInterface.Stub() {
         override fun playInFloatWindow() {
         }
@@ -95,8 +93,6 @@ class VideoService : Service() {
         playControlNotification = PlayControlNotification(this)
         startForeground(PlayControlNotification.NOTIFICATION_ID, playControlNotification.mNotification)
 
-        videoFloatWindow = VideoFloatWindow(this)
-        MyApplication.instance.playerHelper.setVideoFloatWindow(videoFloatWindow)
         MyApplication.instance.playerHelper.addPlayerListener(playerListener)
 
         val intentFilter = IntentFilter()
@@ -114,9 +110,7 @@ class VideoService : Service() {
     }
 
     override fun onDestroy() {
-        videoFloatWindow.hide()
         unregisterReceiver(playControlReceiver)
-        MyApplication.instance.playerHelper.setVideoFloatWindow(null)
         MyApplication.instance.playerHelper.removePlayerListener(playerListener)
         super.onDestroy()
     }

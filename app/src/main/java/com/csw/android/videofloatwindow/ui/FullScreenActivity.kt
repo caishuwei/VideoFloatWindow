@@ -49,9 +49,9 @@ class FullScreenActivity : BaseActivity() {
             val videoInfo = intent.getSerializableExtra("VideoInfo")
             val uri = intent.data
             if (videoInfo != null && videoInfo is VideoInfo) {
-                videoContainer.setVideoInfo(videoInfo).bindPlayer().play()
+                videoContainer.setVideoInfo(videoInfo).play().bindPlayer()
             } else if (uri != null && "content" == uri.scheme) {
-                videoContainer.setVideoInfo(Utils.getVideoInfo(contentResolver, uri)).bindPlayer().play()
+                videoContainer.setVideoInfo(Utils.getVideoInfo(contentResolver, uri)).play().bindPlayer()
             }
         } else {
             videoContainer.setVideoInfo(null)

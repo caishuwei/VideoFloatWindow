@@ -48,6 +48,12 @@ class FloatWindowVideoContainer : VideoContainer {
         }
     }
 
+    override fun unBindPlayer(): VideoContainer {
+        super.unBindPlayer()
+        videoFloatWindow?.hide()
+        return this
+    }
+
     private fun playNext() {
         val nextVideo = MyApplication.instance.playerHelper.getNext()
         if (nextVideo != null) {
@@ -59,12 +65,6 @@ class FloatWindowVideoContainer : VideoContainer {
         val preVideo = MyApplication.instance.playerHelper.getPrevious()
         if (preVideo != null) {
             MyApplication.instance.playerHelper.playInFloatWindow(preVideo)
-        }
-    }
-
-    private fun playInFullScreen() {
-        videoInfo?.let {
-            FullScreenActivity.openActivity(context, it)
         }
     }
 

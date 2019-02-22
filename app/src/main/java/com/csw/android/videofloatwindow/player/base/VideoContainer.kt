@@ -2,10 +2,13 @@ package com.csw.android.videofloatwindow.player.base
 
 import android.content.Context
 import android.content.pm.ActivityInfo
+import android.support.design.widget.Snackbar
+import android.support.v4.app.FragmentActivity
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
+import com.csw.android.videofloatwindow.permission.SystemAlertWindowPermission
 import com.csw.android.videofloatwindow.player.PlayerHelper
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
 import com.csw.android.videofloatwindow.util.Utils
@@ -37,6 +40,9 @@ open class VideoContainer : FrameLayout {
         private set
 
 
+    /**
+     * 绑定播放视图
+     */
     open fun bindPlayer(): VideoContainer {
         MyApplication.instance.playerHelper.bindPlayer(videoContainer) {
             onBindPlayer(it)
@@ -44,14 +50,23 @@ open class VideoContainer : FrameLayout {
         return this
     }
 
+    /**
+     * 解除播放视图绑定
+     */
     open fun unBindPlayer(): VideoContainer {
         MyApplication.instance.playerHelper.unBindPlayer(videoContainer)
         return this
     }
 
+    /**
+     * 绑定播放视图后的操作，如设播放控制器的各种按钮监听
+     */
     open fun onBindPlayer(playerBindHelper: PlayerHelper.PlayerBindHelper) {
     }
 
+    /**
+     * 播放当前的视频
+     */
     open fun play(): VideoContainer {
         videoInfo?.let {
             MyApplication.instance.playerHelper.play(it)
@@ -59,6 +74,9 @@ open class VideoContainer : FrameLayout {
         return this
     }
 
+    /**
+     * 停止视频播放
+     */
     open fun stop(): VideoContainer {
         videoInfo?.let {
             MyApplication.instance.playerHelper.stop(it)
@@ -72,11 +90,13 @@ open class VideoContainer : FrameLayout {
         }
     }
 
-
+    /**
+     * 设置播放信息
+     */
     open fun setVideoInfo(videoInfo: VideoInfo?): VideoContainer {
-        if (this.videoInfo != videoInfo) {
-            unBindPlayer();
-        }
+//        if (this.videoInfo != videoInfo) {
+//            unBindPlayer();
+//        }
         this.videoInfo = videoInfo
         tryRotateScreen()
         return this
@@ -92,6 +112,37 @@ open class VideoContainer : FrameLayout {
                 else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
             }
         }
+    }
+
+    fun playInFullScreen() {
+        videoInfo?.let {
+            FullScreenActivity.openActivity(context, it)
+        }
+    }
+
+    fun tryPlayInWindow() {
+        val activity = context
+        if (activity is FragmentActivity) {
+            SystemAlertWindowPermission.request(activity, object : SystemAlertWindowPermission.OnRequestResultListener {
+                override fun onResult(isGranted: Boolean) {
+                    if (isGranted) {
+                        playInWindow()
+                    } else {
+                        Snackbar.make(this@VideoContainer, "没有悬浮窗权限", Snackbar.LENGTH_SHORT).show()
+                    }
+                }
+            })
+        }
+    }
+
+    open fun playInWindow() {
+        videoInfo?.let {
+            MyApplication.instance.playerHelper.playInFloatWindow(it)
+        }
+    }
+
+    fun isBindPlayer(): Boolean {
+        return videoContainer.childCount > 0
     }
 
 }

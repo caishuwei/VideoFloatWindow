@@ -1,17 +1,24 @@
 package com.csw.android.videofloatwindow.ui.list
 
 import android.Manifest
+import android.graphics.Rect
 import android.os.Bundle
 import android.provider.MediaStore
 import android.support.design.widget.Snackbar
 import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
 import android.view.View
+import com.chad.library.adapter.base.BaseViewHolder
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.dagger.localvideos.LocalVideosContract
 import com.csw.android.videofloatwindow.entities.VideoInfo
+import com.csw.android.videofloatwindow.player.PlayerHelper
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
 import com.csw.android.videofloatwindow.ui.base.MvpFragment
+import com.csw.android.videofloatwindow.util.LogUtils
+import com.csw.android.videofloatwindow.util.Utils
+import com.csw.android.videofloatwindow.view.ListVideoContainer
 import com.tbruyelle.rxpermissions2.RxPermissions
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
@@ -20,12 +27,8 @@ import javax.inject.Inject
 
 class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
 
-    companion object {
-        fun newInstance(): LocalVideosFragment {
-            return LocalVideosFragment()
-        }
-    }
-
+    private var linearLayoutManager: LinearLayoutManager? = null
+    private var videosAdapter: LargeVideosAdapter? = null
     @Inject
     lateinit var presenter: LocalVideosContract.Presenter
 
@@ -41,15 +44,16 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
         return R.layout.activity_local_videos
     }
 
+
     override fun initView(rootView: View, savedInstanceState: Bundle?) {
         super.initView(rootView, savedInstanceState)
-        recyclerView.layoutManager = LinearLayoutManager(
+        linearLayoutManager = LinearLayoutManager(
                 rootView.context,
                 LinearLayoutManager.VERTICAL,
                 false)
+        recyclerView.layoutManager = linearLayoutManager
     }
 
-    private lateinit var videosAdapter: VideosAdapter
 
     override fun initAdapter() {
         super.initAdapter()
@@ -59,23 +63,153 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
 
     override fun initListener() {
         super.initListener()
-        videosAdapter.setOnItemClickListener { _, view, position ->
-            val videoInfo = videosAdapter.getItem(position)
-            videoInfo?.let {
-                FullScreenActivity.openActivity(view.context, it)
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            private var needFindPlayVideo = false
+
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                if (needFindPlayVideo) {
+                    playVisibleVideo()
+                }
+            }
+
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+                when (newState) {
+                    RecyclerView.SCROLL_STATE_IDLE -> {
+                        playVisibleVideo()
+                    }
+                    RecyclerView.SCROLL_STATE_DRAGGING -> {
+                        needFindPlayVideo = true
+                    }
+                    RecyclerView.SCROLL_STATE_SETTLING -> {
+                        needFindPlayVideo = false
+                    }
+                }
+            }
+        })
+        videosAdapter?.let {
+            it.setOnItemClickListener { _, view, position ->
+                val videoInfo = it.getItem(position)
+                videoInfo?.let {
+                    FullScreenActivity.openActivity(view.context, it)
+                }
+            }
+            it.onVideoPlayListener = object : PlayerHelper.OnVideoPlayListener {
+                override fun onVideoPlayCompleted(videoInfo: VideoInfo): Boolean {
+                    //遍历查找下一个视频
+                    val data = it.data
+                    var currIndex = -1
+                    for ((index, vi) in data.withIndex()) {
+                        if (vi.filePath == videoInfo.filePath) {
+                            currIndex = index
+                            break
+                        }
+                    }
+                    if (currIndex >= 0 && currIndex + 1 < data.size) {
+                        //滚动到下个视频item出现在屏幕上
+                        play(currIndex + 1)
+                    }
+                    return true
+                }
             }
         }
         smartRefreshLayout.isEnableRefresh = true
         smartRefreshLayout.isEnableLoadMore = false
         smartRefreshLayout.setOnRefreshListener {
-            videosAdapter.setNewData(null)
+            videosAdapter?.setNewData(null)
             requestLocalVideos()
+        }
+    }
+
+    private fun playVisibleVideo() {
+        val start = System.currentTimeMillis()
+        Utils.runIfNotNull(videosAdapter, linearLayoutManager) { arg1, arg2 ->
+            val fv = arg2.findFirstVisibleItemPosition()
+            val lv = arg2.findLastVisibleItemPosition()
+            if (fv >= 0) {
+                if (fv == lv) {
+                    //可见区域只有一个Item
+                    val view = arg2.findViewByPosition(fv)
+                    view?.let { itemView ->
+                        val vh = recyclerView.getChildViewHolder(itemView) as BaseViewHolder
+                        val listVideoContainer = vh.getView<ListVideoContainer>(R.id.mv_video_container)
+                        listVideoContainer.play().bindPlayer()
+                    }
+                } else {
+                    val view1 = arg2.findViewByPosition(fv)
+                    val view2 = arg2.findViewByPosition(fv + 1)
+                    Utils.runIfNotNull(view1, view2) { v1, v2 ->
+                        var intArray = IntArray(2)
+                        val listRect = Rect(0, 0, recyclerView.width, recyclerView.height)
+                        recyclerView.getLocationInWindow(intArray)
+                        listRect.offset(intArray[0], intArray[1])
+                        val videoRect = Rect()
+                        val vh1 = recyclerView.getChildViewHolder(v1) as BaseViewHolder
+                        val video1 = vh1.getView<ListVideoContainer>(R.id.mv_video_container)
+                        videoRect.set(0, 0, video1.width, video1.height)
+                        video1.getLocationInWindow(intArray)
+                        videoRect.offset(intArray[0], intArray[1])
+                        if (listRect.contains(videoRect)) {
+                            //第一个可见item视频完全可见
+                            video1.play().bindPlayer()
+                        } else {
+                            val vh2 = recyclerView.getChildViewHolder(v2) as BaseViewHolder
+                            val video2 = vh2.getView<ListVideoContainer>(R.id.mv_video_container)
+                            if (videoRect.bottom <= listRect.top) {
+                                //第一个可见item视频已经不可见
+                                video2.play().bindPlayer()
+                            } else {
+                                //第一个可见item视频部分可见
+                                //如果第二个item视频已经完全可见，则播放第二个视频，否则播放第一个
+                                videoRect.set(0, 0, video2.width, video2.height)
+                                video2.getLocationInWindow(intArray)
+                                videoRect.offset(intArray[0], intArray[1])
+                                if (videoRect.bottom < listRect.bottom) {
+                                    video2.play().bindPlayer()
+                                } else {
+                                    video1.play().bindPlayer()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        LogUtils.e(msg = "playVisibleVideo->${System.currentTimeMillis() - start}")
+    }
+
+    private fun play(i: Int) {
+        Utils.runIfNotNull(videosAdapter, linearLayoutManager) { arg1, arg2 ->
+            val fv = arg2.findFirstVisibleItemPosition()
+            val lv = arg2.findLastVisibleItemPosition()
+            if (i in fv..lv) {
+                val view = arg2.findViewByPosition(i)
+                view?.let { itemView ->
+                    val vh = recyclerView.getChildViewHolder(itemView) as BaseViewHolder
+                    val listVideoContainer = vh.getView<ListVideoContainer>(R.id.mv_video_container)
+                    listVideoContainer.play().bindPlayer()
+                }
+                arg2.scrollToPositionWithOffset(i, 0)
+            } else if (i in 0 until arg1.data.size) {
+                //当前视图不可见
+                arg2.scrollToPositionWithOffset(i, 0)
+                recyclerView.post {
+                    play(i)
+                }
+            }
         }
     }
 
     override fun initData() {
         super.initData()
         smartRefreshLayout.autoRefresh()
+    }
+
+    override fun onDestroyView() {
+        linearLayoutManager = null
+        videosAdapter = null
+        super.onDestroyView()
     }
 
 
@@ -98,7 +232,7 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
                             .subscribe(
                                     {
                                         smartRefreshLayout.finishRefresh()
-                                        videosAdapter.setNewData(it)
+                                        videosAdapter?.setNewData(it)
                                         MyApplication.instance.playerHelper.playList = it
                                     },
                                     {

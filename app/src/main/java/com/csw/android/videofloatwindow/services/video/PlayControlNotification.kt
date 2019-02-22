@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.support.v4.app.NotificationCompat
 import android.view.View
@@ -35,10 +37,15 @@ class PlayControlNotification {
     private lateinit var bigRemoteViews: RemoteViews
     private lateinit var normalRemoteViews: RemoteViews
 
+    private val updateNotificationTask: Runnable
+    private val mainHandler = Handler(Looper.getMainLooper())
+
     constructor(context: Context) {
         this.context = context
         mNotificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
+        updateNotificationTask = Runnable {
+            mNotificationManager.notify(NOTIFICATION_ID, mNotification)
+        }
         createChannel()
         createNotification()
     }
@@ -103,7 +110,8 @@ class PlayControlNotification {
     }
 
     private fun updateNotification() {
-        mNotificationManager.notify(NOTIFICATION_ID, mNotification)
+        mainHandler.removeCallbacks(updateNotificationTask)
+        mainHandler.postDelayed(updateNotificationTask, 100)
     }
 
     fun setFloatWindowButtonVisibility(i: Int) {

@@ -1,23 +1,28 @@
 package com.csw.android.videofloatwindow.view
 
-import android.app.Activity
 import android.content.Context
-import android.support.design.widget.Snackbar
 import android.util.AttributeSet
 import android.view.View.OnClickListener
-import com.csw.android.videofloatwindow.app.MyApplication
-import com.csw.android.videofloatwindow.permission.SystemAlertWindowPermission
 import com.csw.android.videofloatwindow.player.PlayerHelper
 import com.csw.android.videofloatwindow.player.base.VideoContainer
-import com.csw.android.videofloatwindow.ui.FullScreenActivity
+import com.csw.android.videofloatwindow.util.LogUtils
 
 class ListVideoContainer : VideoContainer {
 
     val whRatioImageView: WHRatioImageView
+    var onVideoPlayListener: PlayerHelper.OnVideoPlayListener? = null
+    val floatWindowClickListener = OnClickListener { _ ->
+        tryPlayInWindow()
+    }
+    val fullScreenClickListener = OnClickListener {
+        playInFullScreen()
+    }
 
     constructor(context: Context) : this(context, null)
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        isFocusable = true
+        isFocusableInTouchMode = true
         whRatioImageView = WHRatioImageView(context)
         whRatioImageView.setOnClickListener {
             bindPlayer()
@@ -33,35 +38,17 @@ class ListVideoContainer : VideoContainer {
         super.onBindPlayer(playerBindHelper)
         videoInfo?.let {
             playerBindHelper.setTitle(it.fileName)
-                    .setFloatWindowClickListener(OnClickListener { _ ->
-                        playInWindow()
-                    })
-        }
-
-    }
-
-    private fun finishActivity() {
-        val activity = context
-        if (activity is Activity) {
-            activity.finish()
+                    .setFloatWindowClickListener(floatWindowClickListener)
+                    .setFullScreenClickListener(fullScreenClickListener)
+                    .setOnVideoPlayListener(onVideoPlayListener)
         }
     }
+//
+//    override fun play(): VideoContainer {
+//        val start = System.currentTimeMillis()
+//        super.play()
+//        LogUtils.e(msg = "playTime->${System.currentTimeMillis() - start}")
+//        return this
+//    }
 
-    private fun playInWindow() {
-        val activity = context
-        if (activity is FullScreenActivity) {
-            SystemAlertWindowPermission.request(activity, object : SystemAlertWindowPermission.OnRequestResultListener {
-                override fun onResult(isGranted: Boolean) {
-                    if (isGranted) {
-                        videoInfo?.let {
-                            MyApplication.instance.playerHelper.playInFloatWindow(it)
-                            finishActivity()
-                        }
-                    } else {
-                        Snackbar.make(this@ListVideoContainer, "没有悬浮窗权限", Snackbar.LENGTH_SHORT).show()
-                    }
-                }
-            })
-        }
-    }
 }

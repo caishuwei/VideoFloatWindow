@@ -2,6 +2,7 @@ package com.csw.android.videofloatwindow.player.video
 
 import android.app.Activity
 import android.content.Context
+import android.graphics.Color
 import android.os.Bundle
 import android.support.v4.view.NestedScrollingChild
 import android.support.v4.view.NestedScrollingChildHelper
@@ -94,6 +95,9 @@ class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
     private lateinit var autoHintViewHolder: HintViewHolder
 
     override fun initView(rootView: View, savedInstanceState: Bundle?) {
+        setBackgroundColor(Color.BLACK)
+        //播放器视图中有些控件会古怪地获取焦点。。导致列表瞎滚动，这里禁用视图焦点获取
+        descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
         playerView = rootView.findViewById(R.id.player_view)
         vBack = playerView.findViewById(R.id.v_back)
         tvTitle = playerView.findViewById(R.id.tv_title)
@@ -181,6 +185,7 @@ class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
                     errorHintViewHolder.addToLayer(hintLayerController)
                     errorHintViewHolder.setHintInfo(R.drawable.player_error, "视频错误")
                 }
+                player.stop(true)
             }
 
             override fun onLoadingChanged(isLoading: Boolean) {

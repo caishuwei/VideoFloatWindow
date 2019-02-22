@@ -2,14 +2,11 @@ package com.csw.android.videofloatwindow.view
 
 import android.app.Activity
 import android.content.Context
-import android.support.design.widget.Snackbar
 import android.util.AttributeSet
 import android.view.View.OnClickListener
 import com.csw.android.videofloatwindow.app.MyApplication
-import com.csw.android.videofloatwindow.permission.SystemAlertWindowPermission
 import com.csw.android.videofloatwindow.player.PlayerHelper
 import com.csw.android.videofloatwindow.player.base.VideoContainer
-import com.csw.android.videofloatwindow.ui.FullScreenActivity
 
 class FullScreenVideoContainer : VideoContainer {
 
@@ -26,7 +23,7 @@ class FullScreenVideoContainer : VideoContainer {
                         unBindPlayer()
                     })
                     .setFloatWindowClickListener(OnClickListener { _ ->
-                        playInWindow()
+                        tryPlayInWindow()
                     })
                     .setPreviousClickListener(
                             if (MyApplication.instance.playerHelper.hasPrevious()) {
@@ -46,7 +43,7 @@ class FullScreenVideoContainer : VideoContainer {
                                 null
                             }
                     )
-                    .enableVolumeAndBrightnessController(true)
+                    .setVolumeAndBrightnessControllerEnable(true)
         }
 
     }
@@ -54,39 +51,26 @@ class FullScreenVideoContainer : VideoContainer {
     private fun playNext() {
         val nextVideo = MyApplication.instance.playerHelper.getNext()
         if (nextVideo != null) {
-            setVideoInfo(nextVideo).bindPlayer().play()
+            setVideoInfo(nextVideo).play().bindPlayer()
         }
     }
 
     private fun playPre() {
         val preVideo = MyApplication.instance.playerHelper.getPrevious()
         if (preVideo != null) {
-            setVideoInfo(preVideo).bindPlayer().play()
+            setVideoInfo(preVideo).play().bindPlayer()
         }
+    }
+
+    override fun playInWindow() {
+        super.playInWindow()
+        finishActivity()
     }
 
     private fun finishActivity() {
         val activity = context
         if (activity is Activity) {
             activity.finish()
-        }
-    }
-
-    private fun playInWindow() {
-        val activity = context
-        if (activity is FullScreenActivity) {
-            SystemAlertWindowPermission.request(activity, object : SystemAlertWindowPermission.OnRequestResultListener {
-                override fun onResult(isGranted: Boolean) {
-                    if (isGranted) {
-                        videoInfo?.let {
-                            MyApplication.instance.playerHelper.playInFloatWindow(it)
-                            finishActivity()
-                        }
-                    } else {
-                        Snackbar.make(this@FullScreenVideoContainer, "没有悬浮窗权限", Snackbar.LENGTH_SHORT).show()
-                    }
-                }
-            })
         }
     }
 }
