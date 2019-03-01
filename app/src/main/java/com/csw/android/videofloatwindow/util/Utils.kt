@@ -24,7 +24,7 @@ class Utils {
         /**
          * 判断两个可空变量都不为空之后调用run
          */
-        fun <T, K> runIfNotNull( arg1: T?, arg2: K?, run: (arg1: T, arg2: K) -> (Unit)) {
+        fun <T, K> runIfNotNull(arg1: T?, arg2: K?, run: (arg1: T, arg2: K) -> (Unit)) {
             if (arg1 != null && arg2 != null) {
                 run(arg1, arg2)
             }
@@ -72,6 +72,13 @@ class Utils {
                     View.MeasureSpec.makeMeasureSpec(wSize, View.MeasureSpec.EXACTLY),
                     View.MeasureSpec.makeMeasureSpec(hSize, View.MeasureSpec.EXACTLY)
             )
+        }
+
+        fun videoEquals(videoInfo1: VideoInfo?, videoInfo2: VideoInfo?): Boolean {
+            if (videoInfo1 != null && videoInfo2 != null) {
+                return videoInfo1.filePath.equals(videoInfo2.filePath)
+            }
+            return false
         }
     }
 

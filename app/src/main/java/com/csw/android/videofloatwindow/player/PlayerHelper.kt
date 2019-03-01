@@ -2,9 +2,6 @@ package com.csw.android.videofloatwindow.player
 
 import android.app.Application
 import android.net.Uri
-import android.os.Debug
-import android.os.Environment
-import android.os.Environment.DIRECTORY_DOWNLOADS
 import android.view.View
 import android.view.ViewGroup
 import com.csw.android.videofloatwindow.R
@@ -31,8 +28,6 @@ class PlayerHelper(context: Application) {
     private val view: CustomVideoView = CustomVideoView(MyApplication.instance)
     private val player: SimpleExoPlayer
     private val mediaDataSourceFactory: DefaultDataSourceFactory
-
-    private val playerBindHelper: PlayerBindHelper
 
     private var currVideoInfo: VideoInfo = none
 
@@ -67,7 +62,6 @@ class PlayerHelper(context: Application) {
         player = view.player
         componentListener = ComponentListener()
         player.addListener(componentListener)
-        playerBindHelper = PlayerBindHelper()
         val bandwidthMeter = DefaultBandwidthMeter()
         mediaDataSourceFactory = DefaultDataSourceFactory(
                 context,
@@ -98,7 +92,7 @@ class PlayerHelper(context: Application) {
                     )
             )
         }
-        resetBind()
+//        resetBind()
         executeBind(playerBindHelper)
     }
 
@@ -109,7 +103,7 @@ class PlayerHelper(context: Application) {
         if (view.parent === container) {
 //            Debug.startMethodTracing(Environment.getExternalStoragePublicDirectory(DIRECTORY_DOWNLOADS).absolutePath + "/shixintrace.trace")
             val start = System.currentTimeMillis()
-            resetBind()
+//            resetBind()
             container.removeView(view)
             LogUtils.e(msg = "bindPlayerTime->${System.currentTimeMillis() - start}")
 //            Debug.stopMethodTracing()
@@ -306,18 +300,6 @@ class PlayerHelper(context: Application) {
         return videoInfo !== none && videoInfo.filePath == currVideoInfo.filePath
     }
 
-    private fun resetBind() {
-        playerBindHelper.setBackClickListener(null)
-                .setBackClickListener(null)
-                .setTitle("")
-                .setCloseClickListener(null)
-                .setPreviousClickListener(null)
-                .setNextClickListener(null)
-                .setFullScreenClickListener(null)
-                .setFloatWindowClickListener(null)
-                .setVolumeAndBrightnessControllerEnable(false)
-                .setOnVideoPlayListener(null)
-    }
 
     fun addPlayerListener(listener: PlayerListener) {
         playerListenerMap[listener] = null
@@ -331,78 +313,7 @@ class PlayerHelper(context: Application) {
         componentListener.onFloatWindowVisibilityChanged(visible)
     }
 
-    inner class PlayerBindHelper {
-        var onVideoPlayListener: OnVideoPlayListener? = null
 
-        /**
-         * 设置返回按钮事件
-         */
-        fun setBackClickListener(listener: View.OnClickListener?): PlayerBindHelper {
-            return setClickListener(view.vBack, listener)
-        }
-
-        /**
-         * 设置标题
-         */
-        fun setTitle(titleStr: String): PlayerBindHelper {
-            view.tvTitle.text = titleStr
-            return this
-        }
-
-        /**
-         * 设置关闭按钮事件
-         */
-        fun setCloseClickListener(listener: View.OnClickListener?): PlayerBindHelper {
-            return setClickListener(view.vClose, listener)
-        }
-
-        /**
-         * 设置上一首事件
-         */
-        fun setPreviousClickListener(listener: View.OnClickListener?): PlayerBindHelper {
-            return setClickListener(view.vPrevious, listener)
-        }
-
-        /**
-         * 设置上一首事件
-         */
-        fun setNextClickListener(listener: View.OnClickListener?): PlayerBindHelper {
-            return setClickListener(view.vNext, listener)
-        }
-
-        /**
-         * 设置全屏按钮事件
-         */
-        fun setFullScreenClickListener(listener: View.OnClickListener?): PlayerBindHelper {
-            return setClickListener(view.vFullScreen, listener)
-        }
-
-        /**
-         * 设置小窗口播放按钮事件
-         */
-        fun setFloatWindowClickListener(listener: View.OnClickListener?): PlayerBindHelper {
-            return setClickListener(view.vFloatWindow, listener)
-        }
-
-        /**
-         * 启用音量与亮度控制
-         */
-        fun setVolumeAndBrightnessControllerEnable(enable: Boolean): PlayerBindHelper {
-            view.enableVolumeAndBrightnessController = enable
-            return this
-        }
-
-        fun setOnVideoPlayListener(listener: OnVideoPlayListener?): PlayerBindHelper {
-            onVideoPlayListener = listener
-            return this
-        }
-
-        private fun setClickListener(view: View, listener: View.OnClickListener?): PlayerBindHelper {
-            view.setOnClickListener(listener)
-            view.visibility = if (listener == null) View.GONE else View.VISIBLE
-            return this
-        }
-    }
 
     /**
      * 视频播放监听
@@ -533,10 +444,8 @@ class PlayerHelper(context: Application) {
                 Player.STATE_BUFFERING -> {
                 }
                 Player.STATE_READY -> {
-                    view.keepScreenOn = playWhenReady
                 }
                 Player.STATE_ENDED -> {
-                    view.keepScreenOn = false
                     val listener = playerBindHelper.onVideoPlayListener
                     if (listener == null
                             || !listener.onVideoPlayCompleted(currVideoInfo)) {

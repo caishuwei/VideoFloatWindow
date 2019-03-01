@@ -58,11 +58,21 @@ open class VideoContainer : FrameLayout {
         return this
     }
 
+
     /**
      * 绑定播放视图后的操作，如设播放控制器的各种按钮监听
      */
     open fun onBindPlayer(playerBindHelper: PlayerHelper.PlayerBindHelper) {
+
     }
+
+    /**
+     * 播放器绑定解除
+     */
+    open fun onUnBindPlayer(playBindHelper: PlayerHelper.PlayerBindHelper) {
+
+    }
+
 
     /**
      * 播放当前的视频
@@ -144,5 +154,6 @@ open class VideoContainer : FrameLayout {
     fun isBindPlayer(): Boolean {
         return videoContainer.childCount > 0
     }
+
 
 }
