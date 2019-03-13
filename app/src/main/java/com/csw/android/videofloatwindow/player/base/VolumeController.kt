@@ -9,6 +9,10 @@ import com.csw.android.videofloatwindow.app.MyApplication
 import java.util.*
 
 class VolumeController {
+    companion object {
+        val instance = VolumeController()
+    }
+
     private val audioManager: AudioManager
     val deviceMaxVolume: Int
     private val listeners: WeakHashMap<VolumeChangeListener, Any> = WeakHashMap()

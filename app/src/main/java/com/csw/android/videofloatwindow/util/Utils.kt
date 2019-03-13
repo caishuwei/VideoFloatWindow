@@ -76,7 +76,7 @@ class Utils {
 
         fun videoEquals(videoInfo1: VideoInfo?, videoInfo2: VideoInfo?): Boolean {
             if (videoInfo1 != null && videoInfo2 != null) {
-                return videoInfo1.filePath.equals(videoInfo2.filePath)
+                return videoInfo1.target.equals(videoInfo2.target)
             }
             return false
         }

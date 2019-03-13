@@ -4,9 +4,8 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View.OnClickListener
 import com.csw.android.videofloatwindow.app.MyApplication
-import com.csw.android.videofloatwindow.player.PlayerHelper
 import com.csw.android.videofloatwindow.player.base.VideoContainer
-import com.csw.android.videofloatwindow.ui.FullScreenActivity
+import com.csw.android.videofloatwindow.player.video.CustomVideoView
 
 class FloatWindowVideoContainer : VideoContainer {
     var videoFloatWindow: VideoFloatWindow? = null
@@ -15,10 +14,10 @@ class FloatWindowVideoContainer : VideoContainer {
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    override fun onBindPlayer(playerBindHelper: PlayerHelper.PlayerBindHelper) {
-        super.onBindPlayer(playerBindHelper)
+    override fun settingPlayController(controllerSettingHelper: CustomVideoView.ControllerSettingHelper) {
+        super.settingPlayController(controllerSettingHelper)
         videoInfo?.let { it ->
-            playerBindHelper.setBackClickListener(null)
+            controllerSettingHelper.setBackClickListener(null)
                     .setTitle(it.fileName)
                     .setCloseClickListener(OnClickListener { _ ->
                         MyApplication.instance.playerHelper.hideFloatWindow()
@@ -44,14 +43,15 @@ class FloatWindowVideoContainer : VideoContainer {
                                 null
                             }
                     )
+                    .setVolumeAndBrightnessControllerEnable(false)
             videoFloatWindow?.updateWindowWH(it)
         }
     }
 
-    override fun unBindPlayer(): VideoContainer {
-        super.unBindPlayer()
+    override fun onUnbindVideoView(videoView: CustomVideoView) {
+        super.onUnbindVideoView(videoView)
+        //视图解绑，隐藏弹窗
         videoFloatWindow?.hide()
-        return this
     }
 
     private fun playNext() {

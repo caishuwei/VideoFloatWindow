@@ -5,8 +5,8 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View.OnClickListener
 import com.csw.android.videofloatwindow.app.MyApplication
-import com.csw.android.videofloatwindow.player.PlayerHelper
 import com.csw.android.videofloatwindow.player.base.VideoContainer
+import com.csw.android.videofloatwindow.player.video.CustomVideoView
 
 class FullScreenVideoContainer : VideoContainer {
 
@@ -14,13 +14,13 @@ class FullScreenVideoContainer : VideoContainer {
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    override fun onBindPlayer(playerBindHelper: PlayerHelper.PlayerBindHelper) {
-        super.onBindPlayer(playerBindHelper)
+    override fun settingPlayController(controllerSettingHelper: CustomVideoView.ControllerSettingHelper) {
+        super.settingPlayController(controllerSettingHelper)
         videoInfo?.let {
-            playerBindHelper.setTitle(it.fileName)
+            controllerSettingHelper
+                    .setTitle(it.fileName)
                     .setBackClickListener(OnClickListener { _ ->
                         finishActivity()
-                        unBindPlayer()
                     })
                     .setFloatWindowClickListener(OnClickListener { _ ->
                         tryPlayInWindow()
@@ -51,14 +51,16 @@ class FullScreenVideoContainer : VideoContainer {
     private fun playNext() {
         val nextVideo = MyApplication.instance.playerHelper.getNext()
         if (nextVideo != null) {
-            setVideoInfo(nextVideo).play().bindPlayer()
+            videoInfo = nextVideo
+            play()
         }
     }
 
     private fun playPre() {
         val preVideo = MyApplication.instance.playerHelper.getPrevious()
         if (preVideo != null) {
-            setVideoInfo(preVideo).play().bindPlayer()
+            videoInfo = preVideo
+            play()
         }
     }
 

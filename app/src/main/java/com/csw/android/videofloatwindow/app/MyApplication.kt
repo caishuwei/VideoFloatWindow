@@ -16,11 +16,6 @@ import com.tencent.bugly.crashreport.CrashReport
 
 
 class MyApplication : Application() {
-    lateinit var brightnessController: BrightnessController
-        private set
-    lateinit var volumeController: VolumeController
-        private set
-
     companion object {
         lateinit var instance: MyApplication
         lateinit var appComponent: AppComponent
@@ -41,8 +36,6 @@ class MyApplication : Application() {
         MyApplication.instance = this
         appComponent = DaggerAppComponent.builder().setMyApplication(this).build()
         CrashReport.initCrashReport(getApplicationContext(), "eb0b86c8af", false);
-        brightnessController = BrightnessController()
-        volumeController = VolumeController()
     }
 
     override fun attachBaseContext(base: Context?) {

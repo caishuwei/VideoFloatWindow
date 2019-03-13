@@ -148,13 +148,14 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
     private fun removeFromWindow() {
         if (parent != null) {
             windowManager.removeView(this)
-            videoContainer.unBindPlayer()
+            videoContainer.releaseVideoView()
             MyApplication.instance.playerHelper.dispatchFloatWindowVisibleChanged(false)
         }
     }
 
     fun setVideoInfo(videoInfo: VideoInfo) {
-        videoContainer.setVideoInfo(videoInfo).play().bindPlayer()
+        videoContainer.videoInfo = videoInfo
+        videoContainer.play()
     }
 
     fun updateWindowWH(it: VideoInfo) {

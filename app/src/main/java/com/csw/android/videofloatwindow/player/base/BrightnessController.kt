@@ -6,6 +6,10 @@ import com.csw.android.videofloatwindow.app.MyApplication
 import java.util.*
 
 class BrightnessController {
+    companion object {
+        val instance = BrightnessController()
+    }
+
     private var currValue = -1
     private val listeners: WeakHashMap<BrightnessChangeListener, Any> = WeakHashMap()
 

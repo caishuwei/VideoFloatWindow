@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.support.design.widget.Snackbar
 import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.LinearSmoothScroller
 import android.support.v7.widget.RecyclerView
 import android.view.View
 import com.chad.library.adapter.base.BaseViewHolder
@@ -13,7 +14,7 @@ import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.dagger.localvideos.LocalVideosContract
 import com.csw.android.videofloatwindow.entities.VideoInfo
-import com.csw.android.videofloatwindow.player.PlayerHelper
+import com.csw.android.videofloatwindow.player.video.CustomVideoView
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
 import com.csw.android.videofloatwindow.ui.base.MvpFragment
 import com.csw.android.videofloatwindow.util.LogUtils
@@ -95,7 +96,7 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
                     FullScreenActivity.openActivity(view.context, it)
                 }
             }
-            it.onVideoPlayListener = object : PlayerHelper.OnVideoPlayListener {
+            it.onVideoPlayListener = object : CustomVideoView.OnVideoPlayListener {
                 override fun onVideoPlayCompleted(videoInfo: VideoInfo): Boolean {
                     //遍历查找下一个视频
                     val data = it.data
@@ -108,7 +109,7 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
                     }
                     if (currIndex >= 0 && currIndex + 1 < data.size) {
                         //滚动到下个视频item出现在屏幕上
-                        play(currIndex + 1)
+                        playByPosition(currIndex + 1)
                     }
                     return true
                 }
@@ -118,6 +119,7 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
         smartRefreshLayout.isEnableLoadMore = false
         smartRefreshLayout.setOnRefreshListener {
             videosAdapter?.setNewData(null)
+            videosAdapter?.pauseAllVideoView();
             requestLocalVideos()
         }
     }
@@ -134,7 +136,7 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
                     view?.let { itemView ->
                         val vh = recyclerView.getChildViewHolder(itemView) as BaseViewHolder
                         val listVideoContainer = vh.getView<ListVideoContainer>(R.id.mv_video_container)
-                        listVideoContainer.play().bindPlayer()
+                        listVideoContainer.play()
                     }
                 } else {
                     val view1 = arg2.findViewByPosition(fv)
@@ -152,13 +154,13 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
                         videoRect.offset(intArray[0], intArray[1])
                         if (listRect.contains(videoRect)) {
                             //第一个可见item视频完全可见
-                            video1.play().bindPlayer()
+                            video1.play()
                         } else {
                             val vh2 = recyclerView.getChildViewHolder(v2) as BaseViewHolder
                             val video2 = vh2.getView<ListVideoContainer>(R.id.mv_video_container)
                             if (videoRect.bottom <= listRect.top) {
                                 //第一个可见item视频已经不可见
-                                video2.play().bindPlayer()
+                                video2.play()
                             } else {
                                 //第一个可见item视频部分可见
                                 //如果第二个item视频已经完全可见，则播放第二个视频，否则播放第一个
@@ -166,9 +168,9 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
                                 video2.getLocationInWindow(intArray)
                                 videoRect.offset(intArray[0], intArray[1])
                                 if (videoRect.bottom < listRect.bottom) {
-                                    video2.play().bindPlayer()
+                                    video2.play()
                                 } else {
-                                    video1.play().bindPlayer()
+                                    video1.play()
                                 }
                             }
                         }
@@ -179,7 +181,7 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
         LogUtils.e(msg = "playVisibleVideo->${System.currentTimeMillis() - start}")
     }
 
-    private fun play(i: Int) {
+    private fun playByPosition(i: Int) {
         Utils.runIfNotNull(videosAdapter, linearLayoutManager) { arg1, arg2 ->
             val fv = arg2.findFirstVisibleItemPosition()
             val lv = arg2.findLastVisibleItemPosition()
@@ -188,14 +190,27 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
                 view?.let { itemView ->
                     val vh = recyclerView.getChildViewHolder(itemView) as BaseViewHolder
                     val listVideoContainer = vh.getView<ListVideoContainer>(R.id.mv_video_container)
-                    listVideoContainer.play().bindPlayer()
+                    listVideoContainer.play()
                 }
-                arg2.scrollToPositionWithOffset(i, 0)
+                val smoothScroller = object : LinearSmoothScroller(activity) {
+
+                    override fun getVerticalSnapPreference(): Int {
+                        return LinearSmoothScroller.SNAP_TO_START
+                    }
+
+                    override fun calculateTimeForScrolling(dx: Int): Int {
+                        //300毫秒完成滚动
+                        return 300
+                    }
+
+                }
+                smoothScroller.targetPosition = i
+                arg2.startSmoothScroll(smoothScroller)
             } else if (i in 0 until arg1.data.size) {
-                //当前视图不可见
+                //当前视图不可见，直接定位到这个item
                 arg2.scrollToPositionWithOffset(i, 0)
                 recyclerView.post {
-                    play(i)
+                    playByPosition(i)
                 }
             }
         }
@@ -206,12 +221,17 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
         smartRefreshLayout.autoRefresh()
     }
 
+    override fun onResume() {
+        super.onResume()
+        playVisibleVideo()
+    }
+
     override fun onDestroyView() {
         linearLayoutManager = null
+        videosAdapter?.releaseAllVideoView()
         videosAdapter = null
         super.onDestroyView()
     }
-
 
     private fun requestLocalVideos() {
         val a = activity
@@ -234,6 +254,9 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
                                         smartRefreshLayout.finishRefresh()
                                         videosAdapter?.setNewData(it)
                                         MyApplication.instance.playerHelper.playList = it
+                                        smartRefreshLayout.post {
+                                            playVisibleVideo()
+                                        }
                                     },
                                     {
                                         smartRefreshLayout.finishRefresh()

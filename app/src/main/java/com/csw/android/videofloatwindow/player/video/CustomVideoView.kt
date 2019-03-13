@@ -1,14 +1,12 @@
 package com.csw.android.videofloatwindow.player.video
 
 import android.app.Activity
-import android.content.Context
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.support.v4.view.NestedScrollingChild
 import android.support.v4.view.NestedScrollingChildHelper
 import android.support.v4.view.ViewCompat
-import android.util.AttributeSet
 import android.view.*
 import android.view.View.OnClickListener
 import android.widget.FrameLayout
@@ -17,7 +15,6 @@ import android.widget.TextView
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
-import com.csw.android.videofloatwindow.player.PlayerHelper
 import com.csw.android.videofloatwindow.player.base.BrightnessController
 import com.csw.android.videofloatwindow.player.base.VideoContainer
 import com.csw.android.videofloatwindow.player.base.VolumeController
@@ -50,29 +47,38 @@ import java.util.*
  * 实现滑动控制屏幕亮度与音量
  * 嵌套滑动分发
  */
-class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
+class CustomVideoView
+/**
+ * 构造方法弃用传进来的context，统一使用ApplicationContext，避免视图移动到别的界面，旧界面引用被持有无法释放
+ */ private constructor(videoInfo: VideoInfo) : RelativeLayout(MyApplication.instance), IUICreator, NestedScrollingChild {
+    companion object {
+
+        val videoViewMap = WeakHashMap<String, CustomVideoView>()
+
+        fun getVideoView(videoInfo: VideoInfo): CustomVideoView {
+            var result = videoViewMap[videoInfo.target]
+            if (result == null) {
+                result = CustomVideoView(videoInfo)
+                videoViewMap[videoInfo.target] = result
+            }
+            return result
+        }
+
+    }
+
     //播放器相关视图
-    lateinit var playerView: PlayerView
-        private set
-    lateinit var vBack: View
-        private set
-    lateinit var tvTitle: TextView
-        private set
-    lateinit var vClose: View
-        private set
-    lateinit var vFullScreen: View
-        private set
-    lateinit var vFloatWindow: View
-        private set
-    lateinit var vPrevious: View
-        private set
-    lateinit var vNext: View
-        private set
+    private lateinit var playerView: PlayerView
+    private lateinit var vBack: View
+    private lateinit var tvTitle: TextView
+    private lateinit var vClose: View
+    private lateinit var vFullScreen: View
+    private lateinit var vFloatWindow: View
+    private lateinit var vPrevious: View
+    private lateinit var vNext: View
     //手动关闭提示层
     private lateinit var fl_hint_layer: FrameLayout
     //自动关闭提示层
     private lateinit var fl_auto_hide_layer: FrameLayout
-
     //播放器
     lateinit var player: SimpleExoPlayer
         private set
@@ -90,20 +96,6 @@ class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
 
     private lateinit var autoHintLayerController: AutoHintLayerController
     private lateinit var autoHintViewHolder: HintViewHolder
-
-    /**
-     * 构造方法弃用传进来的context，统一使用ApplicationContext，避免视图移动到别的界面，旧界面引用被持有无法释放
-     */
-    constructor(context: Context?) : this(MyApplication.instance, null)
-
-    constructor(context: Context?, attrs: AttributeSet?) : this(MyApplication.instance, attrs, 0)
-    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(MyApplication.instance, attrs, defStyleAttr) {
-        LayoutInflater.from(MyApplication.instance).inflate(getContentViewID(), this)
-        initView(this, null)
-        initAdapter()
-        initListener()
-        initData()
-    }
 
     override fun getContentViewID(): Int {
         return R.layout.view_custom_video
@@ -132,6 +124,7 @@ class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
                 context,
                 trackSelector)
         playerView.player = player
+        playerView.controllerAutoShow = false
         mediaDataSourceFactory = DefaultDataSourceFactory(
                 context,
                 Util.getUserAgent(context, context.getString(R.string.app_name)),
@@ -152,6 +145,9 @@ class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
         autoHintLayerController = AutoHintLayerController(fl_auto_hide_layer)
         autoHintViewHolder = HintViewHolder(fl_auto_hide_layer)
         autoHintViewHolder.addToLayer(autoHintLayerController)
+        autoHintLayerController.hide()
+
+        controllerSettingHelper.resetBind()
     }
 
     override fun initAdapter() {
@@ -159,15 +155,15 @@ class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
     }
 
     override fun initListener() {
-        MyApplication.instance.brightnessController.addListener(object : BrightnessController.BrightnessChangeListener {
+        BrightnessController.instance.addListener(object : BrightnessController.BrightnessChangeListener {
             override fun onBrightnessChanged(value: Int) {
                 autoHintViewHolder.setHintInfo(R.drawable.player_light, "亮度:$value%");
                 autoHintLayerController.show();
             }
         })
-        MyApplication.instance.volumeController.addListener(object : VolumeController.VolumeChangeListener {
+        VolumeController.instance.addListener(object : VolumeController.VolumeChangeListener {
             override fun onVolumeChanged(value: Int) {
-                autoHintViewHolder.setHintInfo(R.drawable.player_volume, "音量:${(value * 100f / MyApplication.instance.volumeController.deviceMaxVolume).toInt()}%");
+                autoHintViewHolder.setHintInfo(R.drawable.player_volume, "音量:${(value * 100f / VolumeController.instance.deviceMaxVolume).toInt()}%");
                 autoHintLayerController.show();
             }
         })
@@ -180,6 +176,9 @@ class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
             }
 
             override fun onSeekProcessed() {
+                if (player.playWhenReady) {
+                    play()
+                }
             }
 
             override fun onTracksChanged(trackGroups: TrackGroupArray?, trackSelections: TrackSelectionArray?) {
@@ -224,6 +223,9 @@ class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
             }
 
             override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
+                if (playWhenReady) {
+                    MyApplication.instance.playerHelper.currVideoView = this@CustomVideoView
+                }
                 when (playbackState) {
                     Player.STATE_IDLE -> {
                     }
@@ -238,6 +240,9 @@ class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
                     }
                     Player.STATE_ENDED -> {
                         keepScreenOn = false
+                        player.playWhenReady = false
+                        player.seekTo(0)
+                        controllerSettingHelper.onVideoPlayListener?.onVideoPlayCompleted(videoInfo)
                     }
                 }
             }
@@ -255,55 +260,56 @@ class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
 
     override fun onFinishInflate() {
         super.onFinishInflate()
-
     }
 
     //---------------------------------------对外暴露方法-------------------------------------------
-
-    private val containers = LinkedList<VideoContainer>()
-    private val playBindHelper = PlayerBindHelper()
-
-    /**
-     * 添加到容器中显示
-     */
-    fun addToContainer(videoContainer: VideoContainer) {
-        if (containers.peekLast() === videoContainer) {
-            return
-        }
-        containers.remove(videoContainer)
-        unbindFromLastContainer()
-        containers.offer(videoContainer)
-        playBindHelper.resetBind()
-        videoContainer.onBindPlayer(playBindHelper)
-    }
+    //当前所在的播放容器
+    private var currVideoContainer: VideoContainer? = null
 
     /**
-     * 从容器中移除
+     * 辅助控制器的设置
      */
-    fun removeFromContainer(videoContainer: VideoContainer) {
-        if (containers.peekLast() === videoContainer) {
-            unbindFromLastContainer()
-        }
-        containers.remove(videoContainer)
-    }
-
-    private fun unbindFromLastContainer() {
-        containers.peekLast()?.let {
-            playBindHelper.resetBind()
-            it.onUnBindPlayer(playBindHelper)
-        }
-    }
+    val controllerSettingHelper = ControllerSettingHelper()
 
     /**
      * 视频信息
      */
-    var videoInfo: VideoInfo? = null
+    var videoInfo: VideoInfo = videoInfo
         set(value) {
-            if (!Utils.videoEquals(videoInfo, value)) {
+            if (!Utils.videoEquals(field, value)) {
+                videoViewMap.remove(field.target)
+                videoViewMap[value.target] = this
+                field = value
                 player.stop(true)
+            } else {
+                field = value
             }
-            field = value
         }
+
+
+    /**
+     * 绑定到VideoContainer
+     */
+    fun bindVideoContainer(videoContainer: VideoContainer) {
+        if (currVideoContainer != videoContainer) {
+            currVideoContainer?.let {
+                unbindVideoContainer(it)
+            }
+            videoContainer.onBindVideoView(this)
+            currVideoContainer = videoContainer
+        }
+    }
+
+    /**
+     * 从VideoContainer解除绑定
+     */
+    fun unbindVideoContainer(videoContainer: VideoContainer) {
+        if (currVideoContainer == videoContainer) {
+            videoContainer.onUnbindVideoView(this)
+            controllerSettingHelper.resetBind()
+            currVideoContainer = null
+        }
+    }
 
     /**
      * 播放
@@ -335,6 +341,7 @@ class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
      */
     fun release() {
         player.release()
+        videoViewMap.remove(videoInfo.target)
     }
 
 
@@ -481,6 +488,7 @@ class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
         return nestedScrollingChildHelper.dispatchNestedFling(velocityX, velocityY, consumed)
     }
 
+
     //------------------------------------------ inner class ---------------------------------------
     private abstract inner class GestureHandler {
         private var startY: Float = 0f
@@ -501,11 +509,11 @@ class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
         private var startValue: Int = 0
         override fun startHandle(startY: Float) {
             super.startHandle(startY)
-            startValue = MyApplication.instance.volumeController.getValue()
+            startValue = VolumeController.instance.getValue()
         }
 
         override fun onPercentChanged(percentChanged: Float) {
-            MyApplication.instance.volumeController.setValue((MyApplication.instance.volumeController.deviceMaxVolume * percentChanged + startValue).toInt())
+            VolumeController.instance.setValue((VolumeController.instance.deviceMaxVolume * percentChanged + startValue).toInt())
         }
     }
 
@@ -513,11 +521,11 @@ class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
         private var startValue: Int = 0
         override fun startHandle(startY: Float) {
             super.startHandle(startY)
-            startValue = MyApplication.instance.brightnessController.getValue(getWindow(this@CustomVideoView))
+            startValue = BrightnessController.instance.getValue(getWindow(this@CustomVideoView))
         }
 
         override fun onPercentChanged(percentChanged: Float) {
-            MyApplication.instance.brightnessController.setValue(getWindow(this@CustomVideoView), (100 * percentChanged + startValue).toInt())
+            BrightnessController.instance.setValue(getWindow(this@CustomVideoView), (100 * percentChanged + startValue).toInt())
         }
 
         private fun getWindow(view: View): Window? {
@@ -535,20 +543,20 @@ class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
         }
     }
 
-    inner class PlayerBindHelper {
-        var onVideoPlayListener: PlayerHelper.OnVideoPlayListener? = null
+    inner class ControllerSettingHelper {
+        var onVideoPlayListener: OnVideoPlayListener? = null
 
         /**
          * 设置返回按钮事件
          */
-        fun setBackClickListener(listener: View.OnClickListener?): PlayerBindHelper {
+        fun setBackClickListener(listener: View.OnClickListener?): ControllerSettingHelper {
             return setClickListener(vBack, listener)
         }
 
         /**
          * 设置标题
          */
-        fun setTitle(titleStr: String): PlayerBindHelper {
+        fun setTitle(titleStr: String): ControllerSettingHelper {
             tvTitle.text = titleStr
             return this
         }
@@ -556,52 +564,52 @@ class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
         /**
          * 设置关闭按钮事件
          */
-        fun setCloseClickListener(listener: View.OnClickListener?): PlayerBindHelper {
+        fun setCloseClickListener(listener: View.OnClickListener?): ControllerSettingHelper {
             return setClickListener(vClose, listener)
         }
 
         /**
          * 设置上一首事件
          */
-        fun setPreviousClickListener(listener: View.OnClickListener?): PlayerBindHelper {
+        fun setPreviousClickListener(listener: View.OnClickListener?): ControllerSettingHelper {
             return setClickListener(vPrevious, listener)
         }
 
         /**
          * 设置上一首事件
          */
-        fun setNextClickListener(listener: View.OnClickListener?): PlayerBindHelper {
+        fun setNextClickListener(listener: View.OnClickListener?): ControllerSettingHelper {
             return setClickListener(vNext, listener)
         }
 
         /**
          * 设置全屏按钮事件
          */
-        fun setFullScreenClickListener(listener: View.OnClickListener?): PlayerBindHelper {
+        fun setFullScreenClickListener(listener: View.OnClickListener?): ControllerSettingHelper {
             return setClickListener(vFullScreen, listener)
         }
 
         /**
          * 设置小窗口播放按钮事件
          */
-        fun setFloatWindowClickListener(listener: View.OnClickListener?): PlayerBindHelper {
+        fun setFloatWindowClickListener(listener: View.OnClickListener?): ControllerSettingHelper {
             return setClickListener(vFloatWindow, listener)
         }
 
         /**
          * 启用音量与亮度控制
          */
-        fun setVolumeAndBrightnessControllerEnable(enable: Boolean): PlayerBindHelper {
+        fun setVolumeAndBrightnessControllerEnable(enable: Boolean): ControllerSettingHelper {
             enableVolumeAndBrightnessController = enable
             return this
         }
 
-        fun setOnVideoPlayListener(listener: PlayerHelper.OnVideoPlayListener?): PlayerBindHelper {
+        fun setOnVideoPlayListener(listener: OnVideoPlayListener?): ControllerSettingHelper {
             onVideoPlayListener = listener
             return this
         }
 
-        private fun setClickListener(view: View, listener: View.OnClickListener?): PlayerBindHelper {
+        private fun setClickListener(view: View, listener: View.OnClickListener?): ControllerSettingHelper {
             view.setOnClickListener(listener)
             view.visibility = if (listener == null) View.GONE else View.VISIBLE
             return this
@@ -620,5 +628,24 @@ class CustomVideoView : RelativeLayout, IUICreator, NestedScrollingChild {
                     .setVolumeAndBrightnessControllerEnable(false)
                     .setOnVideoPlayListener(null)
         }
+    }
+
+    /**
+     * 视频播放监听
+     */
+    interface OnVideoPlayListener {
+        /**
+         * 视频播放结束
+         * @return true 表示自己处理播放结束后的事件，false 默认处理（尝试播放下一个）
+         */
+        fun onVideoPlayCompleted(videoInfo: VideoInfo): Boolean
+    }
+
+    init {
+        LayoutInflater.from(MyApplication.instance).inflate(getContentViewID(), this)
+        initView(this, null)
+        initAdapter()
+        initListener()
+        initData()
     }
 }

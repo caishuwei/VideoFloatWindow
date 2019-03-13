@@ -49,23 +49,18 @@ class FullScreenActivity : BaseActivity() {
             val videoInfo = intent.getSerializableExtra("VideoInfo")
             val uri = intent.data
             if (videoInfo != null && videoInfo is VideoInfo) {
-                videoContainer.setVideoInfo(videoInfo).play().bindPlayer()
+                videoContainer.videoInfo = videoInfo
+                videoContainer.play()
             } else if (uri != null && "content" == uri.scheme) {
-                videoContainer.setVideoInfo(Utils.getVideoInfo(contentResolver, uri)).play().bindPlayer()
+                videoContainer.videoInfo = Utils.getVideoInfo(contentResolver, uri)
+                videoContainer.play()
             }
-        } else {
-            videoContainer.setVideoInfo(null)
         }
     }
 
     override fun onDestroy() {
-        videoContainer.unBindPlayer()
+        videoContainer.releaseVideoView()
         super.onDestroy()
-    }
-
-    override fun onTouchEvent(event: MotionEvent?): Boolean {
-        LogUtils.e(msg = "Activity__>${event?.action}___>${super.onTouchEvent(event)}");
-        return super.onTouchEvent(event)
     }
 
 }

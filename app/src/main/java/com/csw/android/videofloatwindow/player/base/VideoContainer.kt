@@ -9,7 +9,7 @@ import android.widget.FrameLayout
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.permission.SystemAlertWindowPermission
-import com.csw.android.videofloatwindow.player.PlayerHelper
+import com.csw.android.videofloatwindow.player.video.CustomVideoView
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
 import com.csw.android.videofloatwindow.util.Utils
 
@@ -37,59 +37,99 @@ open class VideoContainer : FrameLayout {
     }
 
     var videoInfo: VideoInfo? = null
-        private set
-
-
-    /**
-     * 绑定播放视图
-     */
-    open fun bindPlayer(): VideoContainer {
-        MyApplication.instance.playerHelper.bindPlayer(videoContainer) {
-            onBindPlayer(it)
+        set(value) {
+            if (!Utils.videoEquals(field, value)) {
+                field = value
+                onSetNewVideoInfo()
+            } else {
+                field = value
+            }
         }
-        return this
-    }
 
     /**
-     * 解除播放视图绑定
+     * 设置新的视频信息
      */
-    open fun unBindPlayer(): VideoContainer {
-        MyApplication.instance.playerHelper.unBindPlayer(videoContainer)
-        return this
+    open fun onSetNewVideoInfo() {
+        tryRotateScreen()
+        videoInfo?.let { vi ->
+            whRatio = vi.whRatio
+            currVideoView?.let { vv ->
+                vv.videoInfo = vi
+                settingPlayController(vv.controllerSettingHelper)
+            }
+            return
+        }
+        //videoInfo为空，解除VideoView
+        currVideoView?.unbindVideoContainer(this)
     }
 
+    var currVideoView: CustomVideoView? = null
+
+    /**
+     * 绑定VideoView
+     */
+    open fun onBindVideoView(videoView: CustomVideoView) {
+        this.currVideoView = videoView
+        videoContainer.addView(videoView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+        settingPlayController(videoView.controllerSettingHelper)
+    }
 
     /**
      * 绑定播放视图后的操作，如设播放控制器的各种按钮监听
      */
-    open fun onBindPlayer(playerBindHelper: PlayerHelper.PlayerBindHelper) {
+    open fun settingPlayController(controllerSettingHelper: CustomVideoView.ControllerSettingHelper) {
 
     }
 
     /**
-     * 播放器绑定解除
+     * 解除VideoView绑定
      */
-    open fun onUnBindPlayer(playBindHelper: PlayerHelper.PlayerBindHelper) {
-
+    open fun onUnbindVideoView(videoView: CustomVideoView) {
+        videoContainer.removeView(videoView)
+        this.currVideoView = null
     }
 
+    /**
+     * 释放播放器
+     */
+    fun releaseVideoView() {
+        currVideoView?.let {
+            it.unbindVideoContainer(this)
+            if (currVideoView == null) {
+                //成功解除VideoView
+                it.release()
+            }
+        }
+    }
+
+    private fun getVideoView(videoInfo: VideoInfo): CustomVideoView {
+        val videoView = currVideoView
+        return if (videoView == null) {
+            val vv = CustomVideoView.getVideoView(videoInfo)
+            vv.bindVideoContainer(this)
+            vv
+        } else {
+            videoView
+        }
+    }
 
     /**
      * 播放当前的视频
      */
     open fun play(): VideoContainer {
         videoInfo?.let {
-            MyApplication.instance.playerHelper.play(it)
+            getVideoView(it).play()
         }
         return this
     }
 
+
     /**
      * 停止视频播放
      */
-    open fun stop(): VideoContainer {
+    open fun pause(): VideoContainer {
         videoInfo?.let {
-            MyApplication.instance.playerHelper.stop(it)
+            getVideoView(it).pause()
         }
         return this
     }
@@ -98,18 +138,6 @@ open class VideoContainer : FrameLayout {
         Utils.measureCenterInsideByScaleRatio(widthMeasureSpec, heightMeasureSpec, whRatio) { w, h ->
             super.onMeasure(w, h)
         }
-    }
-
-    /**
-     * 设置播放信息
-     */
-    open fun setVideoInfo(videoInfo: VideoInfo?): VideoContainer {
-//        if (this.videoInfo != videoInfo) {
-//            unBindPlayer();
-//        }
-        this.videoInfo = videoInfo
-        tryRotateScreen()
-        return this
     }
 
     /**
@@ -150,10 +178,5 @@ open class VideoContainer : FrameLayout {
             MyApplication.instance.playerHelper.playInFloatWindow(it)
         }
     }
-
-    fun isBindPlayer(): Boolean {
-        return videoContainer.childCount > 0
-    }
-
 
 }

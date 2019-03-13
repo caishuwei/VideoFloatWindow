@@ -2,15 +2,15 @@ package com.csw.android.videofloatwindow.view
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.View
 import android.view.View.OnClickListener
-import com.csw.android.videofloatwindow.player.PlayerHelper
 import com.csw.android.videofloatwindow.player.base.VideoContainer
-import com.csw.android.videofloatwindow.util.LogUtils
+import com.csw.android.videofloatwindow.player.video.CustomVideoView
 
 class ListVideoContainer : VideoContainer {
 
     val whRatioImageView: WHRatioImageView
-    var onVideoPlayListener: PlayerHelper.OnVideoPlayListener? = null
+    var onVideoPlayListener: CustomVideoView.OnVideoPlayListener? = null
     val floatWindowClickListener = OnClickListener { _ ->
         tryPlayInWindow()
     }
@@ -25,30 +25,35 @@ class ListVideoContainer : VideoContainer {
         isFocusableInTouchMode = true
         whRatioImageView = WHRatioImageView(context)
         whRatioImageView.setOnClickListener {
-            bindPlayer()
             play()
         }
-        addView(whRatioImageView,
-                0,
-                LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
-        )
+        addView(whRatioImageView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
     }
 
-    override fun onBindPlayer(playerBindHelper: PlayerHelper.PlayerBindHelper) {
-        super.onBindPlayer(playerBindHelper)
+    override fun onSetNewVideoInfo() {
+        super.onSetNewVideoInfo()
+        whRatioImageView.visibility = View.VISIBLE
+    }
+
+    override fun play(): VideoContainer {
+        whRatioImageView.visibility = View.GONE
+        return super.play()
+    }
+
+    override fun onUnbindVideoView(videoView: CustomVideoView) {
+        super.onUnbindVideoView(videoView)
+        whRatioImageView.visibility = View.VISIBLE
+    }
+
+    override fun settingPlayController(controllerSettingHelper: CustomVideoView.ControllerSettingHelper) {
+        super.settingPlayController(controllerSettingHelper)
         videoInfo?.let {
-            playerBindHelper.setTitle(it.fileName)
+            controllerSettingHelper.setTitle(it.fileName)
                     .setFloatWindowClickListener(floatWindowClickListener)
                     .setFullScreenClickListener(fullScreenClickListener)
                     .setOnVideoPlayListener(onVideoPlayListener)
+                    .setVolumeAndBrightnessControllerEnable(false)
         }
     }
-//
-//    override fun play(): VideoContainer {
-//        val start = System.currentTimeMillis()
-//        super.play()
-//        LogUtils.e(msg = "playTime->${System.currentTimeMillis() - start}")
-//        return this
-//    }
 
 }
