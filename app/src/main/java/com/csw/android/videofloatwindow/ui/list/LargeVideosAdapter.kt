@@ -11,11 +11,6 @@ import com.csw.android.videofloatwindow.view.ListVideoContainer
 class LargeVideosAdapter : VideosAdapter(R.layout.item_large_video) {
 
     private val videoContainerSet = HashSet<ListVideoContainer>()
-    var onVideoPlayListener: CustomVideoView.OnVideoPlayListener? = null
-        set(value) {
-            field = value
-            notifyDataSetChanged()
-        }
 
     fun releaseAllVideoView() {
         for (videoContainer in videoContainerSet) {
@@ -44,8 +39,7 @@ class LargeVideosAdapter : VideosAdapter(R.layout.item_large_video) {
             h.setText(R.id.tv_desc, i.filePath)
             val listVideoContainer = h.getView<ListVideoContainer>(R.id.mv_video_container)
             listVideoContainer.videoInfo = i
-            listVideoContainer.onVideoPlayListener = onVideoPlayListener
-            listVideoContainer.pause()
+            listVideoContainer.bindVideoView()
             loadVideoPreviewImage(listVideoContainer.whRatioImageView, i)
         }
     }

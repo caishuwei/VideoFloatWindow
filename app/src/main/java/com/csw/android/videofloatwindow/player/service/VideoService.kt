@@ -1,4 +1,4 @@
-package com.csw.android.videofloatwindow.services.video
+package com.csw.android.videofloatwindow.player.service
 
 import android.app.Service
 import android.content.BroadcastReceiver
@@ -11,7 +11,6 @@ import com.csw.android.videofloatwindow.IVideoServiceInterface
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.base.PlayerListener
-import com.csw.android.videofloatwindow.util.LogUtils
 import com.google.android.exoplayer2.Player
 
 class VideoService : Service() {

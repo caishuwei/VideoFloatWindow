@@ -359,7 +359,7 @@ class PlayerHelper(context: Application) {
                 Player.STATE_ENDED -> {
 //                    val listener = playerBindHelper.onVideoPlayListener
 //                    if (listener == null
-//                            || !listener.onVideoPlayCompleted(currVideoInfo)) {
+//                            || !listener.onPlayCompleted(currVideoInfo)) {
 //                    tryPlayNext()
 //                    }
                 }

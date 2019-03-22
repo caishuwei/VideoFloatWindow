@@ -63,6 +63,27 @@ open class VideoContainer : FrameLayout {
         currVideoView?.unbindVideoContainer(this)
     }
 
+    /**
+     * videoView的VideoInfo发生改变时调用
+     *
+     * 默认实现，VideoInfo与当前的容器的VideoInfo不同时，解除容器与VideoView的绑定，并绑定新的VideoView
+     */
+    open fun onVideoViewVideoInfoChanged(videoView: CustomVideoView) {
+        if (!Utils.videoEquals(videoInfo, videoView.videoInfo)) {
+            videoView.unbindVideoContainer(this)
+            bindVideoView()
+        }
+    }
+
+    /**
+     * 绑定VideoView
+     */
+    fun bindVideoView() {
+        videoInfo?.let {
+            getVideoView(it)
+        }
+    }
+
     var currVideoView: CustomVideoView? = null
 
     /**

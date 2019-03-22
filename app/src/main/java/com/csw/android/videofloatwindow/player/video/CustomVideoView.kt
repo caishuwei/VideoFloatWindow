@@ -37,6 +37,7 @@ import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import java.util.*
+import kotlin.collections.HashSet
 
 /**
  * 自定义VideoView对播放器进行封装
@@ -46,15 +47,36 @@ import java.util.*
  * 实现点击切换播放器控制器状态
  * 实现滑动控制屏幕亮度与音量
  * 嵌套滑动分发
- */
-class CustomVideoView
-/**
+ * <br/>
  * 构造方法弃用传进来的context，统一使用ApplicationContext，避免视图移动到别的界面，旧界面引用被持有无法释放
- */ private constructor(videoInfo: VideoInfo) : RelativeLayout(MyApplication.instance), IUICreator, NestedScrollingChild {
+ * 由于没有context参数的构造方法，所以不能在布局文件中使用
+ */
+class CustomVideoView private constructor(videoInfo: VideoInfo) : RelativeLayout(MyApplication.instance), IUICreator, NestedScrollingChild {
     companion object {
+        //最后播放的CustomVideoView，CustomVideoView的构造使用Application作为上下文，不需要担心context静态引用导致内存泄露
+        var lastPlayVideoView: CustomVideoView? = null
+            set(value) {
+                //重写赋值方法，停止当前最后播放的Video，实现同一时间只有一个视频在播放
+                val old = field
+                val new = value
+                if (old != new) {
+                    old?.let {
+                        it.pause()
+                    }
+                    field = value
+                    for (listener in onPlayVideoChangeListenerSet) {
+                        listener.onLastPlayVideoViewUpdate(old, new)
+                        listener.onPlayVideoInfoUpdated(new?.videoInfo)
+                    }
+                }
+            }
 
-        val videoViewMap = WeakHashMap<String, CustomVideoView>()
+        //存储当前使用中的VideoView
+        private val videoViewMap = WeakHashMap<String, CustomVideoView>()
 
+        /**
+         * 根据VideoInfo获取CustomVideoView实例
+         */
         fun getVideoView(videoInfo: VideoInfo): CustomVideoView {
             var result = videoViewMap[videoInfo.target]
             if (result == null) {
@@ -63,6 +85,18 @@ class CustomVideoView
             }
             return result
         }
+
+        //-------------------------------------新视频播放监听----------------------------------
+        private val onPlayVideoChangeListenerSet = HashSet<OnPlayChangeListener>()
+
+        fun addOnPlayVideoChangeListener(listener: OnPlayChangeListener) {
+            onPlayVideoChangeListenerSet.add(listener)
+        }
+
+        fun removeOnPlayVideoChangeListener(listener: OnPlayChangeListener) {
+            onPlayVideoChangeListenerSet.remove(listener)
+        }
+
 
     }
 
@@ -162,8 +196,8 @@ class CustomVideoView
             }
         })
         VolumeController.instance.addListener(object : VolumeController.VolumeChangeListener {
-            override fun onVolumeChanged(value: Int) {
-                autoHintViewHolder.setHintInfo(R.drawable.player_volume, "音量:${(value * 100f / VolumeController.instance.deviceMaxVolume).toInt()}%");
+            override fun onVolumeChanged(currValue: Int) {
+                autoHintViewHolder.setHintInfo(R.drawable.player_volume, "音量:${(currValue * 100f / VolumeController.instance.deviceMaxVolume).toInt()}%");
                 autoHintLayerController.show();
             }
         })
@@ -242,7 +276,10 @@ class CustomVideoView
                         keepScreenOn = false
                         player.playWhenReady = false
                         player.seekTo(0)
-                        controllerSettingHelper.onVideoPlayListener?.onVideoPlayCompleted(videoInfo)
+                        for (listener in onPlayVideoChangeListenerSet) {
+                            listener.onPlayCompleted(videoInfo)
+                        }
+//                        controllerSettingHelper.onVideoPlayListener?.onVideoPlayCompleted(videoInfo)
                     }
                 }
             }
@@ -281,6 +318,10 @@ class CustomVideoView
                 videoViewMap[value.target] = this
                 field = value
                 player.stop(true)
+                currVideoContainer?.onVideoViewVideoInfoChanged(this)
+                for (listener in onPlayVideoChangeListenerSet) {
+                    listener.onPlayVideoInfoUpdated(field)
+                }
             } else {
                 field = value
             }
@@ -342,6 +383,9 @@ class CustomVideoView
     fun release() {
         player.release()
         videoViewMap.remove(videoInfo.target)
+        if (lastPlayVideoView == this) {
+            lastPlayVideoView = null
+        }
     }
 
 
@@ -544,7 +588,6 @@ class CustomVideoView
     }
 
     inner class ControllerSettingHelper {
-        var onVideoPlayListener: OnVideoPlayListener? = null
 
         /**
          * 设置返回按钮事件
@@ -604,11 +647,6 @@ class CustomVideoView
             return this
         }
 
-        fun setOnVideoPlayListener(listener: OnVideoPlayListener?): ControllerSettingHelper {
-            onVideoPlayListener = listener
-            return this
-        }
-
         private fun setClickListener(view: View, listener: View.OnClickListener?): ControllerSettingHelper {
             view.setOnClickListener(listener)
             view.visibility = if (listener == null) View.GONE else View.VISIBLE
@@ -626,19 +664,30 @@ class CustomVideoView
                     .setFullScreenClickListener(null)
                     .setFloatWindowClickListener(null)
                     .setVolumeAndBrightnessControllerEnable(false)
-                    .setOnVideoPlayListener(null)
         }
     }
 
+
     /**
-     * 视频播放监听
+     * 播放变化监听
      */
-    interface OnVideoPlayListener {
+    interface OnPlayChangeListener {
+
         /**
-         * 视频播放结束
-         * @return true 表示自己处理播放结束后的事件，false 默认处理（尝试播放下一个）
+         * 播放结束
          */
-        fun onVideoPlayCompleted(videoInfo: VideoInfo): Boolean
+        fun onPlayCompleted(videoInfo: VideoInfo)
+
+        /**
+         * 更新最后播放的VideoView
+         */
+        fun onLastPlayVideoViewUpdate(old: CustomVideoView?, new: CustomVideoView?)
+
+        /**
+         * 播放的视频信息更新
+         */
+        fun onPlayVideoInfoUpdated(videoInfo: VideoInfo?);
+
     }
 
     init {

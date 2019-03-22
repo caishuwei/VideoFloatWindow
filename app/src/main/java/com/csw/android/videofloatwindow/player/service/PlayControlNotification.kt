@@ -1,4 +1,4 @@
-package com.csw.android.videofloatwindow.services.video
+package com.csw.android.videofloatwindow.player.service
 
 import android.app.*
 import android.content.Context

@@ -8,7 +8,7 @@ import android.support.v7.widget.LinearLayoutManager
 import android.view.View
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.entities.PlaySheet
-import com.csw.android.videofloatwindow.services.video.VideoService
+import com.csw.android.videofloatwindow.player.service.VideoService
 import com.csw.android.videofloatwindow.ui.base.BaseActivity
 import com.csw.android.videofloatwindow.ui.base.CommonActivity
 import com.csw.android.videofloatwindow.ui.list.LocalVideosFragment

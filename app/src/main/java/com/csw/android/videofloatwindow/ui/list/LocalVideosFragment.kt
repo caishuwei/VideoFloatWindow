@@ -96,25 +96,31 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
                     FullScreenActivity.openActivity(view.context, it)
                 }
             }
-            it.onVideoPlayListener = object : CustomVideoView.OnVideoPlayListener {
-                override fun onVideoPlayCompleted(videoInfo: VideoInfo): Boolean {
-                    //遍历查找下一个视频
-                    val data = it.data
+
+        }
+        CustomVideoView.addOnPlayVideoChangeListener(object : CustomVideoView.OnPlayChangeListener {
+            override fun onPlayCompleted(videoInfo: VideoInfo) {
+            }
+
+            override fun onLastPlayVideoViewUpdate(old: CustomVideoView?, new: CustomVideoView?) {
+            }
+
+            override fun onPlayVideoInfoUpdated(videoInfo: VideoInfo?) {
+                Utils.runIfNotNull(videoInfo,videosAdapter?.data){videoInfo,data->
                     var currIndex = -1
                     for ((index, vi) in data.withIndex()) {
-                        if (vi.filePath == videoInfo.filePath) {
+                        if (Utils.videoEquals(videoInfo,vi)) {
                             currIndex = index
                             break
                         }
                     }
-                    if (currIndex >= 0 && currIndex + 1 < data.size) {
+                    if (currIndex >= 0 && currIndex  < data.size) {
                         //滚动到下个视频item出现在屏幕上
-                        playByPosition(currIndex + 1)
+                        playByPosition(currIndex)
                     }
-                    return true
                 }
             }
-        }
+        })
         smartRefreshLayout.isEnableRefresh = true
         smartRefreshLayout.isEnableLoadMore = false
         smartRefreshLayout.setOnRefreshListener {
