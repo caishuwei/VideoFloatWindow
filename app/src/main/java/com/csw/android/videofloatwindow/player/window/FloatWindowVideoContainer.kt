@@ -4,8 +4,12 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View.OnClickListener
 import com.csw.android.videofloatwindow.app.MyApplication
+import com.csw.android.videofloatwindow.player.PlayHelper
+import com.csw.android.videofloatwindow.player.PlayList
 import com.csw.android.videofloatwindow.player.base.VideoContainer
-import com.csw.android.videofloatwindow.player.video.CustomVideoView
+import com.csw.android.videofloatwindow.player.video.base.IControllerSettingHelper
+import com.csw.android.videofloatwindow.player.video.base.IVideo
+import com.csw.android.videofloatwindow.player.video.exo.ExoVideoView
 
 class FloatWindowVideoContainer : VideoContainer {
     var videoFloatWindow: VideoFloatWindow? = null
@@ -14,19 +18,19 @@ class FloatWindowVideoContainer : VideoContainer {
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    override fun settingPlayController(controllerSettingHelper: CustomVideoView.ControllerSettingHelper) {
+    override fun settingPlayController(controllerSettingHelper: IControllerSettingHelper) {
         super.settingPlayController(controllerSettingHelper)
-        videoInfo?.let { it ->
+        mVideoInfo?.let { it ->
             controllerSettingHelper.setBackClickListener(null)
                     .setTitle(it.fileName)
                     .setCloseClickListener(OnClickListener { _ ->
-                        MyApplication.instance.playerHelper.hideFloatWindow()
+                        VideoFloatWindow.instance.hide()
                     })
                     .setFullScreenClickListener(OnClickListener { _ ->
                         playInFullScreen()
                     })
                     .setPreviousClickListener(
-                            if (MyApplication.instance.playerHelper.hasPrevious()) {
+                            if (PlayList.hasPrevious()) {
                                 OnClickListener { _ ->
                                     playPre()
                                 }
@@ -35,7 +39,7 @@ class FloatWindowVideoContainer : VideoContainer {
                             }
                     )
                     .setNextClickListener(
-                            if (MyApplication.instance.playerHelper.hasNext()) {
+                            if (PlayList.hasNext()) {
                                 OnClickListener { _ ->
                                     playNext()
                                 }
@@ -48,24 +52,12 @@ class FloatWindowVideoContainer : VideoContainer {
         }
     }
 
-    override fun onUnbindVideoView(videoView: CustomVideoView) {
-        super.onUnbindVideoView(videoView)
-        //视图解绑，隐藏弹窗
-        videoFloatWindow?.hide()
-    }
-
     private fun playNext() {
-        val nextVideo = MyApplication.instance.playerHelper.getNext()
-        if (nextVideo != null) {
-            MyApplication.instance.playerHelper.playInFloatWindow(nextVideo)
-        }
+        PlayHelper.tryPlayNext()
     }
 
     private fun playPre() {
-        val preVideo = MyApplication.instance.playerHelper.getPrevious()
-        if (preVideo != null) {
-            MyApplication.instance.playerHelper.playInFloatWindow(preVideo)
-        }
+        PlayHelper.tryPlayPrevious()
     }
 
 }

@@ -8,8 +8,8 @@ import android.support.design.widget.Snackbar
 import android.support.v7.widget.LinearLayoutManager
 import android.view.View
 import com.csw.android.videofloatwindow.R
-import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
+import com.csw.android.videofloatwindow.player.PlayList
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
 import com.csw.android.videofloatwindow.ui.base.BaseActivity
 import com.csw.android.videofloatwindow.util.DBUtils
@@ -77,7 +77,7 @@ class PlaySheetVideosActivity : BaseActivity() {
                     .subscribe(
                             {
                                 videosAdapter.setNewData(it)
-                                MyApplication.instance.playerHelper.playList = it
+                                PlayList.data = it
                             },
                             {
                                 Snackbar.make(recyclerView, it.message

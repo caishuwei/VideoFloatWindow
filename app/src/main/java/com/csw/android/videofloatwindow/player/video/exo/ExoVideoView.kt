@@ -1,4 +1,4 @@
-package com.csw.android.videofloatwindow.player.video
+package com.csw.android.videofloatwindow.player.video.exo
 
 import android.app.Activity
 import android.graphics.Color
@@ -15,9 +15,13 @@ import android.widget.TextView
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
+import com.csw.android.videofloatwindow.player.PlayHelper
+import com.csw.android.videofloatwindow.player.PlayList
 import com.csw.android.videofloatwindow.player.base.BrightnessController
 import com.csw.android.videofloatwindow.player.base.VideoContainer
 import com.csw.android.videofloatwindow.player.base.VolumeController
+import com.csw.android.videofloatwindow.player.video.base.IControllerSettingHelper
+import com.csw.android.videofloatwindow.player.video.base.IVideo
 import com.csw.android.videofloatwindow.player.video.layer.AutoHintLayerController
 import com.csw.android.videofloatwindow.player.video.layer.HintLayerController
 import com.csw.android.videofloatwindow.player.video.view.ErrorHintViewHolder
@@ -36,8 +40,6 @@ import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
-import java.util.*
-import kotlin.collections.HashSet
 
 /**
  * 自定义VideoView对播放器进行封装
@@ -51,54 +53,7 @@ import kotlin.collections.HashSet
  * 构造方法弃用传进来的context，统一使用ApplicationContext，避免视图移动到别的界面，旧界面引用被持有无法释放
  * 由于没有context参数的构造方法，所以不能在布局文件中使用
  */
-class CustomVideoView private constructor(videoInfo: VideoInfo) : RelativeLayout(MyApplication.instance), IUICreator, NestedScrollingChild {
-    companion object {
-        //最后播放的CustomVideoView，CustomVideoView的构造使用Application作为上下文，不需要担心context静态引用导致内存泄露
-        var lastPlayVideoView: CustomVideoView? = null
-            set(value) {
-                //重写赋值方法，停止当前最后播放的Video，实现同一时间只有一个视频在播放
-                val old = field
-                val new = value
-                if (old != new) {
-                    old?.let {
-                        it.pause()
-                    }
-                    field = value
-                    for (listener in onPlayVideoChangeListenerSet) {
-                        listener.onLastPlayVideoViewUpdate(old, new)
-                        listener.onPlayVideoInfoUpdated(new?.videoInfo)
-                    }
-                }
-            }
-
-        //存储当前使用中的VideoView
-        private val videoViewMap = WeakHashMap<String, CustomVideoView>()
-
-        /**
-         * 根据VideoInfo获取CustomVideoView实例
-         */
-        fun getVideoView(videoInfo: VideoInfo): CustomVideoView {
-            var result = videoViewMap[videoInfo.target]
-            if (result == null) {
-                result = CustomVideoView(videoInfo)
-                videoViewMap[videoInfo.target] = result
-            }
-            return result
-        }
-
-        //-------------------------------------新视频播放监听----------------------------------
-        private val onPlayVideoChangeListenerSet = HashSet<OnPlayChangeListener>()
-
-        fun addOnPlayVideoChangeListener(listener: OnPlayChangeListener) {
-            onPlayVideoChangeListenerSet.add(listener)
-        }
-
-        fun removeOnPlayVideoChangeListener(listener: OnPlayChangeListener) {
-            onPlayVideoChangeListenerSet.remove(listener)
-        }
-
-
-    }
+class ExoVideoView internal constructor(videoInfo: VideoInfo) : RelativeLayout(MyApplication.instance), IVideo, IUICreator, NestedScrollingChild {
 
     //播放器相关视图
     private lateinit var playerView: PlayerView
@@ -181,7 +136,7 @@ class CustomVideoView private constructor(videoInfo: VideoInfo) : RelativeLayout
         autoHintViewHolder.addToLayer(autoHintLayerController)
         autoHintLayerController.hide()
 
-        controllerSettingHelper.resetBind()
+        controllerSettingHelper.reset()
     }
 
     override fun initAdapter() {
@@ -191,19 +146,23 @@ class CustomVideoView private constructor(videoInfo: VideoInfo) : RelativeLayout
     override fun initListener() {
         BrightnessController.instance.addListener(object : BrightnessController.BrightnessChangeListener {
             override fun onBrightnessChanged(value: Int) {
-                autoHintViewHolder.setHintInfo(R.drawable.player_light, "亮度:$value%");
-                autoHintLayerController.show();
+                if (enableVolumeAndBrightnessController) {
+                    autoHintViewHolder.setHintInfo(R.drawable.player_light, "亮度:$value%");
+                    autoHintLayerController.show();
+                }
             }
         })
         VolumeController.instance.addListener(object : VolumeController.VolumeChangeListener {
             override fun onVolumeChanged(currValue: Int) {
-                autoHintViewHolder.setHintInfo(R.drawable.player_volume, "音量:${(currValue * 100f / VolumeController.instance.deviceMaxVolume).toInt()}%");
-                autoHintLayerController.show();
+                if (enableVolumeAndBrightnessController) {
+                    autoHintViewHolder.setHintInfo(R.drawable.player_volume, "音量:${(currValue * 100f / VolumeController.instance.deviceMaxVolume).toInt()}%");
+                    autoHintLayerController.show();
+                }
             }
         })
         errorHintViewHolder.clickListener = OnClickListener {
-            MyApplication.instance.playerHelper.tryPlayCurr()
             errorHintViewHolder.removeFromLayer(hintLayerController)
+            play()
         }
         player.addListener(object : Player.EventListener {
             override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters?) {
@@ -258,8 +217,9 @@ class CustomVideoView private constructor(videoInfo: VideoInfo) : RelativeLayout
 
             override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
                 if (playWhenReady) {
-                    MyApplication.instance.playerHelper.currVideoView = this@CustomVideoView
+                    PlayHelper.lastPlayVideo = this@ExoVideoView
                 }
+                PlayHelper.onVideoViewPlayStateChanged(this@ExoVideoView)
                 when (playbackState) {
                     Player.STATE_IDLE -> {
                     }
@@ -276,10 +236,6 @@ class CustomVideoView private constructor(videoInfo: VideoInfo) : RelativeLayout
                         keepScreenOn = false
                         player.playWhenReady = false
                         player.seekTo(0)
-                        for (listener in onPlayVideoChangeListenerSet) {
-                            listener.onPlayCompleted(videoInfo)
-                        }
-//                        controllerSettingHelper.onVideoPlayListener?.onVideoPlayCompleted(videoInfo)
                     }
                 }
             }
@@ -300,63 +256,75 @@ class CustomVideoView private constructor(videoInfo: VideoInfo) : RelativeLayout
     }
 
     //---------------------------------------对外暴露方法-------------------------------------------
+
+    override fun getView(): View {
+        return this
+    }
+
     //当前所在的播放容器
     private var currVideoContainer: VideoContainer? = null
 
     /**
      * 辅助控制器的设置
      */
-    val controllerSettingHelper = ControllerSettingHelper()
+    private val controllerSettingHelper: IControllerSettingHelper = ControllerSettingHelper()
+
+    override fun getControllerSettingHelper(): IControllerSettingHelper {
+        return controllerSettingHelper
+    }
 
     /**
      * 视频信息
      */
-    var videoInfo: VideoInfo = videoInfo
-        set(value) {
-            if (!Utils.videoEquals(field, value)) {
-                videoViewMap.remove(field.target)
-                videoViewMap[value.target] = this
-                field = value
-                player.stop(true)
-                currVideoContainer?.onVideoViewVideoInfoChanged(this)
-                for (listener in onPlayVideoChangeListenerSet) {
-                    listener.onPlayVideoInfoUpdated(field)
-                }
-            } else {
-                field = value
+    private var mVideoInfo: VideoInfo = videoInfo
+
+    override fun getVideoInfo(): VideoInfo {
+        return mVideoInfo;
+    }
+
+
+    override fun setVideoInfo(videoInfo: VideoInfo) {
+        if (!Utils.videoEquals(mVideoInfo, videoInfo)) {
+            val currKey = mVideoInfo.target
+            mVideoInfo = videoInfo
+            player.stop(true)
+            PlayHelper.resetVideoKey(currKey, mVideoInfo.target, this);
+            PlayHelper.onVideoViewVideoInfoChanged(this)
+            if (PlayHelper.lastPlayVideo == this) {
+                PlayList.updateCurrIndex()
             }
+        } else {
+            mVideoInfo = videoInfo
         }
+    }
 
-
-    /**
-     * 绑定到VideoContainer
-     */
-    fun bindVideoContainer(videoContainer: VideoContainer) {
+    override fun bindVideoContainer(videoContainer: VideoContainer) {
         if (currVideoContainer != videoContainer) {
             currVideoContainer?.let {
-                unbindVideoContainer(it)
+                unbindVideoContainer(it, false)
             }
-            videoContainer.onBindVideoView(this)
+            videoContainer.onBindVideo(this)
             currVideoContainer = videoContainer
         }
     }
 
-    /**
-     * 从VideoContainer解除绑定
-     */
-    fun unbindVideoContainer(videoContainer: VideoContainer) {
+    override fun unbindVideoContainer(videoContainer: VideoContainer, release: Boolean) {
         if (currVideoContainer == videoContainer) {
-            videoContainer.onUnbindVideoView(this)
-            controllerSettingHelper.resetBind()
+            videoContainer.onUnbindVideo(this)
+            controllerSettingHelper.reset()
             currVideoContainer = null
+            if (release) {
+                release()
+            }
         }
     }
 
-    /**
-     * 播放
-     */
-    fun play() {
-        videoInfo?.let {
+    override fun inContainer(): Boolean {
+        return currVideoContainer != null
+    }
+
+    override fun play() {
+        mVideoInfo?.let {
             when (player.playbackState) {
                 Player.STATE_IDLE -> {
                     val mediaSource = ExtractorMediaSource.Factory(mediaDataSourceFactory)
@@ -368,23 +336,29 @@ class CustomVideoView private constructor(videoInfo: VideoInfo) : RelativeLayout
                 }
             }
             player.playWhenReady = true
+            PlayHelper.lastPlayVideo = this
         }
     }
 
-    /**
-     * 暂停
-     */
-    fun pause() {
+    override fun isPlaying(): Boolean {
+        return player.playWhenReady && (player.playbackState == Player.STATE_READY || player.playbackState == Player.STATE_BUFFERING)
+    }
+
+
+    override fun pause() {
         player.playWhenReady = false
     }
 
-    /**
-     */
-    fun release() {
-        player.release()
-        videoViewMap.remove(videoInfo.target)
-        if (lastPlayVideoView == this) {
-            lastPlayVideoView = null
+    override fun release() {
+        if (!PlayHelper.isVideoViewCanBackgroundPlay(this)) {
+            currVideoContainer?.let {
+                unbindVideoContainer(it, false)
+            }
+            player.release()
+            if (PlayHelper.lastPlayVideo == this) {
+                PlayHelper.lastPlayVideo = null
+            }
+            PlayHelper.removeVideo(this)
         }
     }
 
@@ -565,11 +539,11 @@ class CustomVideoView private constructor(videoInfo: VideoInfo) : RelativeLayout
         private var startValue: Int = 0
         override fun startHandle(startY: Float) {
             super.startHandle(startY)
-            startValue = BrightnessController.instance.getValue(getWindow(this@CustomVideoView))
+            startValue = BrightnessController.instance.getValue(getWindow(this@ExoVideoView))
         }
 
         override fun onPercentChanged(percentChanged: Float) {
-            BrightnessController.instance.setValue(getWindow(this@CustomVideoView), (100 * percentChanged + startValue).toInt())
+            BrightnessController.instance.setValue(getWindow(this@ExoVideoView), (100 * percentChanged + startValue).toInt())
         }
 
         private fun getWindow(view: View): Window? {
@@ -587,74 +561,43 @@ class CustomVideoView private constructor(videoInfo: VideoInfo) : RelativeLayout
         }
     }
 
-    inner class ControllerSettingHelper {
+    inner class ControllerSettingHelper : IControllerSettingHelper {
 
-        /**
-         * 设置返回按钮事件
-         */
-        fun setBackClickListener(listener: View.OnClickListener?): ControllerSettingHelper {
+        override fun setBackClickListener(listener: View.OnClickListener?): IControllerSettingHelper {
             return setClickListener(vBack, listener)
         }
 
-        /**
-         * 设置标题
-         */
-        fun setTitle(titleStr: String): ControllerSettingHelper {
+        override fun setTitle(titleStr: String): IControllerSettingHelper {
             tvTitle.text = titleStr
             return this
         }
 
-        /**
-         * 设置关闭按钮事件
-         */
-        fun setCloseClickListener(listener: View.OnClickListener?): ControllerSettingHelper {
+        override fun setCloseClickListener(listener: View.OnClickListener?): IControllerSettingHelper {
             return setClickListener(vClose, listener)
         }
 
-        /**
-         * 设置上一首事件
-         */
-        fun setPreviousClickListener(listener: View.OnClickListener?): ControllerSettingHelper {
+        override fun setPreviousClickListener(listener: View.OnClickListener?): IControllerSettingHelper {
             return setClickListener(vPrevious, listener)
         }
 
-        /**
-         * 设置上一首事件
-         */
-        fun setNextClickListener(listener: View.OnClickListener?): ControllerSettingHelper {
+        override fun setNextClickListener(listener: View.OnClickListener?): IControllerSettingHelper {
             return setClickListener(vNext, listener)
         }
 
-        /**
-         * 设置全屏按钮事件
-         */
-        fun setFullScreenClickListener(listener: View.OnClickListener?): ControllerSettingHelper {
+        override fun setFullScreenClickListener(listener: View.OnClickListener?): IControllerSettingHelper {
             return setClickListener(vFullScreen, listener)
         }
 
-        /**
-         * 设置小窗口播放按钮事件
-         */
-        fun setFloatWindowClickListener(listener: View.OnClickListener?): ControllerSettingHelper {
+        override fun setFloatWindowClickListener(listener: View.OnClickListener?): IControllerSettingHelper {
             return setClickListener(vFloatWindow, listener)
         }
 
-        /**
-         * 启用音量与亮度控制
-         */
-        fun setVolumeAndBrightnessControllerEnable(enable: Boolean): ControllerSettingHelper {
+        override fun setVolumeAndBrightnessControllerEnable(enable: Boolean): IControllerSettingHelper {
             enableVolumeAndBrightnessController = enable
             return this
         }
 
-        private fun setClickListener(view: View, listener: View.OnClickListener?): ControllerSettingHelper {
-            view.setOnClickListener(listener)
-            view.visibility = if (listener == null) View.GONE else View.VISIBLE
-            return this
-        }
-
-
-        fun resetBind() {
+        override fun reset(): IControllerSettingHelper {
             this.setBackClickListener(null)
                     .setBackClickListener(null)
                     .setTitle("")
@@ -664,31 +607,10 @@ class CustomVideoView private constructor(videoInfo: VideoInfo) : RelativeLayout
                     .setFullScreenClickListener(null)
                     .setFloatWindowClickListener(null)
                     .setVolumeAndBrightnessControllerEnable(false)
+            return this
         }
     }
 
-
-    /**
-     * 播放变化监听
-     */
-    interface OnPlayChangeListener {
-
-        /**
-         * 播放结束
-         */
-        fun onPlayCompleted(videoInfo: VideoInfo)
-
-        /**
-         * 更新最后播放的VideoView
-         */
-        fun onLastPlayVideoViewUpdate(old: CustomVideoView?, new: CustomVideoView?)
-
-        /**
-         * 播放的视频信息更新
-         */
-        fun onPlayVideoInfoUpdated(videoInfo: VideoInfo?);
-
-    }
 
     init {
         LayoutInflater.from(MyApplication.instance).inflate(getContentViewID(), this)

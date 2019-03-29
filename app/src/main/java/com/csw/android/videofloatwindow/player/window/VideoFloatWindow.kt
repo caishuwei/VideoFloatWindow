@@ -12,6 +12,7 @@ import android.widget.FrameLayout
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
+import com.csw.android.videofloatwindow.player.PlayHelper
 import com.csw.android.videofloatwindow.player.base.AreaUtils
 import com.csw.android.videofloatwindow.util.LogUtils
 import com.csw.android.videofloatwindow.util.ScreenInfo
@@ -22,12 +23,18 @@ import com.csw.android.videofloatwindow.util.ScreenInfo
  * 嵌套滚动用于处理手指在视频上滑动时移动窗口位置
  */
 class VideoFloatWindow : FrameLayout, NestedScrollingParent {
+    companion object {
+        val instance = VideoFloatWindow(MyApplication.instance)
+    }
+
     private val windowManager: WindowManager
     private val areaUtils: AreaUtils
 
     private val videoContainer: FloatWindowVideoContainer
     private var moveView: FloatWindowMoveView
     private val dp24 = ScreenInfo.dp2Px(24f)
+
+    var onFloatWindowChangeListener: OnFloatWindowChangeListener? = null
 
     constructor(context: Context) : this(context, null)
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
@@ -100,7 +107,7 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
     private fun updateWindowSizeByRB(r: Float, b: Float) {
         val params = this.layoutParams as WindowManager.LayoutParams
         if (params.width > 0 && params.height > 0) {
-            MyApplication.instance.playerHelper.getCurrent()?.let {
+            PlayHelper.lastPlayVideo?.getVideoInfo()?.let {
                 val ratioWH = it.whRatio
                 val areaFillW = (r - params.x) * (r - params.x) / ratioWH
                 val areaFillH = (b - params.y) * (b - params.y) * ratioWH
@@ -123,13 +130,17 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
         removeFromWindow()
     }
 
-    fun show() {
+    fun show(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (Settings.canDrawOverlays(context)) {
                 addToWindow()
+                return true
+            } else {
+                return false
             }
         } else {
             addToWindow()
+            return true
         }
     }
 
@@ -141,7 +152,8 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
     private fun addToWindow() {
         if (parent == null) {
             windowManager.addView(this, layoutParams)
-            MyApplication.instance.playerHelper.dispatchFloatWindowVisibleChanged(true)
+            PlayHelper.onVideoContainerEnterForeground(videoContainer)
+            onFloatWindowChangeListener?.onFloatWindowVisibilityChanged(true)
         }
     }
 
@@ -149,12 +161,13 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
         if (parent != null) {
             windowManager.removeView(this)
             videoContainer.releaseVideoView()
-            MyApplication.instance.playerHelper.dispatchFloatWindowVisibleChanged(false)
+            PlayHelper.onVideoContainerExitForeground(videoContainer)
+            onFloatWindowChangeListener?.onFloatWindowVisibilityChanged(false)
         }
     }
 
     fun setVideoInfo(videoInfo: VideoInfo) {
-        videoContainer.videoInfo = videoInfo
+        videoContainer.setVideoInfo(videoInfo, true)
         videoContainer.play()
     }
 

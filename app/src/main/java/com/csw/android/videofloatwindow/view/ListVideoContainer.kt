@@ -4,13 +4,16 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener
+import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.base.VideoContainer
-import com.csw.android.videofloatwindow.player.video.CustomVideoView
+import com.csw.android.videofloatwindow.player.video.base.IControllerSettingHelper
+import com.csw.android.videofloatwindow.player.video.base.IVideo
+import com.csw.android.videofloatwindow.player.video.exo.ExoVideoView
 
 class ListVideoContainer : VideoContainer {
 
     val whRatioImageView: WHRatioImageView
-    var onVideoPlayListener: CustomVideoView.OnVideoPlayListener? = null
+//    var onVideoPlayListener: ExoVideoView.OnVideoPlayListener? = null
     val floatWindowClickListener = OnClickListener { _ ->
         tryPlayInWindow()
     }
@@ -30,8 +33,8 @@ class ListVideoContainer : VideoContainer {
         addView(whRatioImageView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
     }
 
-    override fun onSetNewVideoInfo() {
-        super.onSetNewVideoInfo()
+    override fun setVideoInfo(videoInfo: VideoInfo, changeVideoView: Boolean) {
+        super.setVideoInfo(videoInfo, changeVideoView)
         whRatioImageView.visibility = View.VISIBLE
     }
 
@@ -40,18 +43,17 @@ class ListVideoContainer : VideoContainer {
         return super.play()
     }
 
-    override fun onUnbindVideoView(videoView: CustomVideoView) {
-        super.onUnbindVideoView(videoView)
+    override fun onUnbindVideo(video: IVideo) {
+        super.onUnbindVideo(video)
         whRatioImageView.visibility = View.VISIBLE
     }
 
-    override fun settingPlayController(controllerSettingHelper: CustomVideoView.ControllerSettingHelper) {
+    override fun settingPlayController(controllerSettingHelper: IControllerSettingHelper) {
         super.settingPlayController(controllerSettingHelper)
-        videoInfo?.let {
+        mVideoInfo?.let {
             controllerSettingHelper.setTitle(it.fileName)
                     .setFloatWindowClickListener(floatWindowClickListener)
                     .setFullScreenClickListener(fullScreenClickListener)
-                    .setOnVideoPlayListener(onVideoPlayListener)
                     .setVolumeAndBrightnessControllerEnable(false)
         }
     }

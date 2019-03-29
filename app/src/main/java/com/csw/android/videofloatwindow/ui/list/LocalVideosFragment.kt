@@ -14,7 +14,9 @@ import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.dagger.localvideos.LocalVideosContract
 import com.csw.android.videofloatwindow.entities.VideoInfo
-import com.csw.android.videofloatwindow.player.video.CustomVideoView
+import com.csw.android.videofloatwindow.player.PlayHelper
+import com.csw.android.videofloatwindow.player.PlayList
+import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
 import com.csw.android.videofloatwindow.ui.base.MvpFragment
 import com.csw.android.videofloatwindow.util.LogUtils
@@ -98,28 +100,24 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
             }
 
         }
-        CustomVideoView.addOnPlayVideoChangeListener(object : CustomVideoView.OnPlayChangeListener {
-            override fun onPlayCompleted(videoInfo: VideoInfo) {
-            }
-
-            override fun onLastPlayVideoViewUpdate(old: CustomVideoView?, new: CustomVideoView?) {
-            }
-
+        PlayHelper.addOnPlayVideoChangeListener(object : PlayHelper.OnPlayChangeListener {
             override fun onPlayVideoInfoUpdated(videoInfo: VideoInfo?) {
-                Utils.runIfNotNull(videoInfo,videosAdapter?.data){videoInfo,data->
-                    var currIndex = -1
-                    for ((index, vi) in data.withIndex()) {
-                        if (Utils.videoEquals(videoInfo,vi)) {
-                            currIndex = index
-                            break
-                        }
-                    }
-                    if (currIndex >= 0 && currIndex  < data.size) {
-                        //滚动到下个视频item出现在屏幕上
-                        playByPosition(currIndex)
-                    }
+                Utils.runIfNotNull(PlayHelper.lastPlayVideo, videosAdapter?.data) { video, data ->
+                    //
+//                    var currIndex = -1
+//                    for ((index, vi) in data.withIndex()) {
+//                        if (Utils.videoEquals(video.getVideoInfo(),vi)) {
+//                            currIndex = index
+//                            break
+//                        }
+//                    }
+//                    if (currIndex >= 0 && currIndex  < data.size) {
+//                        //滚动到下个视频item出现在屏幕上
+//                        playByPosition(currIndex)
+//                    }
                 }
             }
+
         })
         smartRefreshLayout.isEnableRefresh = true
         smartRefreshLayout.isEnableLoadMore = false
@@ -131,6 +129,9 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
     }
 
     private fun playVisibleVideo() {
+        if (VideoFloatWindow.instance.isShowing()) {
+            return
+        }
         val start = System.currentTimeMillis()
         Utils.runIfNotNull(videosAdapter, linearLayoutManager) { arg1, arg2 ->
             val fv = arg2.findFirstVisibleItemPosition()
@@ -259,7 +260,7 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
                                     {
                                         smartRefreshLayout.finishRefresh()
                                         videosAdapter?.setNewData(it)
-                                        MyApplication.instance.playerHelper.playList = it
+                                        PlayList.data = it
                                         smartRefreshLayout.post {
                                             playVisibleVideo()
                                         }

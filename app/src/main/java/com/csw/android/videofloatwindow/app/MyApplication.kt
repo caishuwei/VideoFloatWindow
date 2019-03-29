@@ -6,9 +6,6 @@ import android.database.sqlite.SQLiteDatabase
 import android.support.multidex.MultiDex
 import com.csw.android.videofloatwindow.greendao.DaoMaster
 import com.csw.android.videofloatwindow.greendao.DaoSession
-import com.csw.android.videofloatwindow.player.PlayerHelper
-import com.csw.android.videofloatwindow.player.base.BrightnessController
-import com.csw.android.videofloatwindow.player.base.VolumeController
 import com.scwang.smartrefresh.layout.SmartRefreshLayout
 import com.scwang.smartrefresh.layout.footer.ClassicsFooter
 import com.scwang.smartrefresh.layout.header.BezierRadarHeader
@@ -41,10 +38,6 @@ class MyApplication : Application() {
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
         MultiDex.install(this)
-    }
-
-    val playerHelper: PlayerHelper by lazy {
-        PlayerHelper(this)
     }
 
     val dbHelper: DaoMaster.DevOpenHelper by lazy {

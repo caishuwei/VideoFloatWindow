@@ -4,7 +4,6 @@ import android.view.ViewGroup
 import com.chad.library.adapter.base.BaseViewHolder
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.entities.VideoInfo
-import com.csw.android.videofloatwindow.player.video.CustomVideoView
 import com.csw.android.videofloatwindow.util.Utils
 import com.csw.android.videofloatwindow.view.ListVideoContainer
 
@@ -38,7 +37,7 @@ class LargeVideosAdapter : VideosAdapter(R.layout.item_large_video) {
             h.setText(R.id.tv_name, i.fileName)
             h.setText(R.id.tv_desc, i.filePath)
             val listVideoContainer = h.getView<ListVideoContainer>(R.id.mv_video_container)
-            listVideoContainer.videoInfo = i
+            listVideoContainer.setVideoInfo(i)
             listVideoContainer.bindVideoView()
             loadVideoPreviewImage(listVideoContainer.whRatioImageView, i)
         }

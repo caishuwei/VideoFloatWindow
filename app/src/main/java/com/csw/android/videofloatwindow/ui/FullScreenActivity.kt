@@ -3,12 +3,11 @@ package com.csw.android.videofloatwindow.ui
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.MotionEvent
 import com.csw.android.videofloatwindow.R
-import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
+import com.csw.android.videofloatwindow.player.PlayHelper
+import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
 import com.csw.android.videofloatwindow.ui.base.BaseActivity
-import com.csw.android.videofloatwindow.util.LogUtils
 import com.csw.android.videofloatwindow.util.Utils
 import kotlinx.android.synthetic.main.activity_full_screen.*
 
@@ -44,18 +43,31 @@ class FullScreenActivity : BaseActivity() {
     }
 
     private fun initData(intent: Intent?) {
-        MyApplication.instance.playerHelper.hideFloatWindow()
+        VideoFloatWindow.instance.hide()
         if (intent != null) {
             val videoInfo = intent.getSerializableExtra("VideoInfo")
             val uri = intent.data
             if (videoInfo != null && videoInfo is VideoInfo) {
-                videoContainer.videoInfo = videoInfo
+                videoContainer.setVideoInfo(videoInfo, true)
                 videoContainer.play()
             } else if (uri != null && "content" == uri.scheme) {
-                videoContainer.videoInfo = Utils.getVideoInfo(contentResolver, uri)
-                videoContainer.play()
+                val vi = Utils.getVideoInfo(contentResolver, uri);
+                vi?.let {
+                    videoContainer.setVideoInfo(it, true)
+                    videoContainer.play()
+                }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        PlayHelper.onVideoContainerEnterForeground(videoContainer)
+    }
+
+    override fun onStop() {
+        PlayHelper.onVideoContainerExitForeground(videoContainer)
+        super.onStop()
     }
 
     override fun onDestroy() {

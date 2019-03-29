@@ -5,8 +5,10 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View.OnClickListener
 import com.csw.android.videofloatwindow.app.MyApplication
+import com.csw.android.videofloatwindow.player.PlayHelper
+import com.csw.android.videofloatwindow.player.PlayList
 import com.csw.android.videofloatwindow.player.base.VideoContainer
-import com.csw.android.videofloatwindow.player.video.CustomVideoView
+import com.csw.android.videofloatwindow.player.video.base.IControllerSettingHelper
 
 class FullScreenVideoContainer : VideoContainer {
 
@@ -14,9 +16,9 @@ class FullScreenVideoContainer : VideoContainer {
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    override fun settingPlayController(controllerSettingHelper: CustomVideoView.ControllerSettingHelper) {
+    override fun settingPlayController(controllerSettingHelper: IControllerSettingHelper) {
         super.settingPlayController(controllerSettingHelper)
-        videoInfo?.let {
+        mVideoInfo?.let {
             controllerSettingHelper
                     .setTitle(it.fileName)
                     .setBackClickListener(OnClickListener { _ ->
@@ -26,7 +28,7 @@ class FullScreenVideoContainer : VideoContainer {
                         tryPlayInWindow()
                     })
                     .setPreviousClickListener(
-                            if (MyApplication.instance.playerHelper.hasPrevious()) {
+                            if (PlayList.hasPrevious()) {
                                 OnClickListener { _ ->
                                     playPre()
                                 }
@@ -35,7 +37,7 @@ class FullScreenVideoContainer : VideoContainer {
                             }
                     )
                     .setNextClickListener(
-                            if (MyApplication.instance.playerHelper.hasNext()) {
+                            if (PlayList.hasNext()) {
                                 OnClickListener { _ ->
                                     playNext()
                                 }
@@ -45,23 +47,16 @@ class FullScreenVideoContainer : VideoContainer {
                     )
                     .setVolumeAndBrightnessControllerEnable(true)
         }
-
+        tryRotateScreen()
     }
 
+
     private fun playNext() {
-        val nextVideo = MyApplication.instance.playerHelper.getNext()
-        if (nextVideo != null) {
-            videoInfo = nextVideo
-            play()
-        }
+        PlayHelper.tryPlayNext()
     }
 
     private fun playPre() {
-        val preVideo = MyApplication.instance.playerHelper.getPrevious()
-        if (preVideo != null) {
-            videoInfo = preVideo
-            play()
-        }
+        PlayHelper.tryPlayPrevious()
     }
 
     override fun playInWindow() {

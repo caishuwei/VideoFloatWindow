@@ -53,20 +53,20 @@ class PlayControlNotification {
 
     private fun createNotification() {
         bigRemoteViews = RemoteViews(context.packageName, R.layout.view_play_control_big_notification)
-        setNotificationClickListener(bigRemoteViews, R.id.v_previous, VideoService.ACTION_PLAY_PREVIOUS)
-        setNotificationClickListener(bigRemoteViews, R.id.v_next, VideoService.ACTION_PLAY_NEXT)
-        setNotificationClickListener(bigRemoteViews, R.id.exo_play, VideoService.ACTION_PLAY_CURR)
-        setNotificationClickListener(bigRemoteViews, R.id.exo_pause, VideoService.ACTION_PAUSE_CURR)
-        setNotificationClickListener(bigRemoteViews, R.id.v_full_screen, VideoService.ACTION_FULL_SCREEN)
-        setNotificationClickListener(bigRemoteViews, R.id.v_float_window, VideoService.ACTION_FLOAT_WINDOW)
+        setNotificationClickListener(bigRemoteViews, R.id.v_previous, PlayService.ACTION_PLAY_PREVIOUS)
+        setNotificationClickListener(bigRemoteViews, R.id.v_next, PlayService.ACTION_PLAY_NEXT)
+        setNotificationClickListener(bigRemoteViews, R.id.exo_play, PlayService.ACTION_PLAY_CURR)
+        setNotificationClickListener(bigRemoteViews, R.id.exo_pause, PlayService.ACTION_PAUSE_CURR)
+        setNotificationClickListener(bigRemoteViews, R.id.v_full_screen, PlayService.ACTION_FULL_SCREEN)
+        setNotificationClickListener(bigRemoteViews, R.id.v_float_window, PlayService.ACTION_FLOAT_WINDOW)
 
         normalRemoteViews = RemoteViews(context.packageName, R.layout.view_play_control_normal_notification)
-        setNotificationClickListener(normalRemoteViews, R.id.v_previous, VideoService.ACTION_PLAY_PREVIOUS)
-        setNotificationClickListener(normalRemoteViews, R.id.v_next, VideoService.ACTION_PLAY_NEXT)
-        setNotificationClickListener(normalRemoteViews, R.id.exo_play, VideoService.ACTION_PLAY_CURR)
-        setNotificationClickListener(normalRemoteViews, R.id.exo_pause, VideoService.ACTION_PAUSE_CURR)
-        setNotificationClickListener(normalRemoteViews, R.id.v_full_screen, VideoService.ACTION_FULL_SCREEN)
-        setNotificationClickListener(normalRemoteViews, R.id.v_float_window, VideoService.ACTION_FLOAT_WINDOW)
+        setNotificationClickListener(normalRemoteViews, R.id.v_previous, PlayService.ACTION_PLAY_PREVIOUS)
+        setNotificationClickListener(normalRemoteViews, R.id.v_next, PlayService.ACTION_PLAY_NEXT)
+        setNotificationClickListener(normalRemoteViews, R.id.exo_play, PlayService.ACTION_PLAY_CURR)
+        setNotificationClickListener(normalRemoteViews, R.id.exo_pause, PlayService.ACTION_PAUSE_CURR)
+        setNotificationClickListener(normalRemoteViews, R.id.v_full_screen, PlayService.ACTION_FULL_SCREEN)
+        setNotificationClickListener(normalRemoteViews, R.id.v_float_window, PlayService.ACTION_FLOAT_WINDOW)
 
         mNotification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setCustomContentView(normalRemoteViews)
@@ -83,7 +83,7 @@ class PlayControlNotification {
                 viewId,
                 PendingIntent.getBroadcast(
                         context,
-                        VideoService.REQUEST_CODE,
+                        PlayService.REQUEST_CODE,
                         Intent(broadcastAction),
                         PendingIntent.FLAG_UPDATE_CURRENT
                 )

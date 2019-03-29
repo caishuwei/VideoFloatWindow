@@ -18,10 +18,10 @@ import android.view.WindowManager
 import android.widget.PopupWindow
 import com.chad.library.adapter.base.entity.MultiItemEntity
 import com.csw.android.videofloatwindow.R
-import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.AddItem
 import com.csw.android.videofloatwindow.entities.PlaySheet
 import com.csw.android.videofloatwindow.entities.VideoInfo
+import com.csw.android.videofloatwindow.player.PlayList
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
 import com.csw.android.videofloatwindow.ui.base.BaseActivity
 import com.csw.android.videofloatwindow.util.DBUtils
@@ -102,7 +102,7 @@ class LocalVideosActivity : BaseActivity() {
                                 {
                                     smartRefreshLayout.finishRefresh()
                                     videosAdapter.setNewData(it)
-                                    MyApplication.instance.playerHelper.playList = it
+                                    PlayList.data = it
                                 },
                                 {
                                     smartRefreshLayout.finishRefresh()

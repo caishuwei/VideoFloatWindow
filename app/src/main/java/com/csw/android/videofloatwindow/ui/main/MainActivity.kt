@@ -1,14 +1,12 @@
 package com.csw.android.videofloatwindow.ui.main
 
-import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.support.v4.content.ContextCompat
 import android.support.v7.widget.LinearLayoutManager
 import android.view.View
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.entities.PlaySheet
-import com.csw.android.videofloatwindow.player.service.VideoService
+import com.csw.android.videofloatwindow.player.PlayHelper
 import com.csw.android.videofloatwindow.ui.base.BaseActivity
 import com.csw.android.videofloatwindow.ui.base.CommonActivity
 import com.csw.android.videofloatwindow.ui.list.LocalVideosFragment
@@ -72,11 +70,8 @@ class MainActivity : BaseActivity() {
 
     override fun initData() {
         super.initData()
-        ContextCompat.startForegroundService(
-                this@MainActivity,
-                Intent(this@MainActivity, VideoService::class.java)
-        )
         smartRefreshLayout.autoRefresh()
+        PlayHelper.backgroundPlay = true
     }
 
     private fun loadPlaySheets() {

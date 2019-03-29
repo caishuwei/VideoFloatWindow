@@ -41,7 +41,7 @@
         <activity android:name=".ui.base.CommonActivity" />
 
         <service
-            android:name=".player.service.VideoService"
+            android:name=".player.service.PlayService"
             android:exported="false" />
     </application>
 </manifest>
