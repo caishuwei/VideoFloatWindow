@@ -9,6 +9,7 @@ import com.csw.android.videofloatwindow.player.video.exo.ExoVideoView
 import com.csw.android.videofloatwindow.player.window.FloatWindowVideoContainer
 import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
+import com.csw.android.videofloatwindow.util.LogUtils
 import com.csw.android.videofloatwindow.view.FullScreenVideoContainer
 import java.util.*
 
@@ -31,6 +32,7 @@ class PlayHelper {
                 instance = ExoVideoView(videoInfo)
                 videoMap[videoInfo.target] = instance
             }
+            LogUtils.e(msg = "videoMap size = " + videoMap.size)
             return instance
         }
 
@@ -50,6 +52,7 @@ class PlayHelper {
          */
         fun removeVideo(video: IVideo) {
             videoMap.remove(video.getVideoInfo().target)
+            LogUtils.e(msg = "videoMap size = " + videoMap.size)
         }
 
         /**

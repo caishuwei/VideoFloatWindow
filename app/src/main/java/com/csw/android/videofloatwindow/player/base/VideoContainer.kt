@@ -95,13 +95,7 @@ open class VideoContainer : FrameLayout {
      * 释放播放器
      */
     fun releaseVideoView() {
-        currVideo?.let {
-            it.unbindVideoContainer(this)
-            if (currVideo == null) {
-                //成功解除VideoView
-                it.release()
-            }
-        }
+        currVideo?.unbindVideoContainer(this)
     }
 
     private fun getVideo(videoInfo: VideoInfo): IVideo {
