@@ -56,6 +56,11 @@ interface IVideo {
     fun isPlaying(): Boolean
 
     /**
+     * 是否播放结束
+     */
+    fun isEnd(): Boolean
+
+    /**
      * 暂停播放
      */
     fun pause()

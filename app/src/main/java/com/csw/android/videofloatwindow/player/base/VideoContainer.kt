@@ -4,7 +4,9 @@ import android.app.Activity
 import android.content.Context
 import android.content.pm.ActivityInfo
 import android.support.design.widget.Snackbar
+import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentActivity
+import android.support.v4.app.FragmentManager
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import com.csw.android.videofloatwindow.entities.VideoInfo
@@ -14,6 +16,8 @@ import com.csw.android.videofloatwindow.player.video.base.IControllerSettingHelp
 import com.csw.android.videofloatwindow.player.video.base.IVideo
 import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
+import com.csw.android.videofloatwindow.util.FragmentHelper
+import com.csw.android.videofloatwindow.util.LogUtils
 import com.csw.android.videofloatwindow.util.Utils
 
 open class VideoContainer : FrameLayout {
@@ -148,12 +152,18 @@ open class VideoContainer : FrameLayout {
         }
     }
 
+    /**
+     * 全屏播放
+     */
     fun playInFullScreen() {
         mVideoInfo?.let {
             FullScreenActivity.openActivity(context, it)
         }
     }
 
+    /**
+     * 检查悬浮窗权限并在悬浮窗中播放
+     */
     fun tryPlayInWindow() {
         val activity = context
         if (activity is FragmentActivity) {
@@ -169,6 +179,9 @@ open class VideoContainer : FrameLayout {
         }
     }
 
+    /**
+     * 在悬浮窗中播放
+     */
     open fun playInWindow() {
         mVideoInfo?.let {
             VideoFloatWindow.instance.setVideoInfo(it)
@@ -176,5 +189,49 @@ open class VideoContainer : FrameLayout {
         }
     }
 
+    /**
+     *  在UI销毁时释放VideoView
+     */
+    fun releaseOnUiDestroy(fragmentManager: FragmentManager) {
+        UiDestroyListenerFragment.releaseVideoOnUiDestroy(fragmentManager, this)
+    }
+
+    class UiDestroyListenerFragment : Fragment() {
+
+        companion object {
+            fun releaseVideoOnUiDestroy(fragmentManager: FragmentManager, videoContainer: VideoContainer) {
+                val instance = FragmentHelper.getFragmentInstance(fragmentManager, UiDestroyListenerFragment::class.java.name, UiDestroyListenerFragment::class.java)
+                instance.registerVideoContainer(videoContainer)
+            }
+        }
+
+        private val videoContainerSet = HashSet<VideoContainer>()
+        private var isViewDestroyed = false
+        private fun registerVideoContainer(videoContainer: VideoContainer) {
+            videoContainerSet.add(videoContainer)
+            if (isViewDestroyed) {
+                videoContainer.releaseVideoView()
+            }
+        }
+
+        /**
+         * 这是一个没有视图的fragment，onViewCreated不会走，但onDestroyView会
+         */
+        override fun onDestroyView() {
+            LogUtils.i("UiDestroyListenerFragment", "onDestroyView")
+            isViewDestroyed = true
+            for (videoContainer in videoContainerSet) {
+                videoContainer.releaseVideoView()
+            }
+            videoContainerSet.clear()
+            super.onDestroyView()
+        }
+
+        override fun onDestroy() {
+            LogUtils.i("UiDestroyListenerFragment", "onDestroy")
+            super.onDestroy()
+        }
+
+    }
 
 }

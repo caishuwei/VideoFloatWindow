@@ -55,6 +55,7 @@ import com.google.android.exoplayer2.util.Util
  */
 class ExoVideoView internal constructor(videoInfo: VideoInfo) : RelativeLayout(MyApplication.instance), IVideo, IUICreator, NestedScrollingChild {
 
+
     //播放器相关视图
     private lateinit var playerView: PlayerView
     private lateinit var vBack: View
@@ -344,6 +345,9 @@ class ExoVideoView internal constructor(videoInfo: VideoInfo) : RelativeLayout(M
         return player.playWhenReady && (player.playbackState == Player.STATE_READY || player.playbackState == Player.STATE_BUFFERING)
     }
 
+    override fun isEnd(): Boolean {
+        return player.playbackState == Player.STATE_ENDED
+    }
 
     override fun pause() {
         player.playWhenReady = false

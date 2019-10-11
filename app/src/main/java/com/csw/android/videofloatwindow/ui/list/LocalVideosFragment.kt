@@ -19,7 +19,6 @@ import com.csw.android.videofloatwindow.player.PlayList
 import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
 import com.csw.android.videofloatwindow.ui.base.MvpFragment
-import com.csw.android.videofloatwindow.util.LogUtils
 import com.csw.android.videofloatwindow.util.Utils
 import com.csw.android.videofloatwindow.view.ListVideoContainer
 import com.tbruyelle.rxpermissions2.RxPermissions
@@ -32,6 +31,25 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
 
     private var linearLayoutManager: LinearLayoutManager? = null
     private var videosAdapter: LargeVideosAdapter? = null
+    private val onPlayEndHandler = object : PlayHelper.OnPlayEndHandler {
+        override fun handlePlayEnd(videoInfo: VideoInfo?) {
+            Utils.runIfNotNull(PlayHelper.lastPlayVideo, videosAdapter?.data) { video, data ->
+                if (video.isEnd()) {
+                    var currIndex = -1
+                    for ((index, vi) in data.withIndex()) {
+                        if (Utils.videoEquals(video.getVideoInfo(), vi)) {
+                            currIndex = index + 1
+                            break
+                        }
+                    }
+                    if (currIndex >= 0 && currIndex < data.size) {
+                        //滚动到下个视频item出现在屏幕上
+                        playByPosition(currIndex)
+                    }
+                }
+            }
+        }
+    }
     @Inject
     lateinit var presenter: LocalVideosContract.Presenter
 
@@ -60,7 +78,7 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
 
     override fun initAdapter() {
         super.initAdapter()
-        videosAdapter = LargeVideosAdapter()
+        videosAdapter = LargeVideosAdapter(this)
         recyclerView.adapter = videosAdapter
     }
 
@@ -100,30 +118,11 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
             }
 
         }
-        PlayHelper.addOnPlayVideoChangeListener(object : PlayHelper.OnPlayChangeListener {
-            override fun onPlayVideoInfoUpdated(videoInfo: VideoInfo?) {
-                Utils.runIfNotNull(PlayHelper.lastPlayVideo, videosAdapter?.data) { video, data ->
-                    //
-//                    var currIndex = -1
-//                    for ((index, vi) in data.withIndex()) {
-//                        if (Utils.videoEquals(video.getVideoInfo(),vi)) {
-//                            currIndex = index
-//                            break
-//                        }
-//                    }
-//                    if (currIndex >= 0 && currIndex  < data.size) {
-//                        //滚动到下个视频item出现在屏幕上
-//                        playByPosition(currIndex)
-//                    }
-                }
-            }
-
-        })
         smartRefreshLayout.isEnableRefresh = true
         smartRefreshLayout.isEnableLoadMore = false
         smartRefreshLayout.setOnRefreshListener {
             videosAdapter?.setNewData(null)
-            videosAdapter?.pauseAllVideoView();
+//            PlayHelper.tryPauseCurr()
             requestLocalVideos()
         }
     }
@@ -185,7 +184,6 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
                 }
             }
         }
-        LogUtils.e(msg = "playVisibleVideo->${System.currentTimeMillis() - start}")
     }
 
     private fun playByPosition(i: Int) {
@@ -230,13 +228,35 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
 
     override fun onResume() {
         super.onResume()
-        playVisibleVideo()
+        PlayHelper.setOnPlayEndHandler(onPlayEndHandler)
+        play()
+    }
+
+    private fun play() {
+        val currVideo = PlayHelper.lastPlayVideo
+        val data = videosAdapter?.data
+        if (data == null || data.isEmpty()) {
+            return
+        }
+        //当前有正在播放的歌曲，定位到该歌曲条目位置
+        if (currVideo != null && currVideo.isPlaying()) {
+            for ((index, vi) in data.withIndex()) {
+                if (Utils.videoEquals(vi, currVideo.getVideoInfo())) {
+                    playByPosition(index)
+                    return
+                }
+            }
+        }
+        //条目中找不到当前播放歌曲，播放可见条目的视频
+        recyclerView.post {
+            playVisibleVideo()
+        }
     }
 
     override fun onDestroyView() {
         linearLayoutManager = null
-        videosAdapter?.releaseAllVideoView()
         videosAdapter = null
+        PlayHelper.setOnPlayEndHandler(null)
         super.onDestroyView()
     }
 
@@ -260,10 +280,9 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
                                     {
                                         smartRefreshLayout.finishRefresh()
                                         videosAdapter?.setNewData(it)
+                                        //设置播放列表
                                         PlayList.data = it
-                                        smartRefreshLayout.post {
-                                            playVisibleVideo()
-                                        }
+                                        play()
                                     },
                                     {
                                         smartRefreshLayout.finishRefresh()

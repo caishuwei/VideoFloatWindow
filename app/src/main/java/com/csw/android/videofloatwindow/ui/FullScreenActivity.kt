@@ -51,7 +51,7 @@ class FullScreenActivity : BaseActivity() {
                 videoContainer.setVideoInfo(videoInfo, true)
                 videoContainer.play()
             } else if (uri != null && "content" == uri.scheme) {
-                val vi = Utils.getVideoInfo(contentResolver, uri);
+                val vi = Utils.getVideoInfo(contentResolver, uri)
                 vi?.let {
                     videoContainer.setVideoInfo(it, true)
                     videoContainer.play()

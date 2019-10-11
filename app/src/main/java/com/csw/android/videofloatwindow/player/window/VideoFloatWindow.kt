@@ -109,8 +109,9 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
         if (params.width > 0 && params.height > 0) {
             PlayHelper.lastPlayVideo?.getVideoInfo()?.let {
                 val ratioWH = it.whRatio
-                val areaFillW = (r - params.x) * (r - params.x) / ratioWH
-                val areaFillH = (b - params.y) * (b - params.y) * ratioWH
+                val areaFillW = (r - params.x) * (r - params.x) / ratioWH//宽度拉到手指横坐标的面积
+                val areaFillH = (b - params.y) * (b - params.y) * ratioWH//高度拉到手指纵坐标的面积
+                //取面积小的进行设置
                 if (areaFillW > areaFillH) {
                     params.width = ((b - params.y) * ratioWH).toInt()
                     params.height = (b - params.y).toInt()

@@ -11,17 +11,24 @@ import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
 import com.csw.android.videofloatwindow.util.LogUtils
 import com.csw.android.videofloatwindow.view.FullScreenVideoContainer
+import java.lang.ref.WeakReference
 import java.util.*
 
 class PlayHelper {
 
     companion object {
-        /**
-         * VideoView的创建与回收
-         *
-         *
-         */
+        //VideoView的创建与回收
         private val videoMap = WeakHashMap<String, IVideo>()
+        //单一前台的VideoContainer，如全屏视频或者悬浮窗视频，其可见时设置到这里，用于在通过通知切换下一首时可以通过这里绑定到容器中
+        private var singleForegroundVideoContainer: WeakReference<VideoContainer>? = null
+        //播放结束处理器
+        private val playEndHandler = PlayEndHandler()
+        //播放状态改变监听器集合
+        private val onPlayVideoChangeListenerSet = HashSet<OnPlayChangeListener>()
+
+        init {
+            addOnPlayVideoChangeListener(playEndHandler)
+        }
 
         /**
          * 获取VideoView实例
@@ -32,7 +39,7 @@ class PlayHelper {
                 instance = ExoVideoView(videoInfo)
                 videoMap[videoInfo.target] = instance
             }
-            LogUtils.e(msg = "videoMap size = " + videoMap.size)
+            LogUtils.i("PlayHelper", "videoMap size = " + videoMap.size)
             return instance
         }
 
@@ -52,20 +59,17 @@ class PlayHelper {
          */
         fun removeVideo(video: IVideo) {
             videoMap.remove(video.getVideoInfo().target)
-            LogUtils.e(msg = "videoMap size = " + videoMap.size)
+            LogUtils.i("PlayHelper", "removeVideo ${video.getVideoInfo().fileName}")
+            LogUtils.i("PlayHelper", "videoMap size = " + videoMap.size)
         }
 
-        /**
-         * 单一前台的VideoContainer，如全屏视频或者悬浮窗视频，其可见时设置到这里，用于在通过通知切换下一首时可以通过这里绑定到容器中
-         */
-        private var singleForegroundVideoContainer: VideoContainer? = null
 
         /**
          * VideoContainer进入前台
          */
         fun onVideoContainerEnterForeground(videoContainer: VideoContainer) {
             if (videoContainer is FullScreenVideoContainer || videoContainer is FloatWindowVideoContainer) {
-                singleForegroundVideoContainer = videoContainer
+                singleForegroundVideoContainer = WeakReference(videoContainer)
             }
         }
 
@@ -74,8 +78,10 @@ class PlayHelper {
          */
         fun onVideoContainerExitForeground(videoContainer: VideoContainer) {
             if (videoContainer is FullScreenVideoContainer || videoContainer is FloatWindowVideoContainer) {
-                if (singleForegroundVideoContainer == videoContainer) {
-                    singleForegroundVideoContainer = null
+                singleForegroundVideoContainer?.let {
+                    if (it.get() == videoContainer) {
+                        singleForegroundVideoContainer = null
+                    }
                 }
             }
         }
@@ -126,7 +132,9 @@ class PlayHelper {
             return false
         }
 
-
+        /**
+         * 播放状态发生改变时调用
+         */
         fun onVideoViewPlayStateChanged(video: IVideo) {
             if (lastPlayVideo == video) {
                 for (listener in onPlayVideoChangeListenerSet) {
@@ -135,6 +143,9 @@ class PlayHelper {
             }
         }
 
+        /**
+         * 播放的歌曲发生改变时调用
+         */
         fun onVideoViewVideoInfoChanged(video: IVideo) {
             if (lastPlayVideo == video) {
                 for (listener in onPlayVideoChangeListenerSet) {
@@ -143,9 +154,17 @@ class PlayHelper {
             }
         }
 
-        //-------------------------------------新视频播放监听----------------------------------
-        private val onPlayVideoChangeListenerSet = HashSet<OnPlayChangeListener>()
+        //播放结束处理---------------------------------------------------------------------------
 
+        fun setOnPlayEndHandler(onPlayEndHandler: OnPlayEndHandler?) {
+            if (onPlayEndHandler == null) {
+                playEndHandler.onPlayEndHandler = playEndHandler.defaultPlayEndHandler
+            } else {
+                playEndHandler.onPlayEndHandler = onPlayEndHandler
+            }
+        }
+
+        //播放状态变化监听-----------------------------------------------------------------------
         fun addOnPlayVideoChangeListener(listener: OnPlayChangeListener) {
             onPlayVideoChangeListenerSet.add(listener)
         }
@@ -154,14 +173,14 @@ class PlayHelper {
             onPlayVideoChangeListenerSet.remove(listener)
         }
 
-
+        //播放控制-----------------------------------------------------------------------------
         /**
          * 尝试播放下一个
          */
         fun tryPlayNext(): Boolean {
             val next = PlayList.getNext()
             if (next != null) {
-                val currVideoContainer = singleForegroundVideoContainer
+                val currVideoContainer = singleForegroundVideoContainer?.get()
                 if (currVideoContainer != null) {
                     currVideoContainer.setVideoInfo(next)
                     currVideoContainer.play()
@@ -179,7 +198,7 @@ class PlayHelper {
         fun tryPlayPrevious(): Boolean {
             val pre = PlayList.getPrevious()
             if (pre != null) {
-                val currVideoContainer = singleForegroundVideoContainer
+                val currVideoContainer = singleForegroundVideoContainer?.get()
                 if (currVideoContainer != null) {
                     currVideoContainer.setVideoInfo(pre)
                     currVideoContainer.play()
@@ -248,7 +267,30 @@ class PlayHelper {
         /**
          * 播放的视频信息更新
          */
-        fun onPlayVideoInfoUpdated(videoInfo: VideoInfo?);
+        fun onPlayVideoInfoUpdated(videoInfo: VideoInfo?)
+    }
 
+    /**
+     * 播放结束处理
+     */
+    interface OnPlayEndHandler {
+        fun handlePlayEnd(videoInfo: VideoInfo?)
+    }
+
+    private class PlayEndHandler : OnPlayChangeListener {
+        //默认播放结束则播放列表下一个
+        val defaultPlayEndHandler = object : OnPlayEndHandler {
+            override fun handlePlayEnd(videoInfo: VideoInfo?) {
+                tryPlayNext()
+            }
+        }
+        var onPlayEndHandler = defaultPlayEndHandler
+        override fun onPlayVideoInfoUpdated(videoInfo: VideoInfo?) {
+            lastPlayVideo?.let {
+                if (it.isEnd()) {
+                    onPlayEndHandler.handlePlayEnd(videoInfo)
+                }
+            }
+        }
     }
 }
