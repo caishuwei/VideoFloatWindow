@@ -146,8 +146,8 @@ open class VideoContainer : FrameLayout {
     fun tryRotateScreen() {
         Utils.runIfNotNull(context, mVideoInfo) { c, v ->
             if (c is Activity) {
-                c.requestedOrientation = if (v.whRatio > 1) ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                c.requestedOrientation = if (v.whRatio > 1) ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                else ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             }
         }
     }
