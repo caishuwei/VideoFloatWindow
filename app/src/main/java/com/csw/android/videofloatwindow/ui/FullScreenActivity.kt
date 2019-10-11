@@ -58,19 +58,19 @@ class FullScreenActivity : BaseActivity() {
                 }
             }
         }
+        PlayHelper.onVideoContainerEnterForeground(videoContainer)
     }
 
     override fun onStart() {
         super.onStart()
-        PlayHelper.onVideoContainerEnterForeground(videoContainer)
     }
 
     override fun onStop() {
-        PlayHelper.onVideoContainerExitForeground(videoContainer)
         super.onStop()
     }
 
     override fun onDestroy() {
+        PlayHelper.onVideoContainerExitForeground(videoContainer)
         videoContainer.releaseVideoView()
         super.onDestroy()
     }

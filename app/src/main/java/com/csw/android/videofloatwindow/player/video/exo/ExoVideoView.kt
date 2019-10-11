@@ -235,8 +235,8 @@ class ExoVideoView internal constructor(videoInfo: VideoInfo) : RelativeLayout(M
                     }
                     Player.STATE_ENDED -> {
                         keepScreenOn = false
-                        player.playWhenReady = false
-                        player.seekTo(0)
+//                        player.playWhenReady = false
+//                        player.seekTo(0)
                     }
                 }
             }

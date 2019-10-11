@@ -1,5 +1,7 @@
 package com.csw.android.videofloatwindow.player
 
+import android.os.Handler
+import android.os.Looper
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.base.VideoContainer
@@ -25,6 +27,8 @@ class PlayHelper {
         private val playEndHandler = PlayEndHandler()
         //播放状态改变监听器集合
         private val onPlayVideoChangeListenerSet = HashSet<OnPlayChangeListener>()
+        //主消息循环处理器
+        private val mainHandler = Handler(Looper.getMainLooper())
 
         init {
             addOnPlayVideoChangeListener(playEndHandler)
@@ -281,7 +285,11 @@ class PlayHelper {
         //默认播放结束则播放列表下一个
         val defaultPlayEndHandler = object : OnPlayEndHandler {
             override fun handlePlayEnd(videoInfo: VideoInfo?) {
-                tryPlayNext()
+                lastPlayVideo?.let {
+                    mainHandler.post {
+                        tryPlayNext()
+                    }
+                }
             }
         }
         var onPlayEndHandler = defaultPlayEndHandler

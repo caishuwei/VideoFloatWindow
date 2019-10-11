@@ -232,6 +232,11 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
         play()
     }
 
+    override fun onPause() {
+        super.onPause()
+        PlayHelper.setOnPlayEndHandler(null)
+    }
+
     private fun play() {
         val currVideo = PlayHelper.lastPlayVideo
         val data = videosAdapter?.data
@@ -256,7 +261,6 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
     override fun onDestroyView() {
         linearLayoutManager = null
         videosAdapter = null
-        PlayHelper.setOnPlayEndHandler(null)
         super.onDestroyView()
     }
 
