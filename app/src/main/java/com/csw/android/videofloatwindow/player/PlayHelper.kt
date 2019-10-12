@@ -22,7 +22,7 @@ class PlayHelper {
         //VideoView的创建与回收
         private val videoMap = WeakHashMap<String, IVideo>()
         //单一前台的VideoContainer，如全屏视频或者悬浮窗视频，其可见时设置到这里，用于在通过通知切换下一首时可以通过这里绑定到容器中
-        private var singleForegroundVideoContainer: WeakReference<VideoContainer>? = null
+        private var topLevelVideoContainer: WeakReference<VideoContainer>? = null
         //播放结束处理器
         private val playEndHandler = PlayEndHandler()
         //播放状态改变监听器集合
@@ -67,27 +67,33 @@ class PlayHelper {
             LogUtils.i("PlayHelper", "videoMap size = " + videoMap.size)
         }
 
-
         /**
-         * VideoContainer进入前台
+         * 设置顶层视频容器
          */
-        fun onVideoContainerEnterForeground(videoContainer: VideoContainer) {
+        fun setTopLevelVideoContainer(videoContainer: VideoContainer) {
             if (videoContainer is FullScreenVideoContainer || videoContainer is FloatWindowVideoContainer) {
-                singleForegroundVideoContainer = WeakReference(videoContainer)
+                topLevelVideoContainer = WeakReference(videoContainer)
             }
         }
 
         /**
-         * VideoContainer退出前台
+         * 移除顶层视频容器（需要校验要移除的是否是当前的容器，如果不是，则没有移除权限）
          */
-        fun onVideoContainerExitForeground(videoContainer: VideoContainer) {
+        fun removeTopLevelVideoContainer(videoContainer: VideoContainer) {
             if (videoContainer is FullScreenVideoContainer || videoContainer is FloatWindowVideoContainer) {
-                singleForegroundVideoContainer?.let {
+                topLevelVideoContainer?.let {
                     if (it.get() == videoContainer) {
-                        singleForegroundVideoContainer = null
+                        topLevelVideoContainer = null
                     }
                 }
             }
+        }
+
+        /**
+         * 取得顶层视频容器
+         */
+        fun getTopLevelVideoContainer(): VideoContainer? {
+            return topLevelVideoContainer?.get()
         }
 
         /**
@@ -184,7 +190,7 @@ class PlayHelper {
         fun tryPlayNext(): Boolean {
             val next = PlayList.getNext()
             if (next != null) {
-                val currVideoContainer = singleForegroundVideoContainer?.get()
+                val currVideoContainer = topLevelVideoContainer?.get()
                 if (currVideoContainer != null) {
                     currVideoContainer.setVideoInfo(next)
                     currVideoContainer.play()
@@ -202,7 +208,7 @@ class PlayHelper {
         fun tryPlayPrevious(): Boolean {
             val pre = PlayList.getPrevious()
             if (pre != null) {
-                val currVideoContainer = singleForegroundVideoContainer?.get()
+                val currVideoContainer = topLevelVideoContainer?.get()
                 if (currVideoContainer != null) {
                     currVideoContainer.setVideoInfo(pre)
                     currVideoContainer.play()

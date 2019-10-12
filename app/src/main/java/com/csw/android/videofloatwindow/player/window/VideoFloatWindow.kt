@@ -1,6 +1,7 @@
 package com.csw.android.videofloatwindow.player.window
 
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.PixelFormat
 import android.os.Build
 import android.provider.Settings
@@ -153,7 +154,7 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
     private fun addToWindow() {
         if (parent == null) {
             windowManager.addView(this, layoutParams)
-            PlayHelper.onVideoContainerEnterForeground(videoContainer)
+            PlayHelper.setTopLevelVideoContainer(videoContainer)
             onFloatWindowChangeListener?.onFloatWindowVisibilityChanged(true)
         }
     }
@@ -162,7 +163,7 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
         if (parent != null) {
             windowManager.removeView(this)
             videoContainer.releaseVideoView()
-            PlayHelper.onVideoContainerExitForeground(videoContainer)
+            PlayHelper.removeTopLevelVideoContainer(videoContainer)
             onFloatWindowChangeListener?.onFloatWindowVisibilityChanged(false)
         }
     }
@@ -184,7 +185,6 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
         }
     }
 
-
     private var anchorPosX = 0
     private var anchorPosY = 0
     private fun updateWindowPosition(x: Int, y: Int) {
@@ -198,27 +198,25 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
         }
     }
 
-    //----------------------------------- 处理嵌套滚动的情况 -----------------------------------------
-
+    //处理嵌套滚动的情况>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     override fun getNestedScrollAxes(): Int {
         return ViewCompat.SCROLL_AXIS_VERTICAL
     }
 
     override fun onStartNestedScroll(child: View, target: View, nestedScrollAxes: Int): Boolean {
         //不管哪个方向的嵌套滑动，我们都要
-        LogUtils.e("onStartNestedScroll", "nestedScrollAxes = ${nestedScrollAxes}")
+        LogUtils.i(javaClass.name, "onStartNestedScroll nestedScrollAxes = ${nestedScrollAxes}")
         return true
     }
 
     override fun onNestedScrollAccepted(child: View, target: View, axes: Int) {
         super.onNestedScrollAccepted(child, target, axes)
         //绑定滚动的轴
-        LogUtils.e("onNestedScrollAccepted", "axes = ${axes}")
+        LogUtils.i(javaClass.name, "onNestedScrollAccepted axes = ${axes}")
     }
 
     override fun onStopNestedScroll(child: View) {
         super.onStopNestedScroll(child)
-
     }
 
     /**
@@ -233,7 +231,7 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
      */
     override fun onNestedScroll(target: View, dxConsumed: Int, dyConsumed: Int, dxUnconsumed: Int, dyUnconsumed: Int) {
         //将剩下的滚动量消耗掉
-        LogUtils.e("onNestedScroll", "dxUnconsumed = ${dxUnconsumed},dyUnconsumed = ${dyUnconsumed}")
+        LogUtils.i(javaClass.name, "onNestedScroll dxUnconsumed = ${dxUnconsumed},dyUnconsumed = ${dyUnconsumed}")
         updateWindowPosition(anchorPosX + dxUnconsumed, anchorPosY + dyUnconsumed)
         super.onNestedScroll(target, dxConsumed + dxUnconsumed, dyConsumed + dyUnconsumed, 0, 0)
     }
@@ -245,5 +243,5 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
     override fun onNestedFling(target: View, velocityX: Float, velocityY: Float, consumed: Boolean): Boolean {
         return super.onNestedFling(target, velocityX, velocityY, consumed)
     }
-
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 }

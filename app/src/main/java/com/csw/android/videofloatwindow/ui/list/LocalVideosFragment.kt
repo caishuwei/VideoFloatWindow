@@ -149,6 +149,7 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
         }
     }
 
+    //歌单列表 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     private fun showAddVideoInfoPopupWindow(view: View, videoInfo: VideoInfo) {
         val popupWindow = PopupWindow()
         val recyclerView = RecyclerView(view.context)
@@ -220,12 +221,9 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
         result.addAll(DBUtils.getPlaySheets())
         return result
     }
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     private fun playVisibleVideo() {
-        if (VideoFloatWindow.instance.isShowing()) {
-            return
-        }
-        val start = System.currentTimeMillis()
         Utils.runIfNotNull(videosAdapter, linearLayoutManager) { arg1, arg2 ->
             val fv = arg2.findFirstVisibleItemPosition()
             val lv = arg2.findLastVisibleItemPosition()

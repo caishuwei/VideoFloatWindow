@@ -5,15 +5,15 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener
 import com.csw.android.videofloatwindow.entities.VideoInfo
+import com.csw.android.videofloatwindow.player.PlayHelper
 import com.csw.android.videofloatwindow.player.base.VideoContainer
 import com.csw.android.videofloatwindow.player.video.base.IControllerSettingHelper
 import com.csw.android.videofloatwindow.player.video.base.IVideo
-import com.csw.android.videofloatwindow.player.video.exo.ExoVideoView
 
 class ListVideoContainer : VideoContainer {
 
     val whRatioImageView: WHRatioImageView
-//    var onVideoPlayListener: ExoVideoView.OnVideoPlayListener? = null
+    //    var onVideoPlayListener: ExoVideoView.OnVideoPlayListener? = null
     val floatWindowClickListener = OnClickListener { _ ->
         tryPlayInWindow()
     }
@@ -38,10 +38,39 @@ class ListVideoContainer : VideoContainer {
         whRatioImageView.visibility = View.VISIBLE
     }
 
+    //在不存在顶层视频容器时，才进行VideoView获取，避免在列表界面跟顶层容器抢占>>>>>>>>>>>>>>>>>>>>>
+    /**
+     * 开始播放，隐藏视频预览图
+     */
     override fun play(): VideoContainer {
-        whRatioImageView.visibility = View.GONE
-        return super.play()
+        val topLevelVideoContainer = PlayHelper.getTopLevelVideoContainer()
+        return if (topLevelVideoContainer != null) {
+            //通过顶层视频容器进行播放
+            mVideoInfo?.let {
+                topLevelVideoContainer.setVideoInfo(it)
+                topLevelVideoContainer.play()
+            }
+            this
+        } else {
+            whRatioImageView.visibility = View.GONE
+            super.play()
+        }
     }
+
+    override fun pause(): VideoContainer {
+        return if (PlayHelper.getTopLevelVideoContainer() != null) {
+            this
+        } else {
+            super.pause()
+        }
+    }
+
+    override fun bindVideoView() {
+        if (PlayHelper.getTopLevelVideoContainer() == null) {
+            super.bindVideoView()
+        }
+    }
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     override fun onUnbindVideo(video: IVideo) {
         super.onUnbindVideo(video)
