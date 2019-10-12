@@ -30,7 +30,7 @@ class ListVideoContainer : VideoContainer {
         whRatioImageView.setOnClickListener {
             play()
         }
-        addView(whRatioImageView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+        addView(whRatioImageView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
     }
 
     override fun setVideoInfo(videoInfo: VideoInfo, changeVideoView: Boolean) {

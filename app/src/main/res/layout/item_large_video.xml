@@ -19,7 +19,7 @@
         <com.csw.android.videofloatwindow.view.ListVideoContainer
             android:id="@+id/mv_video_container"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"/>
 
         <LinearLayout
             android:layout_width="match_parent"

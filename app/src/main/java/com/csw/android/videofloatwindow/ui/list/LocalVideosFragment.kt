@@ -94,6 +94,11 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
         super.initAdapter()
         videosAdapter = LargeVideosAdapter(this)
         recyclerView.adapter = videosAdapter
+        recyclerView.post {
+            videosAdapter?.let {
+                it.maxItemHeight = recyclerView.height
+            }
+        }
     }
 
     override fun initListener() {

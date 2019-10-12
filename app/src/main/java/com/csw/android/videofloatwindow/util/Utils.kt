@@ -47,7 +47,6 @@ class Utils {
             val wMode = View.MeasureSpec.getMode(widthMeasureSpec)
             var hSize = View.MeasureSpec.getSize(heightMeasureSpec)
             val hMode = View.MeasureSpec.getMode(heightMeasureSpec)
-
             if (hMode == View.MeasureSpec.UNSPECIFIED) {
                 hSize = ScreenInfo.HEIGHT
             }
