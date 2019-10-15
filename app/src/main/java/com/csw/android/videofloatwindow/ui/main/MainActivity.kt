@@ -77,7 +77,7 @@ class MainActivity : BaseActivity() {
                 Observable.create(
                         ObservableOnSubscribe<List<PlaySheet>> {
                             val result = arrayListOf<PlaySheet>()
-                            DBUtils.insertPlaySheetIfNoExist(PlaySheet(Constants.LOCAL_VIDEO_PLAY_SHEET))//插入本地视频播放列表
+                            DBUtils.insertPlaySheetIfNotExist(PlaySheet(Constants.LOCAL_VIDEO_PLAY_SHEET))//插入本地视频播放列表
                             result.addAll(DBUtils.getPlaySheets())
                             it.onNext(result)
                             it.onComplete()

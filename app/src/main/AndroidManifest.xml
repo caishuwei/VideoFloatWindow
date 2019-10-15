@@ -31,10 +31,11 @@
         <activity android:name=".ui.list.PlaySheetVideosActivity" />
 
         <!--全屏播放界面，为实现在其他应用中小窗口与全屏模式切换，此Activity运行在特定Activity栈中-->
+        <!--singleInstance会导致启动该Activity有短暂的白屏,这里使用SingleTask-->
         <activity
             android:name=".ui.FullScreenActivity"
             android:configChanges="orientation|screenSize|keyboardHidden|keyboard|screenLayout"
-            android:launchMode="singleInstance">
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />

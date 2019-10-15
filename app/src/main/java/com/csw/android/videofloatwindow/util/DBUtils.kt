@@ -1,16 +1,47 @@
 package com.csw.android.videofloatwindow.util
 
+import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.PlaySheet
 import com.csw.android.videofloatwindow.entities.PlaySheetVideo
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.greendao.*
+import com.github.yuweiguocn.library.greendao.MigrationHelper
+import org.greenrobot.greendao.database.Database
 
 class DBUtils {
     companion object {
 
-        private val dbHelper: DaoMaster.DevOpenHelper = DaoMaster.DevOpenHelper(MyApplication.instance, "video_db", null)
+        //覆写数据库连接,greendao默认的数据库更新是把表全删了重建,这里借用第三方sdk,
+        //进行表数据备份,建表,还原数据
+        private class NySQLiteOpenHelper(context: Context?, name: String?, factory: SQLiteDatabase.CursorFactory?) : DaoMaster.DevOpenHelper(context, name, factory) {
+            override fun onUpgrade(db: Database?, oldVersion: Int, newVersion: Int) {
+                try {
+
+                    MigrationHelper.migrate(
+                            db,
+                            object : MigrationHelper.ReCreateAllTableListener {
+                                override fun onCreateAllTables(db: Database?, ifNotExists: Boolean) {
+                                    DaoMaster.createAllTables(db, ifNotExists)
+                                }
+
+                                override fun onDropAllTables(db: Database?, ifExists: Boolean) {
+                                    DaoMaster.dropAllTables(db, ifExists)
+                                }
+                            },
+                            PlaySheetDao::class.java,
+                            PlaySheetVideoDao::class.java,
+                            VideoInfoDao::class.java
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+                super.onUpgrade(db, oldVersion, newVersion)
+            }
+        }
+
+        private val dbHelper: DaoMaster.DevOpenHelper = NySQLiteOpenHelper(MyApplication.instance, "video_db", null)
         private val db: SQLiteDatabase = dbHelper.writableDatabase
         private val daoMaster: DaoMaster = DaoMaster(db)
         private val daoSession: DaoSession = daoMaster.newSession()
@@ -75,7 +106,7 @@ class DBUtils {
         /**
          * 插入一个播放列表（如果不存在）
          */
-        fun insertPlaySheetIfNoExist(insertPlaySheet: PlaySheet) {
+        fun insertPlaySheetIfNotExist(insertPlaySheet: PlaySheet) {
             val playSheet = playSheetDao.queryBuilder().where(PlaySheetDao.Properties.Name.eq(insertPlaySheet.name)).build().unique()
             if (playSheet != null) {
                 insertPlaySheet.id = playSheet.id
