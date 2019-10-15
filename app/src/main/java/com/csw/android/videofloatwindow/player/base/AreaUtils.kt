@@ -1,10 +1,5 @@
 package com.csw.android.videofloatwindow.player.base
 
-import android.view.LayoutInflater
-import android.view.View
-import android.widget.TextView
-import com.csw.android.videofloatwindow.R
-import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.util.ScreenInfo
 
 /**
@@ -20,12 +15,12 @@ class AreaUtils {
 
         var windowOffsetX: Int = 0 //窗口偏移量X
         var windowOffsetY: Int = 0 //窗口偏移量Y
-        var windowWidth: Int = 0 //窗口宽度
-        var windowHeight: Int = 0 //窗口高度
-        var windowCenterX = 0
+        var windowWidth: Int = ScreenInfo.WIDTH //窗口宽度
+        var windowHeight: Int = ScreenInfo.WIDTH * 9 / 16 //窗口高度
+        var windowCenterX = windowWidth / 2
             //窗口中心X
             private set
-        var windowCenterY = 0
+        var windowCenterY = windowHeight / 2
             //窗口中心Y
             private set
 

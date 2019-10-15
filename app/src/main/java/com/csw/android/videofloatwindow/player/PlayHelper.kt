@@ -27,6 +27,8 @@ class PlayHelper {
         private val playEndHandler = PlayEndHandler()
         //播放状态改变监听器集合
         private val onPlayVideoChangeListenerSet = HashSet<OnPlayChangeListener>()
+        //顶层视频容器变化监听器集合
+        private val onTopLevelVideoContainerChangeListenerSet = HashSet<OnTopLevelVideoContainerChangeListener>()
         //主消息循环处理器
         private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -73,6 +75,7 @@ class PlayHelper {
         fun setTopLevelVideoContainer(videoContainer: VideoContainer) {
             if (videoContainer is FullScreenVideoContainer || videoContainer is FloatWindowVideoContainer) {
                 topLevelVideoContainer = WeakReference(videoContainer)
+                noticeTopLevelVideoContainerChanged()
             }
         }
 
@@ -84,8 +87,15 @@ class PlayHelper {
                 topLevelVideoContainer?.let {
                     if (it.get() == videoContainer) {
                         topLevelVideoContainer = null
+                        noticeTopLevelVideoContainerChanged()
                     }
                 }
+            }
+        }
+
+        private fun noticeTopLevelVideoContainerChanged() {
+            for (listener in onTopLevelVideoContainerChangeListenerSet) {
+                listener.onTopLevelVideoContainerChanged(getTopLevelVideoContainer())
             }
         }
 
@@ -94,6 +104,20 @@ class PlayHelper {
          */
         fun getTopLevelVideoContainer(): VideoContainer? {
             return topLevelVideoContainer?.get()
+        }
+
+        /**
+         * 添加顶层容器变化监听
+         */
+        fun addOnTopLevelVideoContainerChangeListener(onTopLevelVideoContainerChangeListener: OnTopLevelVideoContainerChangeListener) {
+            onTopLevelVideoContainerChangeListenerSet.add(onTopLevelVideoContainerChangeListener)
+        }
+
+        /**
+         * 移除顶层容器变化监听
+         */
+        fun removeOnTopLevelVideoContainerChangeListener(onTopLevelVideoContainerChangeListener: OnTopLevelVideoContainerChangeListener) {
+            onTopLevelVideoContainerChangeListenerSet.remove(onTopLevelVideoContainerChangeListener)
         }
 
         /**
@@ -306,5 +330,15 @@ class PlayHelper {
                 }
             }
         }
+    }
+
+    /**
+     * 顶层视频容器变化监听
+     */
+    interface OnTopLevelVideoContainerChangeListener {
+        /**
+         * 顶层视频容器发生变化
+         */
+        fun onTopLevelVideoContainerChanged(videoContainer: VideoContainer?)
     }
 }

@@ -4,6 +4,7 @@ import android.Manifest
 import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
+import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.text.TextUtils
@@ -27,6 +28,7 @@ import com.csw.android.videofloatwindow.entities.PlaySheet
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.PlayHelper
 import com.csw.android.videofloatwindow.player.PlayList
+import com.csw.android.videofloatwindow.player.base.VideoContainer
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
 import com.csw.android.videofloatwindow.ui.base.MvpFragment
 import com.csw.android.videofloatwindow.util.DBUtils
@@ -74,6 +76,15 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
             }
         }
     }
+
+    private val onTopLevelVideoContainerChangeListener = object : PlayHelper.OnTopLevelVideoContainerChangeListener {
+        override fun onTopLevelVideoContainerChanged(videoContainer: VideoContainer?) {
+            if (videoContainer == null) {
+                play()
+            }
+        }
+    }
+
     @Inject
     lateinit var presenter: LocalVideosContract.Presenter
 
@@ -112,6 +123,7 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
             }
         }
     }
+
 
     override fun initListener() {
         super.initListener()
@@ -164,6 +176,7 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
 //            PlayHelper.tryPauseCurr()
             requestPlaySheetVideos()
         }
+        PlayHelper.addOnTopLevelVideoContainerChangeListener(onTopLevelVideoContainerChangeListener)
     }
 
     //歌单列表 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -239,7 +252,9 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
         return result
     }
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
+    /**
+     * 播放第一个完全可见的视频,若没有任何一个视频完全可见,播放第一个视频
+     */
     private fun playVisibleVideo() {
         Utils.runIfNotNull(videosAdapter, linearLayoutManager) { arg1, arg2 ->
             val fv = arg2.findFirstVisibleItemPosition()
@@ -257,7 +272,7 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
                     val view1 = arg2.findViewByPosition(fv)
                     val view2 = arg2.findViewByPosition(fv + 1)
                     Utils.runIfNotNull(view1, view2) { v1, v2 ->
-                        var intArray = IntArray(2)
+                        val intArray = IntArray(2)
                         val listRect = Rect(0, 0, recyclerView.width, recyclerView.height)
                         recyclerView.getLocationInWindow(intArray)
                         listRect.offset(intArray[0], intArray[1])
@@ -295,6 +310,9 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
         }
     }
 
+    /**
+     * 滚动到要播放的条目出现在屏幕中,获取条目开始播放,同时将条目移动到列表顶端
+     */
     private fun playByPosition(i: Int) {
         Utils.runIfNotNull(videosAdapter, linearLayoutManager) { arg1, arg2 ->
             val fv = arg2.findFirstVisibleItemPosition()
@@ -374,6 +392,7 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
     }
 
     override fun onDestroyView() {
+        PlayHelper.removeOnTopLevelVideoContainerChangeListener(onTopLevelVideoContainerChangeListener)
         linearLayoutManager = null
         videosAdapter = null
         super.onDestroyView()
@@ -445,9 +464,14 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
     private fun requestLocalVideos() {
         val a = activity
         a?.let {
+            val arr = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            } else {
+                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
             addLifecycleTask(
                     RxPermissions(it)
-                            .request(Manifest.permission.READ_EXTERNAL_STORAGE)
+                            .request(*arr)
                             .map {
                                 if (it) {
                                     return@map getLocalVideos()
