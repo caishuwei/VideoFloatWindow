@@ -6,14 +6,15 @@ apply plugin: 'kotlin-kapt'
 
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion rootProject.ext.android.compileSdkVersion
+    buildToolsVersion rootProject.ext.android.buildToolsVersion
     defaultConfig {
         applicationId "com.csw.android.videofloatwindow"
-        minSdkVersion 16
-        targetSdkVersion 28
+        minSdkVersion rootProject.ext.android.minSdkVersion
+        targetSdkVersion rootProject.ext.android.targetSdkVersion
         versionCode 1
         versionName "1.0"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
     }
     buildTypes {
@@ -32,51 +33,35 @@ greendao {
     //generateTests：设置自动生成单元测试用例
 }
 
-configurations.all {
-    //强制让所有模块都用相同的支持库版本(multidex的版本号规律不一样，= =!)
-    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-        def requested = details.requested
-        if (requested.group == 'com.android.support') {
-            if (!requested.name.startsWith("multidex")) {
-                details.useVersion '28.0.0'
-            }
-        }
-    }
-}
-
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-    implementation 'com.android.support:design:28.0.0'
-    implementation 'com.android.support:cardview-v7:28.0.0'
-    // 方法数超过一个包的极限进行分包，支持包用于兼容5.0以下版本
-    api 'com.android.support:multidex:1.0.3'
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    // RxAndroid的依赖包
-    implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
-    // 基于RxJava框架的动态权限申请(已经内置RxJava依赖了)
-    implementation 'com.tbruyelle.rxpermissions2:rxpermissions:0.9.5@aar'
-    api 'io.reactivex.rxjava2:rxkotlin:2.3.0'
-    //exo播放器，谷歌亲儿子，流畅程度甩MediaPlay10条街，支持更多的格式，甚至可以自定义视屏解码
-    implementation 'com.google.android.exoplayer:exoplayer:2.8.2'
-    //数据库框架 可以将一张表映射为java对象，可以对对象执行添加 删除 更新操作
-    implementation 'org.greenrobot:greendao:3.2.2'
-    implementation 'org.greenrobot:greendao-generator:3.2.2'
-    //下拉刷新和上拉加载更多框架，目前网上用的比较多，很强大的框架，支持自定义
-    api 'com.scwang.smartrefresh:SmartRefreshLayout:1.0.5.1'
-    // 第三方封装的RecyclerView适配器
-    api 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.30'
-
-    //dagger2 依赖注入
-    api 'com.google.dagger:dagger-android:2.15'
-    api 'com.google.dagger:dagger-android-support:2.15'
-    kapt  'com.google.dagger:dagger-android-processor:2.15'
-    kapt 'com.google.dagger:dagger-compiler:2.15'
-
-    //腾讯bugly
-    api 'com.tencent.bugly:crashreport:latest.release'
-
+    implementation rootProject.ext.androidX.appcompat
+    implementation rootProject.ext.androidX.annotations
+    implementation rootProject.ext.androidX.material
+    implementation rootProject.ext.androidX.drawerlayout
+    implementation rootProject.ext.androidX.recyclerview
+    implementation rootProject.ext.androidX.viewpager
+    implementation rootProject.ext.androidX.viewpager2
+    implementation rootProject.ext.androidX.cardview
+    implementation rootProject.ext.androidX.gridlayout
+    implementation rootProject.ext.androidX.multidex
+    implementation rootProject.ext.others.BaseRecyclerViewAdapterHelper
+    implementation rootProject.ext.others.rxjava
+    implementation rootProject.ext.others.rxandroid
+    implementation rootProject.ext.others.rxkotlin
+    implementation rootProject.ext.others.greenDao
+    implementation rootProject.ext.others.greenDao_generator
+    implementation rootProject.ext.others.greenDao_update_helper
+    implementation rootProject.ext.others.gson
+    implementation rootProject.ext.others.rxpermissions
+    implementation rootProject.ext.others.SmartRefreshLayout
+    implementation rootProject.ext.others.rxpermissions
+    implementation rootProject.ext.others.rxpermissions
+    implementation rootProject.ext.others.exoplayer
+    implementation rootProject.ext.others.dagger2_android
+    implementation rootProject.ext.others.dagger2_android_support
+    kapt rootProject.ext.others.dagger2_android_processor
+    kapt rootProject.ext.others.dagger2_compiler
+    implementation rootProject.ext.others.bugly
 }

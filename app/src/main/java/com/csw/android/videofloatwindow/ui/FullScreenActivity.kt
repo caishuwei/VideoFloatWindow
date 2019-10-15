@@ -24,8 +24,8 @@ class FullScreenActivity : BaseActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        setFullScreen(true)
         super.onCreate(savedInstanceState)
+        setFullScreen(true)
     }
 
     override fun getContentViewID(): Int {
@@ -67,6 +67,11 @@ class FullScreenActivity : BaseActivity() {
 
     override fun onStop() {
         super.onStop()
+    }
+
+    override fun finish() {
+        PlayHelper.removeTopLevelVideoContainer(videoContainer)
+        super.finish()
     }
 
     override fun onDestroy() {

@@ -3,9 +3,9 @@ package com.csw.android.videofloatwindow.player.window
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Rect
-import android.support.v7.widget.AppCompatImageButton
 import android.util.AttributeSet
 import android.view.View
+import androidx.appcompat.widget.AppCompatImageButton
 import com.csw.android.videofloatwindow.R
 
 /**

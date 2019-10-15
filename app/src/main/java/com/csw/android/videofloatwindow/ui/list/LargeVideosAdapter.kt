@@ -1,6 +1,6 @@
 package com.csw.android.videofloatwindow.ui.list
 
-import android.support.v4.app.Fragment
+import androidx.fragment.app.Fragment
 import com.chad.library.adapter.base.BaseViewHolder
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.entities.VideoInfo

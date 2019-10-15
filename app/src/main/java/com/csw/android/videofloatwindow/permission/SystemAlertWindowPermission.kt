@@ -7,13 +7,13 @@ import android.graphics.PixelFormat
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import android.support.annotation.RequiresApi
-import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentActivity
-import android.support.v4.app.FragmentManager
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import androidx.annotation.RequiresApi
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.FragmentManager
 import com.csw.android.videofloatwindow.util.Utils
 
 /**

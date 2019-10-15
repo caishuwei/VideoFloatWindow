@@ -5,11 +5,11 @@ import android.content.res.Configuration
 import android.graphics.PixelFormat
 import android.os.Build
 import android.provider.Settings
-import android.support.v4.view.NestedScrollingParent
-import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
 import android.view.*
 import android.widget.FrameLayout
+import androidx.core.view.NestedScrollingParent
+import androidx.core.view.ViewCompat
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
@@ -298,11 +298,19 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
             var suggestBottom = Math.min(Math.max(bottom, 0F), AreaUtils.maxVideoHeight.toFloat())
             var destWidth = suggestRight - AreaUtils.windowOffsetX
             var destHeight = suggestBottom - AreaUtils.windowOffsetY
+            //宽度调整
+            if (destWidth / ratioWH < AreaUtils.minVideoHeight) {//当前宽度下，高度会小于最小高度
+                destWidth = AreaUtils.minVideoHeight * ratioWH//宽度调整到高度可以达到最小高度
+            }
             if (destWidth > AreaUtils.maxVideoWidth) {
                 destWidth = AreaUtils.maxVideoWidth.toFloat()
             }
             if (destWidth < AreaUtils.minVideoWidth) {
                 destWidth = AreaUtils.minVideoWidth.toFloat()
+            }
+            //高度调整
+            if (destHeight * ratioWH < AreaUtils.minVideoWidth) {//当前高度下，宽度会小于最小宽度
+                destHeight = AreaUtils.minVideoWidth / ratioWH//高度调整到宽度可以达到最小宽度
             }
             if (destHeight > AreaUtils.maxVideoHeight) {
                 destHeight = AreaUtils.maxVideoHeight.toFloat()

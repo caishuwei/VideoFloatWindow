@@ -6,18 +6,17 @@ import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.provider.MediaStore
-import android.support.design.widget.Snackbar
-import android.support.v4.widget.PopupWindowCompat
-import android.support.v7.app.AlertDialog
-import android.support.v7.widget.AppCompatEditText
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.LinearSmoothScroller
-import android.support.v7.widget.RecyclerView
 import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.widget.PopupWindow
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.AppCompatEditText
+import androidx.core.widget.PopupWindowCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.LinearSmoothScroller
+import androidx.recyclerview.widget.RecyclerView
 import com.chad.library.adapter.base.BaseViewHolder
 import com.chad.library.adapter.base.entity.MultiItemEntity
 import com.csw.android.videofloatwindow.R
@@ -28,20 +27,31 @@ import com.csw.android.videofloatwindow.entities.PlaySheet
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.PlayHelper
 import com.csw.android.videofloatwindow.player.PlayList
-import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
 import com.csw.android.videofloatwindow.ui.base.MvpFragment
 import com.csw.android.videofloatwindow.util.DBUtils
 import com.csw.android.videofloatwindow.util.Utils
 import com.csw.android.videofloatwindow.view.ListVideoContainer
 import com.csw.android.videofloatwindow.view.SpaceLineItemDecoration
+import com.google.android.material.snackbar.Snackbar
 import com.tbruyelle.rxpermissions2.RxPermissions
+import io.reactivex.Observable
+import io.reactivex.ObservableEmitter
+import io.reactivex.ObservableOnSubscribe
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_local_videos.*
 import javax.inject.Inject
 
 class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
+
+    companion object {
+        fun createData(playSheet: PlaySheet): Bundle {
+            val data = Bundle()
+            data.putLong("playSheetId", playSheet.id)
+            return data
+        }
+    }
 
     private var linearLayoutManager: LinearLayoutManager? = null
     private var videosAdapter: LargeVideosAdapter? = null
@@ -67,6 +77,8 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
     @Inject
     lateinit var presenter: LocalVideosContract.Presenter
 
+    private var playSheetId: Long? = null
+
     init {
         //初始化时，注入切片对象
         MyApplication.appComponent.getLocalVideosComponentBuilder()
@@ -84,7 +96,7 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
         super.initView(rootView, savedInstanceState)
         linearLayoutManager = LinearLayoutManager(
                 rootView.context,
-                LinearLayoutManager.VERTICAL,
+                RecyclerView.VERTICAL,
                 false)
         recyclerView.layoutManager = linearLayoutManager
     }
@@ -145,12 +157,12 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
             }
 
         }
-        smartRefreshLayout.isEnableRefresh = true
-        smartRefreshLayout.isEnableLoadMore = false
+        smartRefreshLayout.setEnableRefresh(true)
+        smartRefreshLayout.setEnableLoadMore(false)
         smartRefreshLayout.setOnRefreshListener {
             videosAdapter?.setNewData(null)
 //            PlayHelper.tryPauseCurr()
-            requestLocalVideos()
+            requestPlaySheetVideos()
         }
     }
 
@@ -158,7 +170,7 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
     private fun showAddVideoInfoPopupWindow(view: View, videoInfo: VideoInfo) {
         val popupWindow = PopupWindow()
         val recyclerView = RecyclerView(view.context)
-        recyclerView.layoutManager = LinearLayoutManager(view.context, LinearLayoutManager.VERTICAL, false)
+        recyclerView.layoutManager = LinearLayoutManager(view.context, RecyclerView.VERTICAL, false)
         recyclerView.addItemDecoration(object : SpaceLineItemDecoration(0, 1, 0, 0, Color.GRAY) {
             override fun skipDraw(position: Int): Boolean {
                 return position == 0
@@ -318,9 +330,15 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
         }
     }
 
+
     override fun initData() {
         super.initData()
-        smartRefreshLayout.autoRefresh()
+        playSheetId = arguments?.getLong("playSheetId")
+        if (playSheetId != null) {
+            smartRefreshLayout.autoRefresh()
+        } else {
+            activity?.finish()
+        }
     }
 
     override fun onResume() {
@@ -360,6 +378,69 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
         videosAdapter = null
         super.onDestroyView()
     }
+
+
+    private fun requestPlaySheetVideos() {
+        val a = activity
+        a?.let {
+            addLifecycleTask(
+                    RxPermissions(it)
+                            .request(Manifest.permission.READ_EXTERNAL_STORAGE)
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(
+                                    {
+                                        if (it) {
+                                            loadPlaySheet()
+                                        } else {
+                                            Snackbar.make(recyclerView, "SD卡文件读取权限被拒绝", Snackbar.LENGTH_SHORT).show()
+                                        }
+                                    },
+                                    {
+                                        smartRefreshLayout.finishRefresh()
+                                        Snackbar.make(recyclerView, it.message
+                                                ?: "未知异常", Snackbar.LENGTH_SHORT).show()
+                                    }
+                            )
+            )
+        }
+
+
+    }
+
+    private fun loadPlaySheet() {
+        playSheetId?.let { playSheetId ->
+            addLifecycleTask(
+                    Observable.create(object : ObservableOnSubscribe<ArrayList<VideoInfo>> {
+                        override fun subscribe(emitter: ObservableEmitter<ArrayList<VideoInfo>>) {
+                            var result = DBUtils.getVideosByPlaySheetId(playSheetId)
+                            if (result.isEmpty()) {
+                                result = getLocalVideos()
+                                DBUtils.updatePlaySheetVideos(playSheetId, result)
+                            }
+                            emitter.onNext(result)
+                            emitter.onComplete()
+                        }
+                    })
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(
+                                    {
+                                        smartRefreshLayout.finishRefresh()
+                                        videosAdapter?.setNewData(it)
+                                        //设置播放列表
+                                        PlayList.data = it
+                                        play()
+                                    },
+                                    {
+                                        smartRefreshLayout.finishRefresh()
+                                        Snackbar.make(recyclerView, it.message
+                                                ?: "未知异常", Snackbar.LENGTH_SHORT).show()
+                                    }
+                            )
+            )
+        }
+    }
+
 
     private fun requestLocalVideos() {
         val a = activity
@@ -410,7 +491,7 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
         if (cursor != null) {
             if (cursor.moveToFirst()) {
                 do {
-                    data.add(VideoInfo.readFromCursor(cursor))
+                    data.add(DBUtils.insertVideoInfo(VideoInfo.readFromCursor(cursor)))
                 } while (cursor.moveToNext())
             }
             cursor.close()

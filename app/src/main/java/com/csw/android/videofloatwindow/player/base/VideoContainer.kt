@@ -3,12 +3,11 @@ package com.csw.android.videofloatwindow.player.base
 import android.app.Activity
 import android.content.Context
 import android.content.pm.ActivityInfo
-import android.support.design.widget.Snackbar
-import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentActivity
-import android.support.v4.app.FragmentManager
 import android.util.AttributeSet
 import android.widget.FrameLayout
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.FragmentManager
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.permission.SystemAlertWindowPermission
 import com.csw.android.videofloatwindow.player.PlayHelper
@@ -19,6 +18,7 @@ import com.csw.android.videofloatwindow.ui.FullScreenActivity
 import com.csw.android.videofloatwindow.util.FragmentHelper
 import com.csw.android.videofloatwindow.util.LogUtils
 import com.csw.android.videofloatwindow.util.Utils
+import com.google.android.material.snackbar.Snackbar
 
 open class VideoContainer : FrameLayout {
     private val videoContainer: FrameLayout;

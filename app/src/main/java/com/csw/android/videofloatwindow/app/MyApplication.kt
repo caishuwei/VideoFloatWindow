@@ -2,10 +2,7 @@ package com.csw.android.videofloatwindow.app
 
 import android.app.Application
 import android.content.Context
-import android.database.sqlite.SQLiteDatabase
-import android.support.multidex.MultiDex
-import com.csw.android.videofloatwindow.greendao.DaoMaster
-import com.csw.android.videofloatwindow.greendao.DaoSession
+import androidx.multidex.MultiDex
 import com.scwang.smartrefresh.layout.SmartRefreshLayout
 import com.scwang.smartrefresh.layout.footer.ClassicsFooter
 import com.scwang.smartrefresh.layout.header.BezierRadarHeader
@@ -18,11 +15,11 @@ class MyApplication : Application() {
         lateinit var appComponent: AppComponent
 
         init {
-            SmartRefreshLayout.setDefaultRefreshHeaderCreator { context, layout ->
+            SmartRefreshLayout.setDefaultRefreshHeaderCreator { context, _ ->
                 return@setDefaultRefreshHeaderCreator BezierRadarHeader(context)
             }
 
-            SmartRefreshLayout.setDefaultRefreshFooterCreator { context, layout ->
+            SmartRefreshLayout.setDefaultRefreshFooterCreator { context, _ ->
                 return@setDefaultRefreshFooterCreator ClassicsFooter(context).setDrawableSize(20f)
             }
         }
@@ -38,19 +35,6 @@ class MyApplication : Application() {
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
         MultiDex.install(this)
-    }
-
-    val dbHelper: DaoMaster.DevOpenHelper by lazy {
-        DaoMaster.DevOpenHelper(this, "video_db", null)
-    }
-    val db: SQLiteDatabase by lazy {
-        dbHelper.writableDatabase
-    }
-    val daoMaster: DaoMaster by lazy {
-        DaoMaster(db)
-    }
-    val daoSession: DaoSession by lazy {
-        daoMaster.newSession()
     }
 
 }

@@ -3,13 +3,13 @@ package com.csw.android.videofloatwindow.ui.list
 import android.graphics.Bitmap
 import android.provider.MediaStore
 import android.provider.MediaStore.Images.Thumbnails.MINI_KIND
-import android.support.design.widget.Snackbar
 import com.chad.library.adapter.base.BaseQuickAdapter
 import com.chad.library.adapter.base.BaseViewHolder
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.util.Utils
 import com.csw.android.videofloatwindow.view.WHRatioImageView
+import com.google.android.material.snackbar.Snackbar
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable

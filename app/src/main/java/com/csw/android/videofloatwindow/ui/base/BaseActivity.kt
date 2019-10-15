@@ -2,9 +2,9 @@ package com.csw.android.videofloatwindow.ui.base
 
 import android.os.Build
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.view.WindowManager
+import androidx.appcompat.app.AppCompatActivity
 import io.reactivex.disposables.Disposable
 import java.util.*
 

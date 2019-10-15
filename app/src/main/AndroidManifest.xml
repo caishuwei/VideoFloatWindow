@@ -1,10 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.csw.android.videofloatwindow">
 
+    <!--bugly需要网络权限-->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!--前台服务实现后台播放-->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!--系统对话框权限实现悬浮窗-->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!--本地文件读写-->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!--播放视频时屏幕维持唤醒-->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
@@ -22,7 +28,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ui.list.LocalVideosActivity" />
         <activity android:name=".ui.list.PlaySheetVideosActivity" />
 
         <!--全屏播放界面，为实现在其他应用中小窗口与全屏模式切换，此Activity运行在特定Activity栈中-->

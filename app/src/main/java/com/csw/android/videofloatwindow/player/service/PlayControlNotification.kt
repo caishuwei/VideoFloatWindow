@@ -8,9 +8,9 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
-import android.support.v4.app.NotificationCompat
 import android.view.View
 import android.widget.RemoteViews
+import androidx.core.app.NotificationCompat
 import com.csw.android.videofloatwindow.R
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers

@@ -1,18 +1,23 @@
 package com.csw.android.videofloatwindow.util
 
+import android.database.sqlite.SQLiteDatabase
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.PlaySheet
 import com.csw.android.videofloatwindow.entities.PlaySheetVideo
 import com.csw.android.videofloatwindow.entities.VideoInfo
-import com.csw.android.videofloatwindow.greendao.PlaySheetDao
-import com.csw.android.videofloatwindow.greendao.PlaySheetVideoDao
-import com.csw.android.videofloatwindow.greendao.VideoInfoDao
+import com.csw.android.videofloatwindow.greendao.*
 
 class DBUtils {
     companion object {
-        private val videoInfoDao = MyApplication.instance.daoSession.videoInfoDao
-        private val playSheetDao = MyApplication.instance.daoSession.playSheetDao
-        private val playSheetVideoDao = MyApplication.instance.daoSession.playSheetVideoDao
+
+        private val dbHelper: DaoMaster.DevOpenHelper = DaoMaster.DevOpenHelper(MyApplication.instance, "video_db", null)
+        private val db: SQLiteDatabase = dbHelper.writableDatabase
+        private val daoMaster: DaoMaster = DaoMaster(db)
+        private val daoSession: DaoSession = daoMaster.newSession()
+        private val videoInfoDao = daoSession.videoInfoDao
+        private val playSheetDao = daoSession.playSheetDao
+        private val playSheetVideoDao = daoSession.playSheetVideoDao
+
 
         /**
          * 获取用户创建的播放列表（依据时间进行排序，后创建的排在前面）
@@ -27,6 +32,7 @@ class DBUtils {
 
         fun insetPlaySheet(playSheet: PlaySheet) {
             playSheetDao.insert(playSheet)
+            daoSession.clear()
         }
 
         fun isVideoInPlaySheet(playSheetId: Long, videoInfoId: Long): Boolean {
@@ -39,21 +45,23 @@ class DBUtils {
         fun insetPlaySheetVideo(playSheetId: Long, videoInfoId: Long) {
             if (!isVideoInPlaySheet(playSheetId, videoInfoId)) {
                 playSheetVideoDao.insert(PlaySheetVideo(playSheetId, videoInfoId))
+                daoSession.clear()
             }
         }
 
-        fun insertVideoInfo(videoInfo: VideoInfo) {
+        fun insertVideoInfo(videoInfo: VideoInfo): VideoInfo {
             val exitsRow = videoInfoDao.queryBuilder().where(VideoInfoDao.Properties.MediaDbId.eq(videoInfo.mediaDbId)).build().unique()
             exitsRow?.let {
                 videoInfo.id = it.id
-                return
+                return videoInfo
             }
             val id = videoInfoDao.insert(videoInfo)
             videoInfo.id = id
+            daoSession.clear()
+            return videoInfo
         }
 
         fun getVideosByPlaySheetId(playSheetId: Long): ArrayList<VideoInfo> {
-            MyApplication.instance.daoSession.clear()
             val result = arrayListOf<VideoInfo>()
             val playSheet = playSheetDao.queryBuilder().where(PlaySheetDao.Properties.Id.eq(playSheetId)).build().unique()
             playSheet?.let {
@@ -62,6 +70,44 @@ class DBUtils {
                 }
             }
             return result
+        }
+
+        /**
+         * 插入一个播放列表（如果不存在）
+         */
+        fun insertPlaySheetIfNoExist(insertPlaySheet: PlaySheet) {
+            val playSheet = playSheetDao.queryBuilder().where(PlaySheetDao.Properties.Name.eq(insertPlaySheet.name)).build().unique()
+            if (playSheet != null) {
+                insertPlaySheet.id = playSheet.id
+            } else {
+                playSheetDao.insert(insertPlaySheet)
+                daoSession.clear()
+            }
+        }
+
+        /**
+         * 取得歌单
+         */
+        fun getPlaySheet(playSheetId: Long): PlaySheet? {
+            val queryList = playSheetDao.queryBuilder().where(PlaySheetDao.Properties.Id.eq(playSheetId)).build().list()
+            return if (queryList.isEmpty()) {
+                null
+            } else {
+                queryList[0]
+            }
+        }
+
+        /**
+         * 更新播放列表
+         */
+        fun updatePlaySheetVideos(playSheetId: Long, videos: ArrayList<VideoInfo>) {
+            //清除现在的记录
+            playSheetVideoDao.deleteInTx(playSheetVideoDao.queryBuilder().where(PlaySheetVideoDao.Properties.PlaySheetId.eq(playSheetId)).list())
+            //插入新记录
+            for (vi in videos) {
+                playSheetVideoDao.insert(PlaySheetVideo(playSheetId, vi.id))
+            }
+            daoSession.clear()
         }
     }
 }
