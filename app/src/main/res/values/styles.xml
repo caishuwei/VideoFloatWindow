@@ -1,7 +1,7 @@
-<resources>
+<resources xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Base.Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
@@ -16,5 +16,23 @@
         <item name="android:scaleType">fitCenter</item>
     </style>
 
+    <!--toolbar style-->
+    <style name="ToolbarCommonStyle" parent="AppTheme">
+        <item name="android:textColorSecondary">@color/white</item>
+        <item name="android:actionOverflowButtonStyle">
+            @style/Widget.AppCompat.ActionButton.Overflow.WhiteIcon
+        </item>
+    </style>
+
+    <!--toolbar OverflowButton style-->
+    <style name="Widget.AppCompat.ActionButton.Overflow.WhiteIcon" parent="Widget.AppCompat.ActionButton.Overflow">
+        <item name="android:src">@drawable/icon_menu_more</item>
+    </style>
+
+    <!--滑动返回透明背景-->
+    <style name="SwipeBackStyle" parent="AppTheme">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
 
 </resources>

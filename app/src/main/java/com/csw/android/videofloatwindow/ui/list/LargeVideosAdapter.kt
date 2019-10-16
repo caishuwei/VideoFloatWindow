@@ -9,7 +9,6 @@ import com.csw.android.videofloatwindow.util.Utils
 import com.csw.android.videofloatwindow.view.ListVideoContainer
 
 class LargeVideosAdapter(val fragment: Fragment) : VideosAdapter(R.layout.item_large_video) {
-    var maxItemHeight: Int = ScreenInfo.HEIGHT
 
     override fun convert(helper: BaseViewHolder?, item: VideoInfo?) {
         Utils.runIfNotNull(helper, item) { h, i ->

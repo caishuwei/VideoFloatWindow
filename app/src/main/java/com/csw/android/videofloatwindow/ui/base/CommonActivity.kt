@@ -9,7 +9,7 @@ import com.csw.android.videofloatwindow.R
 class CommonActivity : BaseActivity() {
 
     companion object {
-        private val FRAGMENT_TAG = "common_activity_fragment_tag"
+        val FRAGMENT_TAG = "common_activity_fragment_tag"
         fun <T : Fragment> openActivity(context: Context, clazz: Class<T>, data: Bundle?) {
             val intent = Intent(context, CommonActivity::class.java)
             intent.putExtra("clazz", clazz)
@@ -44,6 +44,9 @@ class CommonActivity : BaseActivity() {
             if (fragment != null) {
                 if (!fragment.isAdded) {
                     supportFragmentManager.beginTransaction().add(R.id.fl_fragment_container, fragment, FRAGMENT_TAG).commitAllowingStateLoss()
+                }
+                if (fragment.isDetached) {
+                    supportFragmentManager.beginTransaction().attach(fragment).commitAllowingStateLoss()
                 }
                 return
             }

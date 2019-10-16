@@ -1,10 +1,13 @@
 package com.csw.android.videofloatwindow.ui.base
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
+import com.csw.android.videofloatwindow.R
 import io.reactivex.disposables.Disposable
 import java.util.*
 
@@ -35,6 +38,21 @@ abstract class BaseActivity : AppCompatActivity(), IUICreator {
     }
 
     override fun initData() {
+    }
+
+    override fun startActivity(intent: Intent?, options: Bundle?) {
+        super.startActivity(intent, options)
+        overridePendingTransition(R.anim.open_enter, R.anim.open_exit)
+    }
+
+    override fun startActivityFromChild(child: Activity, intent: Intent?, requestCode: Int, options: Bundle?) {
+        super.startActivityFromChild(child, intent, requestCode, options)
+        overridePendingTransition(R.anim.open_enter, R.anim.open_exit)
+    }
+
+    override fun finish() {
+        super.finish()
+        overridePendingTransition(R.anim.close_enter, R.anim.close_exit)
     }
 
     override fun onDestroy() {

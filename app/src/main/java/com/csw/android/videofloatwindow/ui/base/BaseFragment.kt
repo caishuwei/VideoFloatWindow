@@ -1,10 +1,16 @@
 package com.csw.android.videofloatwindow.ui.base
 
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import com.csw.android.videofloatwindow.util.Utils
+import com.google.android.material.snackbar.Snackbar
+import com.tbruyelle.rxpermissions2.RxPermissions
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import java.util.*
 
@@ -79,4 +85,49 @@ abstract class BaseFragment : Fragment(), IUICreator {
             key.dispose()
         }
     }
+
+    /**
+     * 若本地文件读写权限通过，则执行任务
+     */
+    fun runIfExternalStoragePermissionGranted(onPermissionGranted: () -> (Unit)) {
+        val arr = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        } else {
+            arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
+        requestPermissions(*arr) {
+            if (it) {
+                onPermissionGranted()
+            } else {
+                activity?.window?.decorView?.let {
+                    Snackbar.make(it, "SD卡文件读取权限被拒绝", Snackbar.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    /**
+     * 请求权限，回调结果
+     */
+    fun requestPermissions(vararg permissions: String, onPermissionGranted: (granted: Boolean) -> (Unit)) {
+        val activity = activity
+        val view = activity?.window?.decorView
+        Utils.runIfNotNull(activity, view) { a, v ->
+            addLifecycleTask(
+                    RxPermissions(a)
+                            .request(*permissions)
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(
+                                    {
+                                        onPermissionGranted(it)
+                                    },
+                                    {
+                                        Snackbar.make(v, it.message
+                                                ?: "权限请求异常", Snackbar.LENGTH_SHORT).show()
+                                    }
+                            )
+            )
+        }
+    }
+
 }

@@ -21,14 +21,18 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".ui.main.MainActivity">
+        <activity
+            android:name=".ui.main.MainActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <activity android:name=".ui.list.PlaySheetVideosActivity" />
+        <activity
+            android:name=".ui.list.PlaySheetVideosActivity"
+            android:screenOrientation="portrait" />
 
         <!--全屏播放界面，为实现在其他应用中小窗口与全屏模式切换，此Activity运行在特定Activity栈中-->
         <!--singleInstance会导致启动该Activity有短暂的白屏,这里使用SingleTask-->
@@ -44,7 +48,15 @@
                     android:scheme="content" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.base.CommonActivity" />
+        <activity
+            android:name=".ui.base.CommonActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.base.SwipeBackActivity"
+            android:theme="@style/SwipeBackStyle" />
+        <activity
+            android:name=".ui.base.SwipeBackCommonActivity"
+            android:theme="@style/SwipeBackStyle" />
 
         <service
             android:name=".player.service.PlayService"

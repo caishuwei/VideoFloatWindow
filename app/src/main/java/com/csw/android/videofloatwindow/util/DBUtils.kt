@@ -54,7 +54,7 @@ class DBUtils {
          * 获取用户创建的播放列表（依据时间进行排序，后创建的排在前面）
          */
         fun getPlaySheets(): List<PlaySheet> {
-            return playSheetDao.queryBuilder().orderDesc(PlaySheetDao.Properties.CreateTime).build().list()
+            return playSheetDao.queryBuilder().orderAsc(PlaySheetDao.Properties.CreateTime).build().list()
         }
 
         fun isPlaySheetExists(name: String): Boolean {
@@ -138,6 +138,15 @@ class DBUtils {
             for (vi in videos) {
                 playSheetVideoDao.insert(PlaySheetVideo(playSheetId, vi.id))
             }
+            daoSession.clear()
+        }
+
+        /**
+         * 删除歌单
+         */
+        fun deletePlaySheet(playSheet: PlaySheet) {
+            playSheetDao.delete(playSheet)
+            playSheetVideoDao.deleteInTx(playSheetVideoDao.queryBuilder().where(PlaySheetVideoDao.Properties.PlaySheetId.eq(playSheet.id)).list())
             daoSession.clear()
         }
     }

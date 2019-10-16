@@ -1,19 +1,17 @@
 package com.csw.android.videofloatwindow.ui.list
 
-import android.Manifest
 import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
-import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.text.TextUtils
-import android.view.Gravity
-import android.view.View
-import android.view.WindowManager
+import android.view.*
 import android.widget.PopupWindow
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatEditText
+import androidx.core.content.ContextCompat
 import androidx.core.widget.PopupWindowCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSmoothScroller
@@ -32,15 +30,16 @@ import com.csw.android.videofloatwindow.player.base.VideoContainer
 import com.csw.android.videofloatwindow.ui.FullScreenActivity
 import com.csw.android.videofloatwindow.ui.base.MvpFragment
 import com.csw.android.videofloatwindow.util.DBUtils
+import com.csw.android.videofloatwindow.util.ScreenInfo
 import com.csw.android.videofloatwindow.util.Utils
 import com.csw.android.videofloatwindow.view.ListVideoContainer
 import com.csw.android.videofloatwindow.view.SpaceLineItemDecoration
 import com.google.android.material.snackbar.Snackbar
-import com.tbruyelle.rxpermissions2.RxPermissions
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_local_videos.*
 import javax.inject.Inject
@@ -51,6 +50,7 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
         fun createData(playSheet: PlaySheet): Bundle {
             val data = Bundle()
             data.putLong("playSheetId", playSheet.id)
+            data.putString("playSheetName", playSheet.name)
             return data
         }
     }
@@ -84,7 +84,10 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
             }
         }
     }
-
+    //扫描任务取消器
+    private var scanTaskDisposable: Disposable? = null
+    //第一次加载数据后扫描媒体库
+    private var scanLocalVideosAfterFirstLoad = true
     @Inject
     lateinit var presenter: LocalVideosContract.Presenter
 
@@ -105,6 +108,15 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
 
     override fun initView(rootView: View, savedInstanceState: Bundle?) {
         super.initView(rootView, savedInstanceState)
+        val activity = activity
+        if (activity is AppCompatActivity) {
+            activity.setSupportActionBar(toolbar)
+            activity.supportActionBar?.setHomeButtonEnabled(true)
+            toolbar.navigationIcon = Utils.getDrawableBySize(R.drawable.icon_menu_back, ScreenInfo.dp2Px(30f), ScreenInfo.dp2Px(30f))
+            toolbar.inflateMenu(R.menu.toolbar_menu_local_videos)//填充菜单
+            toolbar.overflowIcon = Utils.getDrawableBySize(R.drawable.icon_menu_more, ScreenInfo.dp2Px(30f), ScreenInfo.dp2Px(30f))
+            setHasOptionsMenu(true)//设置碎片拥有菜单
+        }
         linearLayoutManager = LinearLayoutManager(
                 rootView.context,
                 RecyclerView.VERTICAL,
@@ -117,16 +129,12 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
         super.initAdapter()
         videosAdapter = LargeVideosAdapter(this)
         recyclerView.adapter = videosAdapter
-        recyclerView.post {
-            videosAdapter?.let {
-                it.maxItemHeight = recyclerView.height
-            }
-        }
     }
 
 
     override fun initListener() {
         super.initListener()
+
         videosAdapter?.setOnItemLongClickListener { _, view, position ->
             val videoInfo = videosAdapter?.getItem(position)
             videoInfo?.let {
@@ -174,7 +182,9 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
         smartRefreshLayout.setOnRefreshListener {
             videosAdapter?.setNewData(null)
 //            PlayHelper.tryPauseCurr()
-            requestPlaySheetVideos()
+            runIfExternalStoragePermissionGranted {
+                loadPlaySheet()
+            }
         }
         PlayHelper.addOnTopLevelVideoContainerChangeListener(onTopLevelVideoContainerChangeListener)
     }
@@ -352,11 +362,36 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
     override fun initData() {
         super.initData()
         playSheetId = arguments?.getLong("playSheetId")
+        val playSheetName = arguments?.getString("playSheetName")
+        playSheetName?.let {
+            toolbar.title = it
+        }
         if (playSheetId != null) {
             smartRefreshLayout.autoRefresh()
         } else {
             activity?.finish()
         }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.toolbar_menu_local_videos, menu)
+        super.onCreateOptionsMenu(menu, inflater)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            android.R.id.home -> activity?.finish()
+            R.id.menu_scan -> {
+                runIfExternalStoragePermissionGranted {
+                    startScan()
+                }
+            }
+            R.id.menu_add_to_play_sheet -> {
+                Snackbar.make(toolbar, "menu_add_to_play_sheet", Snackbar.LENGTH_SHORT).show()
+            }
+            else -> return super.onOptionsItemSelected(item)
+        }
+        return true
     }
 
     override fun onResume() {
@@ -392,6 +427,12 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
     }
 
     override fun onDestroyView() {
+        scanTaskDisposable?.let {
+            if (!it.isDisposed) {
+                it.dispose()
+            }
+            scanTaskDisposable = null
+        }
         PlayHelper.removeOnTopLevelVideoContainerChangeListener(onTopLevelVideoContainerChangeListener)
         linearLayoutManager = null
         videosAdapter = null
@@ -399,44 +440,15 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
     }
 
 
-    private fun requestPlaySheetVideos() {
-        val a = activity
-        a?.let {
-            addLifecycleTask(
-                    RxPermissions(it)
-                            .request(Manifest.permission.READ_EXTERNAL_STORAGE)
-                            .observeOn(AndroidSchedulers.mainThread())
-                            .subscribe(
-                                    {
-                                        if (it) {
-                                            loadPlaySheet()
-                                        } else {
-                                            Snackbar.make(recyclerView, "SD卡文件读取权限被拒绝", Snackbar.LENGTH_SHORT).show()
-                                        }
-                                    },
-                                    {
-                                        smartRefreshLayout.finishRefresh()
-                                        Snackbar.make(recyclerView, it.message
-                                                ?: "未知异常", Snackbar.LENGTH_SHORT).show()
-                                    }
-                            )
-            )
-        }
-
-
-    }
-
+    /**
+     * 加载歌单
+     */
     private fun loadPlaySheet() {
         playSheetId?.let { playSheetId ->
             addLifecycleTask(
                     Observable.create(object : ObservableOnSubscribe<ArrayList<VideoInfo>> {
                         override fun subscribe(emitter: ObservableEmitter<ArrayList<VideoInfo>>) {
-                            var result = DBUtils.getVideosByPlaySheetId(playSheetId)
-                            if (result.isEmpty()) {
-                                result = getLocalVideos()
-                                DBUtils.updatePlaySheetVideos(playSheetId, result)
-                            }
-                            emitter.onNext(result)
+                            emitter.onNext(DBUtils.getVideosByPlaySheetId(playSheetId))
                             emitter.onComplete()
                         }
                     })
@@ -449,77 +461,91 @@ class LocalVideosFragment() : MvpFragment(), LocalVideosContract.View {
                                         //设置播放列表
                                         PlayList.data = it
                                         play()
+                                        if(scanLocalVideosAfterFirstLoad){
+                                            startScan()
+                                            scanLocalVideosAfterFirstLoad = false
+                                        }
                                     },
                                     {
                                         smartRefreshLayout.finishRefresh()
                                         Snackbar.make(recyclerView, it.message
                                                 ?: "未知异常", Snackbar.LENGTH_SHORT).show()
+                                        if(scanLocalVideosAfterFirstLoad){
+                                            startScan()
+                                            scanLocalVideosAfterFirstLoad = false
+                                        }
                                     }
                             )
             )
         }
     }
 
-
-    private fun requestLocalVideos() {
-        val a = activity
-        a?.let {
-            val arr = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            } else {
-                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            }
-            addLifecycleTask(
-                    RxPermissions(it)
-                            .request(*arr)
-                            .map {
-                                if (it) {
-                                    return@map getLocalVideos()
-                                } else {
-                                    Snackbar.make(recyclerView, "SD卡文件读取权限被拒绝", Snackbar.LENGTH_SHORT).show()
-                                    return@map arrayListOf<VideoInfo>()
-                                }
-                            }
-                            .subscribeOn(Schedulers.io())
-                            .observeOn(AndroidSchedulers.mainThread())
-                            .subscribe(
-                                    {
-                                        smartRefreshLayout.finishRefresh()
-                                        videosAdapter?.setNewData(it)
-                                        //设置播放列表
-                                        PlayList.data = it
-                                        play()
-                                    },
-                                    {
-                                        smartRefreshLayout.finishRefresh()
-                                        Snackbar.make(recyclerView, it.message
-                                                ?: "未知异常", Snackbar.LENGTH_SHORT).show()
-                                    }
-                            )
-            )
-        }
-    }
 
     /**
-     * 查询设备媒体库获取所有视频文件数据记录，数据量大的时候耗时较长
+     * 查询本地媒体库，取得本地视频列表
      */
-    private fun getLocalVideos(): ArrayList<VideoInfo> {
-        val data = arrayListOf<VideoInfo>()
-        val cursor = MyApplication.instance.contentResolver.query(
-                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                null,//要查询的列，null所有列
-                null,//筛选条件（用占位符代替参数值）
-                null,//筛选参数
-                MediaStore.Video.Media.DATE_MODIFIED + " DESC "//按数据修改日期反向排序
-        )
-        if (cursor != null) {
-            if (cursor.moveToFirst()) {
-                do {
-                    data.add(DBUtils.insertVideoInfo(VideoInfo.readFromCursor(cursor)))
-                } while (cursor.moveToNext())
+    private fun startScan() {
+        //取消还在执行的扫描
+        scanTaskDisposable?.let {
+            if (!it.isDisposed) {
+                it.dispose()
             }
-            cursor.close()
+            scanTaskDisposable = null
         }
-        return data
+        //进行新的扫描任务
+        val scanItem = toolbar.menu.findItem(R.id.menu_scan)
+        scanItem.icon = ContextCompat.getDrawable(MyApplication.instance, R.drawable.icon_menu_scan_disable)
+        scanItem.setEnabled(false)
+        playSheetId?.let {
+            scanTaskDisposable = Observable.create(object : ObservableOnSubscribe<ArrayList<VideoInfo>> {
+                override fun subscribe(emitter: ObservableEmitter<ArrayList<VideoInfo>>) {
+                    val result = getLocalVideos()
+                    DBUtils.updatePlaySheetVideos(it, result)
+                    emitter.onNext(result)
+                    emitter.onComplete()
+                }
+            })
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                            {
+                                scanItem.icon = ContextCompat.getDrawable(MyApplication.instance, R.drawable.icon_menu_scan)
+                                scanItem.setEnabled(true)
+                                videosAdapter?.setNewData(it)
+                                //设置播放列表
+                                PlayList.data = it
+                                play()
+                            },
+                            {
+                                scanItem.icon = ContextCompat.getDrawable(MyApplication.instance, R.drawable.icon_menu_scan)
+                                scanItem.setEnabled(true)
+                                Snackbar.make(recyclerView, it.message
+                                        ?: "未知异常", Snackbar.LENGTH_SHORT).show()
+                            }
+                    )
+        }
     }
+}
+
+/**
+ * 查询设备媒体库获取所有视频文件数据记录，数据量大的时候耗时较长
+ */
+private fun getLocalVideos(): ArrayList<VideoInfo> {
+    val data = arrayListOf<VideoInfo>()
+    val cursor = MyApplication.instance.contentResolver.query(
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+            null,//要查询的列，null所有列
+            null,//筛选条件（用占位符代替参数值）
+            null,//筛选参数
+            MediaStore.Video.Media.DATE_MODIFIED + " DESC "//按数据修改日期反向排序
+    )
+    if (cursor != null) {
+        if (cursor.moveToFirst()) {
+            do {
+                data.add(DBUtils.insertVideoInfo(VideoInfo.readFromCursor(cursor)))
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+    }
+    return data
 }

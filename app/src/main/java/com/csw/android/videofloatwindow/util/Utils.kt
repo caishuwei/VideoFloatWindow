@@ -2,8 +2,15 @@ package com.csw.android.videofloatwindow.util
 
 import android.content.ContentResolver
 import android.database.Cursor
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Matrix
+import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.view.View
+import androidx.annotation.DrawableRes
+import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
 
 class Utils {
@@ -78,6 +85,32 @@ class Utils {
                 return videoInfo1.target.equals(videoInfo2.target)
             }
             return false
+        }
+
+        /**
+         * 获取图片，并设置最大宽高，若图片超出则进行缩小，这是为了toolbar返回按钮弄的
+         */
+        fun getDrawableBySize(@DrawableRes drawableId: Int, maxWidth: Int, maxHeight: Int): BitmapDrawable {
+            val bitmap = BitmapFactory.decodeResource(MyApplication.instance.resources, drawableId)
+            val scaleX = bitmap.width / maxWidth
+            val scaleY = bitmap.height / maxHeight
+            var scale = 1
+            if (scaleX > 1) {
+                scale = scaleX
+            }
+            if (scaleY > 1 && scaleY > scaleX) {
+                scale = scaleY
+            }
+            if (scale != 1) {
+                val scaleBitmap = Bitmap.createBitmap(bitmap.width / scale, bitmap.height / scale, Bitmap.Config.ARGB_8888)
+                val scaleCanvas = Canvas(scaleBitmap)
+                val scaleMatrix = Matrix()
+                scaleMatrix.postScale(1f / scale, 1f / scale)
+                scaleCanvas.drawBitmap(bitmap, scaleMatrix, null)
+                return BitmapDrawable(MyApplication.instance.resources, scaleBitmap)
+            } else {
+                return BitmapDrawable(MyApplication.instance.resources, bitmap)
+            }
         }
     }
 
