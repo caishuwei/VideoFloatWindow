@@ -172,7 +172,7 @@ class PlayControlNotification {
                 it.onNext(bitmap)
                 it.onComplete()
             } else {
-                it.onError(Throwable("no video image has found"))
+                it.onError(Exception("no video image has found"))
             }
         }
                 .subscribeOn(Schedulers.io())

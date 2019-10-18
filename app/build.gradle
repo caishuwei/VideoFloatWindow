@@ -34,6 +34,9 @@ greendao {
 }
 
 dependencies {
+    //implementation 依赖包只在本项目可见，依赖本项目的项目不可见
+    //api 依赖包堆依赖本项目的项目也可见
+    //kapt AnnotationProcessorForKotlin 编译时扫描注解生成代码
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation rootProject.ext.androidX.appcompat
@@ -64,4 +67,6 @@ dependencies {
     kapt rootProject.ext.others.dagger2_android_processor
     kapt rootProject.ext.others.dagger2_compiler
     implementation rootProject.ext.others.bugly
+    implementation rootProject.ext.others.glide
+    kapt rootProject.ext.others.glide_compiler
 }
