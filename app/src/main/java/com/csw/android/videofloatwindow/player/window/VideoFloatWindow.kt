@@ -43,6 +43,7 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
 //        setBackgroundColor(Color.BLACK)
+//        alpha = 0.5f
         windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         playerView = LayoutInflater.from(context).inflate(R.layout.view_video_float_window, this, false)
         playerViewLayoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
@@ -60,8 +61,10 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
         }
         //设置像素格式 但为什么用的是RGBA 而不是ARGB
         windowLayoutParams.format = PixelFormat.RGBA_8888
+        //不允许触摸,这样触摸事件能传递到窗口之下
+        //WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
         //设置不取得焦点
-        windowLayoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+        windowLayoutParams.flags = windowLayoutParams.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
         windowLayoutParams.gravity = Gravity.LEFT or Gravity.TOP
         windowLayoutParams.x = 0
         windowLayoutParams.y = 0
@@ -101,6 +104,7 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
             windowManager.addView(this, layoutParams)
             PlayHelper.setTopLevelVideoContainer(videoContainer)
             onFloatWindowChangeListener?.onFloatWindowVisibilityChanged(true)
+            AvailableAreaMeasure.instance.measureAvailableArea()
         }
     }
 
@@ -110,6 +114,7 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
             videoContainer.releaseVideoView()
             PlayHelper.removeTopLevelVideoContainer(videoContainer)
             onFloatWindowChangeListener?.onFloatWindowVisibilityChanged(false)
+            AvailableAreaMeasure.instance.removeWindow()
         }
     }
 
@@ -271,7 +276,7 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
             playerViewLayoutParams.topMargin = AreaUtils.windowOffsetY
             playerView.layoutParams = playerViewLayoutParams
 
-            adjustAvailableArea()
+            AvailableAreaMeasure.instance.measureAvailableArea()
         } else {
 //            setBackgroundColor(Color.parseColor("#00000000"))
             playerViewLayoutParams.width = AreaUtils.windowWidth
@@ -360,17 +365,6 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
     private fun updateFloatWindow() {
         if (isShowing()) {
             windowManager.updateViewLayout(this, windowLayoutParams)
-        }
-    }
-
-    /**
-     * 重新调整可用区域
-     */
-    private fun adjustAvailableArea() {
-        post {
-            LogUtils.i(javaClass.name, "adjustAvailableArea ${width}x${height}")
-            AreaUtils.maxVideoWidth = width
-            AreaUtils.maxVideoHeight = height
         }
     }
     //《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
