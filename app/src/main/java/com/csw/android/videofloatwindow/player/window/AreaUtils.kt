@@ -1,4 +1,4 @@
-package com.csw.android.videofloatwindow.player.base
+package com.csw.android.videofloatwindow.player.window
 
 import com.csw.android.videofloatwindow.util.ScreenInfo
 
@@ -129,6 +129,13 @@ class AreaUtils {
         fun alignToCenter() {
             windowOffsetX = windowCenterX - windowWidth / 2
             windowOffsetY = windowCenterY - windowHeight / 2
+        }
+
+        /**
+         * 通知悬浮窗更新
+         */
+        fun noticeFloatWindowUpdate() {
+            VideoFloatWindow.instance.onAvailableAreaChanged()
         }
 
     }

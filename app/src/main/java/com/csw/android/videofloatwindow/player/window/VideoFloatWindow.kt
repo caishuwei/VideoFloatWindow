@@ -1,11 +1,13 @@
 package com.csw.android.videofloatwindow.player.window
 
+import android.annotation.SuppressLint
 import android.content.Context
-import android.content.res.Configuration
 import android.graphics.PixelFormat
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.os.Message
 import android.provider.Settings
-import android.util.AttributeSet
 import android.view.*
 import android.widget.FrameLayout
 import androidx.core.view.NestedScrollingParent
@@ -14,40 +16,32 @@ import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.PlayHelper
-import com.csw.android.videofloatwindow.player.base.AreaUtils
 import com.csw.android.videofloatwindow.util.LogUtils
-import com.csw.android.videofloatwindow.util.ScreenInfo
 
 /**
  * 视频悬浮窗口
  * <br/>
  * 嵌套滚动用于处理手指在视频上滑动时移动窗口位置
  */
-class VideoFloatWindow : FrameLayout, NestedScrollingParent {
+class VideoFloatWindow(context: Context) : FrameLayout(context), NestedScrollingParent {
+
     companion object {
         val instance = VideoFloatWindow(MyApplication.instance)//这里用的是Application，不用怕内存泄露
     }
 
-    private val windowManager: WindowManager
+    private val windowManager: WindowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private val windowLayoutParams: WindowManager.LayoutParams
 
-    private val playerView: View
-    private val playerViewLayoutParams: FrameLayout.LayoutParams
+    private val playerView: View = LayoutInflater.from(context).inflate(R.layout.view_video_float_window, this, false)
     private val videoContainer: FloatWindowVideoContainer
     private var moveView: FloatWindowMoveView
-    private val dp24 = ScreenInfo.dp2Px(24f)
 
     var onFloatWindowChangeListener: OnFloatWindowChangeListener? = null
 
-    constructor(context: Context) : this(context, null)
-    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
-    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
-//        setBackgroundColor(Color.BLACK)
-//        alpha = 0.5f
-        windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        playerView = LayoutInflater.from(context).inflate(R.layout.view_video_float_window, this, false)
-        playerViewLayoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
-        super.addView(playerView, playerViewLayoutParams)
+    private val windowUpdateHelper = WindowUpdateHelper()
+
+    init {
+        super.addView(playerView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
         videoContainer = findViewById(R.id.videoContainer)
         videoContainer.videoFloatWindow = this
         moveView = findViewById(R.id.moveView)
@@ -65,16 +59,14 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
         //WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
         //设置不取得焦点
         windowLayoutParams.flags = windowLayoutParams.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-        windowLayoutParams.gravity = Gravity.LEFT or Gravity.TOP
+        windowLayoutParams.gravity = Gravity.START or Gravity.TOP
         windowLayoutParams.x = 0
         windowLayoutParams.y = 0
 
         windowLayoutParams.width = WindowManager.LayoutParams.WRAP_CONTENT
         windowLayoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT
         windowLayoutParams.dimAmount = 0f
-        layoutParams = windowLayoutParams
     }
-
 
     fun hide() {
         removeFromWindow()
@@ -82,11 +74,11 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
 
     fun show(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (Settings.canDrawOverlays(context)) {
+            return if (Settings.canDrawOverlays(context)) {
                 addToWindow()
-                return true
+                true
             } else {
-                return false
+                false
             }
         } else {
             addToWindow()
@@ -101,7 +93,7 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
 
     private fun addToWindow() {
         if (parent == null) {
-            windowManager.addView(this, layoutParams)
+            windowManager.addView(this, windowLayoutParams)
             PlayHelper.setTopLevelVideoContainer(videoContainer)
             onFloatWindowChangeListener?.onFloatWindowVisibilityChanged(true)
             AvailableAreaMeasure.instance.measureAvailableArea()
@@ -130,24 +122,19 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
             AreaUtils.alignToCenter()
             AreaUtils.adjustWindowOffset()
 
-            playerViewLayoutParams.width = AreaUtils.windowWidth
-            playerViewLayoutParams.height = AreaUtils.windowHeight
-            playerView.layoutParams = playerViewLayoutParams
-
-            if (!moveOrScale) {
-                windowLayoutParams.width = WindowManager.LayoutParams.WRAP_CONTENT
-                windowLayoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT
-                windowLayoutParams.x = AreaUtils.windowOffsetX
-                windowLayoutParams.y = AreaUtils.windowOffsetY
-                updateFloatWindow()
-            }
+            windowLayoutParams.width = AreaUtils.windowWidth
+            windowLayoutParams.height = AreaUtils.windowHeight
+            windowLayoutParams.x = AreaUtils.windowOffsetX
+            windowLayoutParams.y = AreaUtils.windowOffsetY
+            updateFloatWindow()
         }
     }
 
-    override fun onConfigurationChanged(newConfig: Configuration?) {
-        super.onConfigurationChanged(newConfig)
+    fun onAvailableAreaChanged() {
+        videoContainer.mVideoInfo?.let {
+            updateWindowWH(it)
+        }
     }
-
 
     //窗口缩放实现》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
     /**
@@ -160,7 +147,6 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
                     //当点在moveView上，直接就拦截触摸事件，自己处理
                     if (moveView.isDownOnThisView(it.x, it.y)) {
                         moveView.setInMoving(true)
-                        setWindowState(true)
                         return true
                     }
                 }
@@ -173,6 +159,7 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
     /**
      * 触摸事件处理，缩放窗口
      */
+    @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         event?.let {
             when (it.action) {
@@ -180,13 +167,18 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
                 }
                 MotionEvent.ACTION_MOVE -> {
                     if (moveView.isInMoving()) {
-                        updateWindowSizeByRB(it.x + moveView.width / 2, it.y + moveView.height / 2)
+                        windowUpdateHelper.updateWindowSizeByRB(
+                                it.x + moveView.width / 2,
+                                it.y + moveView.height / 2
+                        )
                     }
                 }
                 MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
                     if (moveView.isInMoving()) {
-                        updateWindowSizeByRB(it.x + moveView.width / 2, it.y + moveView.height / 2)
-                        setWindowState(false)
+                        windowUpdateHelper.updateWindowSizeByRB(
+                                it.x + moveView.width / 2,
+                                it.y + moveView.height / 2
+                        )
                         moveView.setInMoving(false)
                     }
                 }
@@ -206,20 +198,15 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
 
     override fun onStartNestedScroll(child: View, target: View, nestedScrollAxes: Int): Boolean {
         //不管哪个方向的嵌套滑动，我们都要
-        LogUtils.i(javaClass.name, "onStartNestedScroll nestedScrollAxes = ${nestedScrollAxes}")
-        setWindowState(true)
         return true
     }
 
     override fun onNestedScrollAccepted(child: View, target: View, axes: Int) {
         super.onNestedScrollAccepted(child, target, axes)
-        //绑定滚动的轴
-        LogUtils.i(javaClass.name, "onNestedScrollAccepted axes = ${axes}")
     }
 
     override fun onStopNestedScroll(child: View) {
         super.onStopNestedScroll(child)
-        setWindowState(false)
     }
 
     /**
@@ -234,8 +221,7 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
      */
     override fun onNestedScroll(target: View, dxConsumed: Int, dyConsumed: Int, dxUnconsumed: Int, dyUnconsumed: Int) {
         //将剩下的滚动量消耗掉
-        LogUtils.i(javaClass.name, "onNestedScroll dxUnconsumed = ${dxUnconsumed},dyUnconsumed = ${dyUnconsumed}")
-        updateWindowPosition(AreaUtils.windowOffsetX + dxUnconsumed, AreaUtils.windowOffsetY + dyUnconsumed)
+        windowUpdateHelper.updateWindowPosition(AreaUtils.windowOffsetX + dxUnconsumed, AreaUtils.windowOffsetY + dyUnconsumed)
         super.onNestedScroll(target, dxConsumed + dxUnconsumed, dyConsumed + dyUnconsumed, 0, 0)
     }
 
@@ -248,124 +234,112 @@ class VideoFloatWindow : FrameLayout, NestedScrollingParent {
     }
     //《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
 
-    //悬浮窗状态切换，在进入移动或缩放状态时，切换为全屏状态(悬浮窗区域会拦截触摸事件，不管该位置是
-    // 否是透明的)，进行移动缩放操作》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
-    private var moveOrScale: Boolean = false
-
-    /**
-     * 设置窗口状态
-     * @param moveOrScale 移动或者缩放状态
-     */
-    private fun setWindowState(moveOrScale: Boolean) {
-        this.moveOrScale = moveOrScale
-        if (moveOrScale) {
-//            setBackgroundColor(Color.parseColor("#80000000"))
-            //窗口视图填满可用空间
-            windowLayoutParams.width = WindowManager.LayoutParams.MATCH_PARENT
-            windowLayoutParams.height = WindowManager.LayoutParams.MATCH_PARENT
-//            AreaUtils.windowOffsetX = windowLayoutParams.x
-//            AreaUtils.windowOffsetY = windowLayoutParams.y
-            windowLayoutParams.x = 0
-            windowLayoutParams.y = 0
-            updateFloatWindow()
-
-            //播放视图根据当前窗口位置进行属性设置
-            playerViewLayoutParams.width = AreaUtils.windowWidth
-            playerViewLayoutParams.height = AreaUtils.windowHeight
-            playerViewLayoutParams.leftMargin = AreaUtils.windowOffsetX
-            playerViewLayoutParams.topMargin = AreaUtils.windowOffsetY
-            playerView.layoutParams = playerViewLayoutParams
-
-            AvailableAreaMeasure.instance.measureAvailableArea()
-        } else {
-//            setBackgroundColor(Color.parseColor("#00000000"))
-            playerViewLayoutParams.width = AreaUtils.windowWidth
-            playerViewLayoutParams.height = AreaUtils.windowHeight
-            playerViewLayoutParams.leftMargin = 0
-            playerViewLayoutParams.topMargin = 0
-            playerView.layoutParams = playerViewLayoutParams
-
-            windowLayoutParams.width = WindowManager.LayoutParams.WRAP_CONTENT
-            windowLayoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT
-            windowLayoutParams.x = AreaUtils.windowOffsetX
-            windowLayoutParams.y = AreaUtils.windowOffsetY
-            updateFloatWindow()
-        }
-    }
-
-    /**
-     * 根据右下角手指触摸位置更新窗口尺寸
-     */
-    private fun updateWindowSizeByRB(right: Float, bottom: Float) {
-        PlayHelper.lastPlayVideo?.getVideoInfo()?.let {
-            val ratioWH = it.whRatio
-            var suggestRight = Math.min(Math.max(right, 0F), AreaUtils.maxVideoWidth.toFloat())
-            var suggestBottom = Math.min(Math.max(bottom, 0F), AreaUtils.maxVideoHeight.toFloat())
-            var destWidth = suggestRight - AreaUtils.windowOffsetX
-            var destHeight = suggestBottom - AreaUtils.windowOffsetY
-            //宽度调整
-            if (destWidth / ratioWH < AreaUtils.minVideoHeight) {//当前宽度下，高度会小于最小高度
-                destWidth = AreaUtils.minVideoHeight * ratioWH//宽度调整到高度可以达到最小高度
-            }
-            if (destWidth > AreaUtils.maxVideoWidth) {
-                destWidth = AreaUtils.maxVideoWidth.toFloat()
-            }
-            if (destWidth < AreaUtils.minVideoWidth) {
-                destWidth = AreaUtils.minVideoWidth.toFloat()
-            }
-            //高度调整
-            if (destHeight * ratioWH < AreaUtils.minVideoWidth) {//当前高度下，宽度会小于最小宽度
-                destHeight = AreaUtils.minVideoWidth / ratioWH//高度调整到宽度可以达到最小宽度
-            }
-            if (destHeight > AreaUtils.maxVideoHeight) {
-                destHeight = AreaUtils.maxVideoHeight.toFloat()
-            }
-            if (destHeight < AreaUtils.minVideoHeight) {
-                destHeight = AreaUtils.minVideoHeight.toFloat()
-            }
-            val areaFillW = destWidth * destWidth / ratioWH//按缩放比例宽度拉到手指横坐标的面积
-            val areaFillH = destHeight * destHeight * ratioWH//按缩放比例高度拉到手指纵坐标的面积
-            //取面积小的进行设置
-            if (areaFillW > areaFillH) {
-                AreaUtils.windowWidth = (destHeight * ratioWH).toInt()
-                AreaUtils.windowHeight = destHeight.toInt()
-            } else {
-                AreaUtils.windowWidth = destWidth.toInt()
-                AreaUtils.windowHeight = (destWidth / ratioWH).toInt()
-            }
-            AreaUtils.suggestArea = AreaUtils.windowWidth * AreaUtils.windowHeight
-            AreaUtils.adjustWindowOffset()
-            AreaUtils.calcWindowCenter()
-            //更新playerView位置
-            playerViewLayoutParams.width = AreaUtils.windowWidth
-            playerViewLayoutParams.height = AreaUtils.windowHeight
-            playerViewLayoutParams.leftMargin = AreaUtils.windowOffsetX
-            playerViewLayoutParams.topMargin = AreaUtils.windowOffsetY
-            playerView.layoutParams = playerViewLayoutParams
-            LogUtils.i(javaClass.name, "updateWindowSizeByRB ${AreaUtils.windowWidth}x${AreaUtils.windowHeight}")
-        }
-    }
-
-    /**
-     * 更新窗口位置
-     */
-    private fun updateWindowPosition(left: Int, top: Int) {
-        AreaUtils.windowOffsetX = left
-        AreaUtils.windowOffsetY = top
-        AreaUtils.adjustWindowOffset()
-        AreaUtils.calcWindowCenter()
-        LogUtils.i(javaClass.name, "updateWindowPosition ${AreaUtils.windowOffsetX}x${AreaUtils.windowOffsetY}")
-        playerViewLayoutParams.width = AreaUtils.windowWidth
-        playerViewLayoutParams.height = AreaUtils.windowHeight
-        playerViewLayoutParams.leftMargin = AreaUtils.windowOffsetX
-        playerViewLayoutParams.topMargin = AreaUtils.windowOffsetY
-        playerView.layoutParams = playerViewLayoutParams
-    }
-
     private fun updateFloatWindow() {
         if (isShowing()) {
             windowManager.updateViewLayout(this, windowLayoutParams)
         }
+    }
+
+    /**
+     * 这个类用于过滤缩放过程中一些不必要的缩放次数，实现窗口缩放的流畅性
+     * 窗口移动倒是很流畅，不需要修改
+     */
+    private inner class WindowUpdateHelper {
+        private val setNewRB = 1
+        private val mainHandler = object : Handler(Looper.getMainLooper()) {
+            override fun handleMessage(msg: Message?) {
+                msg?.let {
+                    when (it.what) {
+                        setNewRB -> {
+                            handleSetNewRB()
+                        }
+                    }
+                }
+            }
+        }
+
+        private fun handleSetNewRB() {
+            PlayHelper.lastPlayVideo?.getVideoInfo()?.let {
+                val ratioWH = it.whRatio
+                val suggestRight = Math.min(Math.max(windowLayoutParams.x + right, 0F), AreaUtils.maxVideoWidth.toFloat())
+                val suggestBottom = Math.min(Math.max(windowLayoutParams.y + bottom, 0F), AreaUtils.maxVideoHeight.toFloat())
+                var destWidth = suggestRight - AreaUtils.windowOffsetX
+                var destHeight = suggestBottom - AreaUtils.windowOffsetY
+                //宽度调整
+                if (destWidth / ratioWH < AreaUtils.minVideoHeight) {//当前宽度下，高度会小于最小高度
+                    destWidth = AreaUtils.minVideoHeight * ratioWH//宽度调整到高度可以达到最小高度
+                }
+                if (destWidth > AreaUtils.maxVideoWidth) {
+                    destWidth = AreaUtils.maxVideoWidth.toFloat()
+                }
+                if (destWidth < AreaUtils.minVideoWidth) {
+                    destWidth = AreaUtils.minVideoWidth.toFloat()
+                }
+                //高度调整
+                if (destHeight * ratioWH < AreaUtils.minVideoWidth) {//当前高度下，宽度会小于最小宽度
+                    destHeight = AreaUtils.minVideoWidth / ratioWH//高度调整到宽度可以达到最小宽度
+                }
+                if (destHeight > AreaUtils.maxVideoHeight) {
+                    destHeight = AreaUtils.maxVideoHeight.toFloat()
+                }
+                if (destHeight < AreaUtils.minVideoHeight) {
+                    destHeight = AreaUtils.minVideoHeight.toFloat()
+                }
+                val areaFillW = destWidth * destWidth / ratioWH//按缩放比例宽度拉到手指横坐标的面积
+                val areaFillH = destHeight * destHeight * ratioWH//按缩放比例高度拉到手指纵坐标的面积
+                //取面积小的进行设置
+                if (areaFillW > areaFillH) {
+                    AreaUtils.windowWidth = (destHeight * ratioWH).toInt()
+                    AreaUtils.windowHeight = destHeight.toInt()
+                } else {
+                    AreaUtils.windowWidth = destWidth.toInt()
+                    AreaUtils.windowHeight = (destWidth / ratioWH).toInt()
+                }
+                AreaUtils.suggestArea = AreaUtils.windowWidth * AreaUtils.windowHeight
+                AreaUtils.adjustWindowOffset()
+                AreaUtils.calcWindowCenter()
+                //更新playerView位置
+                windowLayoutParams.width = AreaUtils.windowWidth
+                windowLayoutParams.height = AreaUtils.windowHeight
+                windowLayoutParams.x = AreaUtils.windowOffsetX
+                windowLayoutParams.y = AreaUtils.windowOffsetY
+                updateFloatWindow()
+                LogUtils.i(javaClass.name, "updateWindowSizeByRB ${AreaUtils.windowWidth}x${AreaUtils.windowHeight}")
+            }
+        }
+
+        private var right: Float = 0f
+        private var bottom: Float = 0f
+
+        /**
+         * 根据右下角手指触摸位置更新窗口尺寸
+         * 设置新的窗口尺寸，由于windowManager更新视图大小速度有限，导致窗口缩放非常卡顿，这里通过主线程消息循环，减少修改次数
+         * 过于频繁的更新只会变得更卡，这里限制最多30毫秒更新一次
+         */
+        fun updateWindowSizeByRB(r: Float, b: Float) {
+            right = r
+            bottom = b
+            if (!mainHandler.hasMessages(setNewRB)) {
+                mainHandler.sendEmptyMessageDelayed(setNewRB, 30)
+            }
+        }
+
+        /**
+         * 更新窗口位置
+         */
+        fun updateWindowPosition(left: Int, top: Int) {
+            AreaUtils.windowOffsetX = left
+            AreaUtils.windowOffsetY = top
+            AreaUtils.adjustWindowOffset()
+            AreaUtils.calcWindowCenter()
+            LogUtils.i(javaClass.name, "updateWindowPosition ${AreaUtils.windowOffsetX}x${AreaUtils.windowOffsetY}")
+            windowLayoutParams.width = AreaUtils.windowWidth
+            windowLayoutParams.height = AreaUtils.windowHeight
+            windowLayoutParams.x = AreaUtils.windowOffsetX
+            windowLayoutParams.y = AreaUtils.windowOffsetY
+            updateFloatWindow()
+        }
+
     }
     //《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
 }
