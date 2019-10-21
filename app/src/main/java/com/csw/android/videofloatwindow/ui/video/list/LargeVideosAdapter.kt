@@ -1,10 +1,9 @@
-package com.csw.android.videofloatwindow.ui.list
+package com.csw.android.videofloatwindow.ui.video.list
 
 import androidx.fragment.app.Fragment
 import com.chad.library.adapter.base.BaseViewHolder
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.entities.VideoInfo
-import com.csw.android.videofloatwindow.util.ScreenInfo
 import com.csw.android.videofloatwindow.util.Utils
 import com.csw.android.videofloatwindow.view.ListVideoContainer
 

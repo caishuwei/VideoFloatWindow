@@ -8,24 +8,35 @@ import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import com.csw.android.videofloatwindow.R
+import com.csw.android.videofloatwindow.dagger.IBaseView
 import io.reactivex.disposables.Disposable
 import java.util.*
 
 /**
  * Activity基类
  */
-abstract class BaseActivity : AppCompatActivity(), IUICreator {
+abstract class BaseActivity : AppCompatActivity(), IUICreator, IBaseView {
 
     //只在生命周期中执行的任务
     private val lifecycleTasks: WeakHashMap<Disposable, Any> = WeakHashMap()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        //在设置布局之前注入
+        initInject()
+
         setContentView(getContentViewID())
         initView(window.decorView, savedInstanceState)
         initAdapter()
         initListener()
         initData()
+    }
+
+    /**
+     * 初始化注入
+     */
+    open fun initInject() {
+
     }
 
     override fun initView(rootView: View, savedInstanceState: Bundle?) {

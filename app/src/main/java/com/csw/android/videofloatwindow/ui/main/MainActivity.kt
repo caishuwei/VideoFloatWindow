@@ -1,6 +1,5 @@
 package com.csw.android.videofloatwindow.ui.main
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -9,23 +8,28 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.app.Constants
+import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.PlaySheet
 import com.csw.android.videofloatwindow.player.PlayHelper
-import com.csw.android.videofloatwindow.ui.base.BaseActivity
+import com.csw.android.videofloatwindow.ui.base.BaseMVPActivity
 import com.csw.android.videofloatwindow.ui.base.SwipeBackCommonActivity
-import com.csw.android.videofloatwindow.ui.list.LocalVideosFragment
-import com.csw.android.videofloatwindow.ui.list.PlaySheetVideosActivity
+import com.csw.android.videofloatwindow.ui.video.list.CommonVideoListFragment
+import com.csw.android.videofloatwindow.ui.video.list.local.LocalVideoListFragment
 import com.csw.android.videofloatwindow.util.DBUtils
-import com.csw.android.videofloatwindow.view.SpaceLineItemDecoration
-import io.reactivex.Observable
-import io.reactivex.ObservableOnSubscribe
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : BaseActivity() {
+class MainActivity : BaseMVPActivity<MainContract.Presenter>(), MainContract.View {
+
 
     private lateinit var playSheetAdapter: PlaySheetAdapter
+
+    override fun initInject() {
+        MyApplication.appComponent.getMainComponentBuilder()
+                .setView(this)
+                .build()
+                .inject(this)
+    }
 
     override fun getContentViewID(): Int {
         return R.layout.activity_main
@@ -34,11 +38,6 @@ class MainActivity : BaseActivity() {
     override fun initView(rootView: View, savedInstanceState: Bundle?) {
         super.initView(rootView, savedInstanceState)
         recyclerView.layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
-//        recyclerView.addItemDecoration(object : SpaceLineItemDecoration(0, 1, 0, 0, Color.GRAY) {
-//            override fun skipDraw(position: Int): Boolean {
-//                return position == 0
-//            }
-//        })
     }
 
     override fun initAdapter() {
@@ -54,10 +53,9 @@ class MainActivity : BaseActivity() {
             val playSheet = playSheetAdapter.getItem(position)
             playSheet?.let {
                 if (it.name == Constants.LOCAL_VIDEO_PLAY_SHEET) {
-                    SwipeBackCommonActivity.openActivity(this@MainActivity, LocalVideosFragment::class.java, LocalVideosFragment.createData(it))
-//                    startActivity(Intent(this@MainActivity, LocalVideosActivity::class.java))
+                    SwipeBackCommonActivity.openActivity(this@MainActivity, LocalVideoListFragment::class.java, LocalVideoListFragment.createData(it))
                 } else {
-                    PlaySheetVideosActivity.openActivity(this@MainActivity, playSheet.id)
+                    SwipeBackCommonActivity.openActivity(this@MainActivity, CommonVideoListFragment::class.java, CommonVideoListFragment.createData(it))
                 }
             }
         }
@@ -83,7 +81,7 @@ class MainActivity : BaseActivity() {
                     if (Constants.LOCAL_VIDEO_PLAY_SHEET != it.name) {
                         playSheetAdapter.data.remove(it)
                         playSheetAdapter.notifyItemRemoved(viewHolder.adapterPosition)
-                        DBUtils.deletePlaySheet(it)
+                        presenter.removePlaySheet(it)
                     }
                 }
             }
@@ -94,7 +92,7 @@ class MainActivity : BaseActivity() {
         smartRefreshLayout.setEnableLoadMore(false)
         smartRefreshLayout.setOnRefreshListener {
             playSheetAdapter.setNewData(null)
-            loadPlaySheets()
+            presenter.loadPlaySheets()
         }
     }
 
@@ -104,30 +102,23 @@ class MainActivity : BaseActivity() {
         PlayHelper.backgroundPlay = true
     }
 
-    private fun loadPlaySheets() {
-        addLifecycleTask(
-                Observable.create(
-                        ObservableOnSubscribe<List<PlaySheet>> {
-                            val result = arrayListOf<PlaySheet>()
-                            DBUtils.insertPlaySheetIfNotExist(PlaySheet(Constants.LOCAL_VIDEO_PLAY_SHEET))//插入本地视频播放列表
-                            result.addAll(DBUtils.getPlaySheets())
-                            it.onNext(result)
-                            it.onComplete()
-                        }
-                )
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe {
-                            playSheetAdapter.setNewData(it)
-                            smartRefreshLayout.finishRefresh(true)
-                        }
-        )
-    }
-
     override fun finish() {
         super.finish()
         //退出app，使用系统动画
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+    }
+
+    override fun updatePlaySheets(playSheets: List<PlaySheet>) {
+        playSheetAdapter.setNewData(playSheets)
+    }
+
+    override fun onLoadPlaySheetsSucceed() {
+        smartRefreshLayout.finishRefresh(true)
+    }
+
+    override fun onLoadPlaySheetsFailed(errorMsg: String) {
+        smartRefreshLayout.finishRefresh(false)
+        Snackbar.make(recyclerView, errorMsg, Snackbar.LENGTH_SHORT).show()
     }
 
 }

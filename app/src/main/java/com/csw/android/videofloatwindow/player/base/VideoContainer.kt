@@ -3,6 +3,7 @@ package com.csw.android.videofloatwindow.player.base
 import android.app.Activity
 import android.content.Context
 import android.content.pm.ActivityInfo
+import android.os.Build
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
@@ -14,7 +15,7 @@ import com.csw.android.videofloatwindow.player.PlayHelper
 import com.csw.android.videofloatwindow.player.video.base.IControllerSettingHelper
 import com.csw.android.videofloatwindow.player.video.base.IVideo
 import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
-import com.csw.android.videofloatwindow.ui.FullScreenActivity
+import com.csw.android.videofloatwindow.ui.video.full_screen.FullScreenActivity
 import com.csw.android.videofloatwindow.util.FragmentHelper
 import com.csw.android.videofloatwindow.util.LogUtils
 import com.csw.android.videofloatwindow.util.Utils
@@ -172,7 +173,12 @@ open class VideoContainer : FrameLayout {
                     if (isGranted) {
                         playInWindow()
                     } else {
-                        Snackbar.make(this@VideoContainer, "没有悬浮窗权限", Snackbar.LENGTH_SHORT).show()
+                        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O) {
+                            //Android 8.0存在一个bug，用户在设置页面开启悬浮窗权限并返回，此时并不能得到正确的悬浮窗权限结果，但实际已经可以添加悬浮窗
+                            Snackbar.make(this@VideoContainer, "没有悬浮窗权限，Android 8.0手机第一次开启权限会提示失败，但实际已有权限，再次点击悬浮窗按钮即可", Snackbar.LENGTH_LONG).show()
+                        } else {
+                            Snackbar.make(this@VideoContainer, "没有悬浮窗权限", Snackbar.LENGTH_SHORT).show()
+                        }
                     }
                 }
             })

@@ -2,7 +2,9 @@ package com.csw.android.videofloatwindow.app
 
 import android.app.Application
 import android.content.Context
-import com.csw.android.videofloatwindow.dagger.localvideos.LocalVideosComponent
+import com.csw.android.videofloatwindow.ui.main.MainComponent
+import com.csw.android.videofloatwindow.ui.video.list.VideoListComponent
+import com.csw.android.videofloatwindow.ui.video.list.local.LocalVideoListComponent
 import dagger.BindsInstance
 import dagger.Component
 import dagger.Module
@@ -16,7 +18,10 @@ import dagger.Provides
 interface AppComponent {
 
     //添加子实例池构建器
-    fun getLocalVideosComponentBuilder(): LocalVideosComponent.Builder
+    fun getMainComponentBuilder(): MainComponent.Builder
+    fun getVideoListComponentBuilder(): VideoListComponent.Builder
+
+    fun getLocalVideoListComponentBuilder(): LocalVideoListComponent.Builder
 
     /**
      * 实例工厂构建，可以先注入一些已存的实例

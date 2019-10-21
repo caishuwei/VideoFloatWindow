@@ -10,7 +10,7 @@ import com.csw.android.videofloatwindow.player.video.base.IVideo
 import com.csw.android.videofloatwindow.player.video.exo.ExoVideoView
 import com.csw.android.videofloatwindow.player.window.FloatWindowVideoContainer
 import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
-import com.csw.android.videofloatwindow.ui.FullScreenActivity
+import com.csw.android.videofloatwindow.ui.video.full_screen.FullScreenActivity
 import com.csw.android.videofloatwindow.util.LogUtils
 import com.csw.android.videofloatwindow.view.FullScreenVideoContainer
 import java.lang.ref.WeakReference

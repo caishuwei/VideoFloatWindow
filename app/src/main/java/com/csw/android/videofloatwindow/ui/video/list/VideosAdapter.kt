@@ -1,4 +1,4 @@
-package com.csw.android.videofloatwindow.ui.list
+package com.csw.android.videofloatwindow.ui.video.list
 
 import android.provider.MediaStore
 import com.chad.library.adapter.base.BaseQuickAdapter

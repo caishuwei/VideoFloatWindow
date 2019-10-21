@@ -1,4 +1,4 @@
-package com.csw.android.videofloatwindow.ui
+package com.csw.android.videofloatwindow.ui.video.full_screen
 
 import android.content.Context
 import android.content.Intent
