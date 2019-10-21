@@ -149,5 +149,9 @@ class DBUtils {
             playSheetVideoDao.deleteInTx(playSheetVideoDao.queryBuilder().where(PlaySheetVideoDao.Properties.PlaySheetId.eq(playSheet.id)).list())
             daoSession.clear()
         }
+
+        fun getPlaySheetByName(name: String): PlaySheet? {
+            return playSheetDao.queryBuilder().where(PlaySheetDao.Properties.Name.eq(name)).unique()
+        }
     }
 }

@@ -1,7 +1,11 @@
 package com.csw.android.videofloatwindow.ui.main
 
+import android.app.AlertDialog
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
+import androidx.appcompat.widget.AppCompatEditText
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.*
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -15,7 +19,6 @@ import com.csw.android.videofloatwindow.ui.base.BaseMVPActivity
 import com.csw.android.videofloatwindow.ui.base.SwipeBackCommonActivity
 import com.csw.android.videofloatwindow.ui.video.list.CommonVideoListFragment
 import com.csw.android.videofloatwindow.ui.video.list.local.LocalVideoListFragment
-import com.csw.android.videofloatwindow.util.DBUtils
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -79,8 +82,8 @@ class MainActivity : BaseMVPActivity<MainContract.Presenter>(), MainContract.Vie
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 playSheetAdapter.getItem(viewHolder.adapterPosition)?.let {
                     if (Constants.LOCAL_VIDEO_PLAY_SHEET != it.name) {
-                        playSheetAdapter.data.remove(it)
-                        playSheetAdapter.notifyItemRemoved(viewHolder.adapterPosition)
+//                        playSheetAdapter.data.remove(it)
+//                        playSheetAdapter.notifyItemRemoved(viewHolder.adapterPosition)
                         presenter.removePlaySheet(it)
                     }
                 }
@@ -94,6 +97,31 @@ class MainActivity : BaseMVPActivity<MainContract.Presenter>(), MainContract.Vie
             playSheetAdapter.setNewData(null)
             presenter.loadPlaySheets()
         }
+        floatActionBottom.setOnClickListener {
+            //添加歌单
+            val input = AppCompatEditText(this@MainActivity)
+            input.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            input.gravity = Gravity.CENTER
+            input.maxLines = 1
+            AlertDialog.Builder(this@MainActivity)
+                    .setTitle("创建一个歌单")
+                    .setView(input)
+                    .setNegativeButton("取消") { dialog, which ->
+                        dialog.dismiss()
+                    }
+                    .setPositiveButton("创建") { dialog, which ->
+                        val name = input.text.toString().trim()
+                        if (name.isEmpty()) {
+                            Snackbar.make(smartRefreshLayout, "名称不能为空", Snackbar.LENGTH_SHORT).show()
+                        } else if (presenter.isPlaySheetExist(name)) {
+                            Snackbar.make(smartRefreshLayout, "该名称已被使用", Snackbar.LENGTH_SHORT).show()
+                        } else {
+                            presenter.addPlaySheet(PlaySheet(name))
+                            dialog.dismiss()
+                        }
+                    }
+                    .create().show()
+        }
     }
 
     override fun initData() {
@@ -104,8 +132,12 @@ class MainActivity : BaseMVPActivity<MainContract.Presenter>(), MainContract.Vie
 
     override fun finish() {
         super.finish()
-        //退出app，使用系统动画
+        //退出app，使用系统动画淡出
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+    }
+
+    override fun refreshPlaySheetList() {
+        smartRefreshLayout.autoRefresh()
     }
 
     override fun updatePlaySheets(playSheets: List<PlaySheet>) {

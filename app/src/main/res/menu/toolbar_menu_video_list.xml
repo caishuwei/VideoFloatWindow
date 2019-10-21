@@ -3,7 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/menu_add_to_play_sheet"
-        android:title="添加到歌单" />
+        android:id="@+id/menu_add_video"
+        android:icon="@drawable/icon_add"
+        android:title="添加视频"
+        app:showAsAction="always" />
 
 </menu>

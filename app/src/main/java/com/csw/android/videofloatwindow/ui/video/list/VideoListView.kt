@@ -316,7 +316,7 @@ open class VideoListView<T : VideoListContract.Presenter>() : BaseMVPFragment<T>
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> activity?.finish()
-            R.id.menu_add_to_play_sheet -> {
+            R.id.menu_add_video -> {
                 Snackbar.make(toolbar, "menu_add_to_play_sheet", Snackbar.LENGTH_SHORT).show()
             }
             else -> return super.onOptionsItemSelected(item)

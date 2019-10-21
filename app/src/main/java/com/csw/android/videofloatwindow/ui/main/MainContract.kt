@@ -8,14 +8,16 @@ interface MainContract {
 
     interface Presenter : IBasePresenter {
         fun loadPlaySheets()
-        fun removePlaySheet(it: PlaySheet)
+        fun removePlaySheet(playSheet: PlaySheet)
+        fun addPlaySheet(playSheet: PlaySheet)
+        fun isPlaySheetExist(name: String): Boolean
     }
 
     interface View : IBaseView {
+        fun refreshPlaySheetList()
         fun updatePlaySheets(playSheets: List<PlaySheet>)
         fun onLoadPlaySheetsSucceed()
         fun onLoadPlaySheetsFailed(errorMsg: String)
-
     }
 
 }

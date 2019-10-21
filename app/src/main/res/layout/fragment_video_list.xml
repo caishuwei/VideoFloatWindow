@@ -18,7 +18,7 @@
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:layout_scrollFlags="enterAlways|scroll"
+                app:layout_scrollFlags="snap|enterAlways|scroll"
                 app:title="@string/app_name"
                 app:titleTextColor="@color/white">
 

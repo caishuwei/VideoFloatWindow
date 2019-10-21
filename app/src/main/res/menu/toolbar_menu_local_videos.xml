@@ -8,8 +8,4 @@
         android:title="扫描"
         app:showAsAction="ifRoom" />
 
-    <item
-        android:id="@+id/menu_add_to_play_sheet"
-        android:title="添加到歌单" />
-
 </menu>
