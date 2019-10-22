@@ -73,6 +73,7 @@ open class VideoListView<T : VideoListContract.Presenter>() : BaseMVPFragment<T>
     }
     //当前的歌单Id
     var playSheetId: Long? = null
+    var playSheetName: String? = null
 
     override fun getContentViewID(): Int {
         return R.layout.fragment_video_list
@@ -148,7 +149,7 @@ open class VideoListView<T : VideoListContract.Presenter>() : BaseMVPFragment<T>
     override fun initData() {
         super.initData()
         playSheetId = arguments?.getLong("playSheetId")
-        val playSheetName = arguments?.getString("playSheetName")
+        playSheetName = arguments?.getString("playSheetName")
         setupTitleBar(playSheetName)
         if (playSheetId != null) {
             smartRefreshLayout.autoRefresh()
@@ -297,30 +298,30 @@ open class VideoListView<T : VideoListContract.Presenter>() : BaseMVPFragment<T>
 
     //TitleBar>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     protected open fun setupTitleBar(playSheetName: String?) {
-        val activity = activity
-        if (activity is AppCompatActivity) {
-            activity.setSupportActionBar(toolbar)
-            activity.supportActionBar?.setHomeButtonEnabled(true)
-            toolbar.title = playSheetName
-            toolbar.navigationIcon = Utils.getDrawableBySize(R.drawable.icon_menu_back, ScreenInfo.dp2Px(30f), ScreenInfo.dp2Px(30f))
-            toolbar.inflateMenu(R.menu.toolbar_menu_local_videos)//填充菜单
-            toolbar.overflowIcon = Utils.getDrawableBySize(R.drawable.icon_menu_more, ScreenInfo.dp2Px(30f), ScreenInfo.dp2Px(30f))
-            setHasOptionsMenu(true)//设置碎片拥有菜单
-        }
+//        val activity = activity
+//        if (activity is AppCompatActivity) {
+//            activity.setSupportActionBar(toolbar)
+//            activity.supportActionBar?.setHomeButtonEnabled(true)
+//            toolbar.title = playSheetName
+//            toolbar.navigationIcon = Utils.getDrawableBySize(R.drawable.icon_menu_back, ScreenInfo.dp2Px(30f), ScreenInfo.dp2Px(30f))
+//            toolbar.inflateMenu(R.menu.toolbar_menu_local_videos)//填充菜单
+//            toolbar.overflowIcon = Utils.getDrawableBySize(R.drawable.icon_menu_more, ScreenInfo.dp2Px(30f), ScreenInfo.dp2Px(30f))
+//            setHasOptionsMenu(true)//设置碎片拥有菜单
+//        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.toolbar_menu_video_list, menu)
+//        inflater.inflate(R.menu.toolbar_menu_video_list, menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            android.R.id.home -> activity?.finish()
-            R.id.menu_add_video -> {
-                Snackbar.make(toolbar, "menu_add_to_play_sheet", Snackbar.LENGTH_SHORT).show()
-            }
-            else -> return super.onOptionsItemSelected(item)
-        }
+//        when (item.itemId) {
+//            android.R.id.home -> activity?.finish()
+//            R.id.menu_add_video -> {
+//                Snackbar.make(toolbar, "menu_add_to_play_sheet", Snackbar.LENGTH_SHORT).show()
+//            }
+//            else -> return super.onOptionsItemSelected(item)
+//        }
         return true
     }
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

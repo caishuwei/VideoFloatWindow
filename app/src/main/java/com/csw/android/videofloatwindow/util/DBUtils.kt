@@ -131,7 +131,7 @@ class DBUtils {
         /**
          * 更新播放列表
          */
-        fun updatePlaySheetVideos(playSheetId: Long, videos: ArrayList<VideoInfo>) {
+        fun updatePlaySheetVideos(playSheetId: Long, videos: List<VideoInfo>) {
             //清除现在的记录
             playSheetVideoDao.deleteInTx(playSheetVideoDao.queryBuilder().where(PlaySheetVideoDao.Properties.PlaySheetId.eq(playSheetId)).list())
             //插入新记录
@@ -152,6 +152,17 @@ class DBUtils {
 
         fun getPlaySheetByName(name: String): PlaySheet? {
             return playSheetDao.queryBuilder().where(PlaySheetDao.Properties.Name.eq(name)).unique()
+        }
+
+        fun getVideosByPlaySheetName(name: String): ArrayList<VideoInfo> {
+            val playSheet = getPlaySheetByName(name)
+            val result = ArrayList<VideoInfo>()
+            playSheet?.let {
+                for (playSheetVideo in it.playSheetVideos) {
+                    result.add(playSheetVideo.videoInfo)
+                }
+            }
+            return result
         }
     }
 }

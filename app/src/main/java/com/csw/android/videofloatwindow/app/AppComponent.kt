@@ -5,6 +5,7 @@ import android.content.Context
 import com.csw.android.videofloatwindow.ui.main.MainComponent
 import com.csw.android.videofloatwindow.ui.video.list.VideoListComponent
 import com.csw.android.videofloatwindow.ui.video.list.local.LocalVideoListComponent
+import com.csw.android.videofloatwindow.ui.video.sheet.PlaySheetEditComponent
 import dagger.BindsInstance
 import dagger.Component
 import dagger.Module
@@ -20,8 +21,8 @@ interface AppComponent {
     //添加子实例池构建器
     fun getMainComponentBuilder(): MainComponent.Builder
     fun getVideoListComponentBuilder(): VideoListComponent.Builder
-
     fun getLocalVideoListComponentBuilder(): LocalVideoListComponent.Builder
+    fun getPlaySheetEditComponentBuilder(): PlaySheetEditComponent.Builder
 
     /**
      * 实例工厂构建，可以先注入一些已存的实例

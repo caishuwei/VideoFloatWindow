@@ -16,7 +16,6 @@ import org.greenrobot.greendao.annotation.Id;
 import org.greenrobot.greendao.annotation.ToMany;
 import org.greenrobot.greendao.annotation.Unique;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.List;
@@ -82,6 +81,7 @@ public class VideoInfo implements Serializable {
     private int width;//视频宽
     private int height;//视频高
     private String resolution;//视频分辨率字符串
+    private String imageUri;//预览图地址
 
     @ToMany(referencedJoinProperty = "videoInfoId")
     private List<PlaySheetVideo> playSheetVideos;
@@ -108,11 +108,12 @@ public class VideoInfo implements Serializable {
         this.width = width;
         this.height = height;
         this.resolution = resolution;
+        imageUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI + "/" + mediaDbId;
     }
 
-    @Generated(hash = 11887049)
+    @Generated(hash = 1223459747)
     public VideoInfo(Long id, String filePath, long duration, long fileSize, String fileName, long mediaDbId, int width, int height,
-                     String resolution) {
+            String resolution, String imageUri) {
         this.id = id;
         this.filePath = filePath;
         this.duration = duration;
@@ -122,6 +123,7 @@ public class VideoInfo implements Serializable {
         this.width = width;
         this.height = height;
         this.resolution = resolution;
+        this.imageUri = imageUri;
     }
 
     @Generated(hash = 296402066)
@@ -206,6 +208,14 @@ public class VideoInfo implements Serializable {
 
     public void setResolution(String resolution) {
         this.resolution = resolution;
+    }
+
+    public String getImageUri() {
+        return imageUri;
+    }
+
+    public void setImageUri(String imageUri) {
+        this.imageUri = imageUri;
     }
 
     /**

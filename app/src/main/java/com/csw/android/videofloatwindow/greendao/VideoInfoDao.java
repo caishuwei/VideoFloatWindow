@@ -33,6 +33,7 @@ public class VideoInfoDao extends AbstractDao<VideoInfo, Long> {
         public final static Property Width = new Property(6, int.class, "width", false, "WIDTH");
         public final static Property Height = new Property(7, int.class, "height", false, "HEIGHT");
         public final static Property Resolution = new Property(8, String.class, "resolution", false, "RESOLUTION");
+        public final static Property ImageUri = new Property(9, String.class, "imageUri", false, "IMAGE_URI");
     }
 
     private DaoSession daoSession;
@@ -59,7 +60,8 @@ public class VideoInfoDao extends AbstractDao<VideoInfo, Long> {
                 "\"MEDIA_DB_ID\" INTEGER NOT NULL UNIQUE ," + // 5: mediaDbId
                 "\"WIDTH\" INTEGER NOT NULL ," + // 6: width
                 "\"HEIGHT\" INTEGER NOT NULL ," + // 7: height
-                "\"RESOLUTION\" TEXT);"); // 8: resolution
+                "\"RESOLUTION\" TEXT," + // 8: resolution
+                "\"IMAGE_URI\" TEXT);"); // 9: imageUri
     }
 
     /** Drops the underlying database table. */
@@ -96,6 +98,11 @@ public class VideoInfoDao extends AbstractDao<VideoInfo, Long> {
         if (resolution != null) {
             stmt.bindString(9, resolution);
         }
+ 
+        String imageUri = entity.getImageUri();
+        if (imageUri != null) {
+            stmt.bindString(10, imageUri);
+        }
     }
 
     @Override
@@ -126,6 +133,11 @@ public class VideoInfoDao extends AbstractDao<VideoInfo, Long> {
         if (resolution != null) {
             stmt.bindString(9, resolution);
         }
+ 
+        String imageUri = entity.getImageUri();
+        if (imageUri != null) {
+            stmt.bindString(10, imageUri);
+        }
     }
 
     @Override
@@ -150,7 +162,8 @@ public class VideoInfoDao extends AbstractDao<VideoInfo, Long> {
             cursor.getLong(offset + 5), // mediaDbId
             cursor.getInt(offset + 6), // width
             cursor.getInt(offset + 7), // height
-            cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8) // resolution
+            cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8), // resolution
+            cursor.isNull(offset + 9) ? null : cursor.getString(offset + 9) // imageUri
         );
         return entity;
     }
@@ -166,6 +179,7 @@ public class VideoInfoDao extends AbstractDao<VideoInfo, Long> {
         entity.setWidth(cursor.getInt(offset + 6));
         entity.setHeight(cursor.getInt(offset + 7));
         entity.setResolution(cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8));
+        entity.setImageUri(cursor.isNull(offset + 9) ? null : cursor.getString(offset + 9));
      }
     
     @Override

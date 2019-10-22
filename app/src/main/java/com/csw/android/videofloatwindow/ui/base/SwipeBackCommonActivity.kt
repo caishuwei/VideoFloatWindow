@@ -18,6 +18,15 @@ class SwipeBackCommonActivity : SwipeBackActivity() {
             }
             context.startActivity(intent)
         }
+
+        fun <T : Fragment>openActivityForResult(fragment: Fragment, requestCode: Int, clazz: Class<T>, data: Bundle?) {
+            val intent = Intent(fragment.context, SwipeBackCommonActivity::class.java)
+            intent.putExtra("clazz", clazz)
+            data?.let {
+                intent.putExtra("data", it)
+            }
+            fragment.startActivityForResult(intent, requestCode)
+        }
     }
 
     override fun initData() {

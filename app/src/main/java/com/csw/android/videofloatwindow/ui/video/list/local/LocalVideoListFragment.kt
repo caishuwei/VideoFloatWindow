@@ -53,6 +53,7 @@ class LocalVideoListFragment : VideoListView<LocalVideoListContract.Presenter>()
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
+            android.R.id.home -> activity?.finish()
             R.id.menu_scan -> {
                 presenter.scanLocalVideos(playSheetId)
             }
@@ -60,7 +61,6 @@ class LocalVideoListFragment : VideoListView<LocalVideoListContract.Presenter>()
         }
         return true
     }
-
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     //View>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     override fun onLoadPlaySheetFailed(errorMsg: String) {
