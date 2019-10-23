@@ -32,7 +32,6 @@ class PlaySheetEditFragment : BaseMVPFragment<PlaySheetEditContract.Presenter>()
 
     private var adapter1: PlaySheetEditVideoListAdapter? = null
     private var adapter2: PlaySheetEditVideoListAdapter? = null
-
     override fun initInject() {
         MyApplication.appComponent.getPlaySheetEditComponentBuilder().setView(this).build().inject(this)
     }
@@ -95,6 +94,7 @@ class PlaySheetEditFragment : BaseMVPFragment<PlaySheetEditContract.Presenter>()
         super.initData()
         playSheetId = arguments?.getLong("playSheetId")
 //        val playSheetName = arguments?.getString("playSheetName")
+
         playSheetId?.let {
             presenter.loadPlaySheet(it)
             return

@@ -11,7 +11,9 @@ public interface VideoListContract {
 
 
     public   interface Presenter : IBasePresenter {
+        fun isPlaySheetExist(name: String): Boolean
         fun loadPlaySheetById(playSheetId: Long?)
+        fun updatePlaySheetName(playSheetId: Long?,newName: String)
     }
 
     public interface View : IBaseView {

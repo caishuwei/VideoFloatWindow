@@ -12,7 +12,7 @@ import com.csw.android.videofloatwindow.entities.PlaySheet
 import com.csw.android.videofloatwindow.ui.video.list.VideoListView
 import com.csw.android.videofloatwindow.util.ScreenInfo
 import com.csw.android.videofloatwindow.util.Utils
-import kotlinx.android.synthetic.main.activity_local_videos.*
+import kotlinx.android.synthetic.main.fragment_video_list.*
 
 class LocalVideoListFragment : VideoListView<LocalVideoListContract.Presenter>(), LocalVideoListContract.View {
 
@@ -44,6 +44,9 @@ class LocalVideoListFragment : VideoListView<LocalVideoListContract.Presenter>()
             toolbar.inflateMenu(R.menu.toolbar_menu_local_videos)//填充菜单
             toolbar.overflowIcon = Utils.getDrawableBySize(R.drawable.icon_menu_more, ScreenInfo.dp2Px(30f), ScreenInfo.dp2Px(30f))
             setHasOptionsMenu(true)//设置碎片拥有菜单
+            edt_title.setText(playSheetName)
+            edt_title.isFocusable = false
+            edt_title.isClickable = false
         }
     }
 
@@ -61,6 +64,7 @@ class LocalVideoListFragment : VideoListView<LocalVideoListContract.Presenter>()
         }
         return true
     }
+
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     //View>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     override fun onLoadPlaySheetFailed(errorMsg: String) {

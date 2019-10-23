@@ -164,5 +164,10 @@ class DBUtils {
             }
             return result
         }
+
+        fun updatePlaySheet(playSheet: PlaySheet) {
+            playSheetDao.update(playSheet)
+            daoSession.clear()
+        }
     }
 }

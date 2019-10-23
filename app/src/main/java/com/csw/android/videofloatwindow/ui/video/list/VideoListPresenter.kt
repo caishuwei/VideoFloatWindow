@@ -16,6 +16,19 @@ import io.reactivex.schedulers.Schedulers
 open class VideoListPresenter<T : VideoListContract.View> constructor(view: T) :
         BasePresenterImpl<T>(view),
         VideoListContract.Presenter {
+    override fun updatePlaySheetName(playSheetId: Long?, newName: String) {
+        playSheetId?.let {
+            val playSheet = DBUtils.getPlaySheet(it)
+            playSheet?.let {ps->
+                ps.name = newName
+                DBUtils.updatePlaySheet(ps)
+            }
+        }
+    }
+
+    override fun isPlaySheetExist(name: String): Boolean {
+        return DBUtils.getPlaySheetByName(name)!= null
+    }
 
     override fun loadPlaySheetById(playSheetId: Long?) {
         if (playSheetId == null) {

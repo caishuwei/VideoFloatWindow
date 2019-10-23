@@ -6,7 +6,6 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
@@ -19,11 +18,10 @@ import com.csw.android.videofloatwindow.player.PlayList
 import com.csw.android.videofloatwindow.player.base.VideoContainer
 import com.csw.android.videofloatwindow.ui.base.BaseMVPFragment
 import com.csw.android.videofloatwindow.ui.video.full_screen.FullScreenActivity
-import com.csw.android.videofloatwindow.util.ScreenInfo
 import com.csw.android.videofloatwindow.util.Utils
 import com.csw.android.videofloatwindow.view.ListVideoContainer
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.android.synthetic.main.activity_local_videos.*
+import kotlinx.android.synthetic.main.fragment_video_list.*
 
 open class VideoListView<T : VideoListContract.Presenter>() : BaseMVPFragment<T>(), VideoListContract.View {
 
