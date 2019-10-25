@@ -21,6 +21,7 @@ open class VideoListPresenter<T : VideoListContract.View> constructor(view: T) :
             val playSheet = DBUtils.getPlaySheet(it)
             playSheet?.let {ps->
                 ps.name = newName
+                ps.playSheetVideos.clear()
                 DBUtils.updatePlaySheet(ps)
             }
         }

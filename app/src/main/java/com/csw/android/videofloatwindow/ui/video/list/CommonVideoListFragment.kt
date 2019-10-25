@@ -80,10 +80,11 @@ class CommonVideoListFragment : VideoListView<VideoListContract.Presenter>() {
                     } else {
                         this@CommonVideoListFragment.playSheetName = newName
                         presenter.updatePlaySheetName(playSheetId, newName)
-                        edt_title.clearFocus()
                         //关闭已打开的键盘
                         val inputMethodManager = MyApplication.instance.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                         inputMethodManager.hideSoftInputFromWindow(v.windowToken, 0)
+                        //把焦点转移走
+                        recyclerView.requestFocus()
                     }
                     return@OnEditorActionListener true
                 }
