@@ -24,12 +24,28 @@ abstract class BaseActivity : AppCompatActivity(), IUICreator, IBaseView {
         super.onCreate(savedInstanceState)
         //在设置布局之前注入
         initInject()
+        noticePresenterCreated()
 
         setContentView(getContentViewID())
         initView(window.decorView, savedInstanceState)
         initAdapter()
         initListener()
+        noticePresenterUICreated()
         initData()
+    }
+
+    /**
+     * 告知切面创建
+     */
+    protected open fun noticePresenterCreated() {
+
+    }
+
+    /**
+     * 告知切面UI已经创建
+     */
+    protected open fun noticePresenterUICreated() {
+
     }
 
     /**

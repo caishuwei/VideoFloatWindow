@@ -2,11 +2,11 @@ package com.csw.android.videofloatwindow.util
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.PlaySheet
 import com.csw.android.videofloatwindow.entities.PlaySheetVideo
 import com.csw.android.videofloatwindow.entities.VideoInfo
+import com.csw.android.videofloatwindow.entities.rxbus.OnPlaySheetVideosUpdate
 import com.csw.android.videofloatwindow.greendao.*
 import com.github.yuweiguocn.library.greendao.MigrationHelper
 import org.greenrobot.greendao.database.Database
@@ -140,6 +140,7 @@ class DBUtils {
                 playSheetVideoDao.insert(PlaySheetVideo(playSheetId, vi.id))
             }
             daoSession.clear()
+            RxBus.getDefault().post(OnPlaySheetVideosUpdate(playSheetId))
         }
 
         /**

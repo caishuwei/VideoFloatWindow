@@ -67,16 +67,16 @@ class LocalVideoListFragment : VideoListView<LocalVideoListContract.Presenter>()
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     //View>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    override fun onLoadPlaySheetFailed(errorMsg: String) {
-        super.onLoadPlaySheetFailed(errorMsg)
+    override fun onRequestPlaySheetFailed(errorMsg: String) {
+        super.onRequestPlaySheetFailed(errorMsg)
         if (scanLocalVideosAfterFirstLoad) {
             presenter.scanLocalVideos(playSheetId)
             scanLocalVideosAfterFirstLoad = false
         }
     }
 
-    override fun onLoadPlaySheetSucceed() {
-        super.onLoadPlaySheetSucceed()
+    override fun onRequestPlaySheetSucceed() {
+        super.onRequestPlaySheetSucceed()
         if (scanLocalVideosAfterFirstLoad) {
             presenter.scanLocalVideos(playSheetId)
             scanLocalVideosAfterFirstLoad = false

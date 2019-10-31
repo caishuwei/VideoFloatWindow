@@ -7,8 +7,9 @@ import com.csw.android.videofloatwindow.entities.VideoInfo
 public interface PlaySheetEditContract {
 
     public interface Presenter : IBasePresenter {
-        fun loadPlaySheet(playSheetId: Long)
-        fun savePlaySheetVideos(id: Long, videoList: List<VideoInfo>)
+        fun setPlaySheetId(playSheetId: Long)
+        fun loadPlaySheet()
+        fun savePlaySheetVideos(videoList: List<VideoInfo>)
     }
 
     public interface View : IBaseView {

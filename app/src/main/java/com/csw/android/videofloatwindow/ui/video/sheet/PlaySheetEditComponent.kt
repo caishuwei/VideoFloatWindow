@@ -1,10 +1,13 @@
 package com.csw.android.videofloatwindow.ui.video.sheet
 
+import com.csw.android.videofloatwindow.dagger.LifecycleCallback
 import dagger.BindsInstance
 import dagger.Module
 import dagger.Provides
 import dagger.Subcomponent
+import javax.inject.Singleton
 
+@Singleton
 @Subcomponent(modules = [MyModule::class])
 interface PlaySheetEditComponent {
 
@@ -22,9 +25,14 @@ interface PlaySheetEditComponent {
 
 @Module
 class MyModule {
+    @Singleton
+    @Provides
+    fun getPresenter(playSheetEditPresenter: PlaySheetEditPresenter): PlaySheetEditContract.Presenter {
+        return playSheetEditPresenter
+    }
 
     @Provides
-    fun getPresenter(view: PlaySheetEditContract.View): PlaySheetEditContract.Presenter {
-        return PlaySheetEditPresenter(view)
+    fun getLifecycleCallback(presenter: PlaySheetEditContract.Presenter): LifecycleCallback {
+        return presenter.getLifecycleCallback()
     }
 }

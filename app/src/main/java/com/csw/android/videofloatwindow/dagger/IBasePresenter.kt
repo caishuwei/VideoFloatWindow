@@ -6,6 +6,11 @@ package com.csw.android.videofloatwindow.dagger
 interface IBasePresenter{
 
     /**
+     * 初始化UI数据
+     */
+    fun initUIData()
+
+    /**
      * 取得生命周期回调对象
      */
     fun getLifecycleCallback(): LifecycleCallback

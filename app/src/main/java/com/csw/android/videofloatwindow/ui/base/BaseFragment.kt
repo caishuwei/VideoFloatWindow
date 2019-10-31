@@ -32,6 +32,7 @@ abstract class BaseFragment : Fragment(), IUICreator, IBaseView {
         initView(view, savedInstanceState)
         initAdapter()
         initListener()
+        noticePresenterUICreated()
         initData()
     }
 
@@ -42,6 +43,13 @@ abstract class BaseFragment : Fragment(), IUICreator, IBaseView {
     }
 
     override fun initListener() {
+    }
+
+    /**
+     * 告知切面UI已经创建
+     */
+    protected open fun noticePresenterUICreated() {
+
     }
 
     override fun initData() {

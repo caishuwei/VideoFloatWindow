@@ -14,10 +14,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
+            <!--设置toolbar可以取得焦点，避免EditText自动获得焦点-->
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 app:layout_scrollFlags="snap|enterAlways|scroll"
                 app:title="@string/app_name"
                 app:titleTextColor="@color/white">
@@ -29,8 +32,6 @@
                     android:layout_height="wrap_content"
                     android:background="@drawable/selector_titlebar_edittext_background"
                     android:clickable="true"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
                     android:hint="请输入歌单名称"
                     android:maxLines="1"
                     android:text="@string/app_name"

@@ -25,6 +25,7 @@ import kotlinx.android.synthetic.main.fragment_video_list.*
 
 open class VideoListView<T : VideoListContract.Presenter>() : BaseMVPFragment<T>(), VideoListContract.View {
 
+
     companion object {
         fun createData(playSheet: PlaySheet): Bundle {
             val data = Bundle()
@@ -134,7 +135,7 @@ open class VideoListView<T : VideoListContract.Presenter>() : BaseMVPFragment<T>
             videosAdapter?.setNewData(null)
             runIfExternalStoragePermissionGranted { granted ->
                 if (granted) {
-                    presenter.loadPlaySheetById(playSheetId)
+                    presenter.requestPlaySheetById(playSheetId)
                 } else {
                     smartRefreshLayout.finishRefresh(false)
                 }
@@ -149,11 +150,12 @@ open class VideoListView<T : VideoListContract.Presenter>() : BaseMVPFragment<T>
         playSheetId = arguments?.getLong("playSheetId")
         playSheetName = arguments?.getString("playSheetName")
         setupTitleBar(playSheetName)
-        if (playSheetId != null) {
-            smartRefreshLayout.autoRefresh()
-        } else {
-            activity?.finish()
+        playSheetId?.let {
+            presenter.setPlaySheetId(it)
+            presenter.initUIData()
+            return
         }
+        activity?.finish()
     }
 
     override fun onResume() {
@@ -211,6 +213,7 @@ open class VideoListView<T : VideoListContract.Presenter>() : BaseMVPFragment<T>
                         val vh = recyclerView.getChildViewHolder(itemView) as BaseViewHolder
                         val listVideoContainer = vh.getView<ListVideoContainer>(R.id.mv_video_container)
                         listVideoContainer.play()
+                        syncCurrPlayList()
                     }
                 } else {
                     val view1 = layoutManager.findViewByPosition(fv)
@@ -229,12 +232,14 @@ open class VideoListView<T : VideoListContract.Presenter>() : BaseMVPFragment<T>
                         if (listRect.contains(videoRect)) {
                             //第一个可见item视频完全可见
                             video1.play()
+                            syncCurrPlayList()
                         } else {
                             val vh2 = recyclerView.getChildViewHolder(v2) as BaseViewHolder
                             val video2 = vh2.getView<ListVideoContainer>(R.id.mv_video_container)
                             if (videoRect.bottom <= listRect.top) {
                                 //第一个可见item视频已经不可见
                                 video2.play()
+                                syncCurrPlayList()
                             } else {
                                 //第一个可见item视频部分可见
                                 //如果第二个item视频已经完全可见，则播放第二个视频，否则播放第一个
@@ -243,14 +248,25 @@ open class VideoListView<T : VideoListContract.Presenter>() : BaseMVPFragment<T>
                                 videoRect.offset(intArray[0], intArray[1])
                                 if (videoRect.bottom < listRect.bottom) {
                                     video2.play()
+                                    syncCurrPlayList()
                                 } else {
                                     video1.play()
+                                    syncCurrPlayList()
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * 同步当前播放列表为此列表
+     */
+    private fun syncCurrPlayList() {
+        videosAdapter?.data?.let {
+            PlayList.data = java.util.ArrayList(it)
         }
     }
 
@@ -267,6 +283,7 @@ open class VideoListView<T : VideoListContract.Presenter>() : BaseMVPFragment<T>
                     val vh = recyclerView.getChildViewHolder(itemView) as BaseViewHolder
                     val listVideoContainer = vh.getView<ListVideoContainer>(R.id.mv_video_container)
                     listVideoContainer.play()
+                    syncCurrPlayList()
                 }
                 val smoothScroller = object : LinearSmoothScroller(activity) {
 
@@ -325,19 +342,21 @@ open class VideoListView<T : VideoListContract.Presenter>() : BaseMVPFragment<T>
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     //View>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    override fun refreshPlaySheetVideos() {
+        smartRefreshLayout.autoRefresh()
+    }
+
     override fun updatePlaySheetVideos(videoList: ArrayList<VideoInfo>) {
         videosAdapter?.setNewData(videoList)
-        //设置播放列表
-        PlayList.data = videoList
         play()
     }
 
-    override fun onLoadPlaySheetFailed(errorMsg: String) {
+    override fun onRequestPlaySheetFailed(errorMsg: String) {
         smartRefreshLayout.finishRefresh(false)
         Snackbar.make(recyclerView, errorMsg, Snackbar.LENGTH_SHORT).show()
     }
 
-    override fun onLoadPlaySheetSucceed() {
+    override fun onRequestPlaySheetSucceed() {
         smartRefreshLayout.finishRefresh(true)
     }
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

@@ -13,7 +13,7 @@ class PlayList {
         private var currIndex = Int.MIN_VALUE
         private var videoPos = HashMap<String, Int>()
         /**
-         * 设置播放列表
+         * 设置播放列表,ArrayList采用数组的方式，可以提高查询速度
          */
         var data: ArrayList<VideoInfo>? = null
             set(value) {

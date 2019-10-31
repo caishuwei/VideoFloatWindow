@@ -1,7 +1,12 @@
 package com.csw.android.videofloatwindow.entities;
 
 import com.chad.library.adapter.base.entity.MultiItemEntity;
+import com.csw.android.videofloatwindow.app.Constants;
+import com.csw.android.videofloatwindow.greendao.DaoSession;
+import com.csw.android.videofloatwindow.greendao.PlaySheetDao;
+import com.csw.android.videofloatwindow.greendao.PlaySheetVideoDao;
 
+import org.greenrobot.greendao.DaoException;
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Generated;
 import org.greenrobot.greendao.annotation.Id;
@@ -10,10 +15,6 @@ import org.greenrobot.greendao.annotation.Unique;
 
 import java.io.Serializable;
 import java.util.List;
-import org.greenrobot.greendao.DaoException;
-import com.csw.android.videofloatwindow.greendao.DaoSession;
-import com.csw.android.videofloatwindow.greendao.PlaySheetVideoDao;
-import com.csw.android.videofloatwindow.greendao.PlaySheetDao;
 
 /**
  * 播放列表
@@ -22,7 +23,6 @@ import com.csw.android.videofloatwindow.greendao.PlaySheetDao;
 public class PlaySheet implements Serializable, MultiItemEntity {
 
     public static final long serialVersionUID = 1;
-    public static final int ITEM_TYPE = 1;
 
     @Id(autoincrement = true)//主键 自增id
     private Long id;
@@ -33,10 +33,14 @@ public class PlaySheet implements Serializable, MultiItemEntity {
 
     @ToMany(referencedJoinProperty = "playSheetId")
     private List<PlaySheetVideo> playSheetVideos;
-    /** Used to resolve relations */
+    /**
+     * Used to resolve relations
+     */
     @Generated(hash = 2040040024)
     private transient DaoSession daoSession;
-    /** Used for active entity operations. */
+    /**
+     * Used for active entity operations.
+     */
     @Generated(hash = 1232769245)
     private transient PlaySheetDao myDao;
 
@@ -78,7 +82,9 @@ public class PlaySheet implements Serializable, MultiItemEntity {
 
     @Override
     public int getItemType() {
-        return ITEM_TYPE;
+        return (getPlaySheetVideos() == null || getPlaySheetVideos().isEmpty()) ?
+                Constants.ItemTypeEnum.EMPTY_PLAY_SHEET :
+                Constants.ItemTypeEnum.PLAY_SHEET;
     }
 
     public void setId(Long id) {
@@ -108,7 +114,9 @@ public class PlaySheet implements Serializable, MultiItemEntity {
         return playSheetVideos;
     }
 
-    /** Resets a to-many relationship, making the next get call to query for a fresh result. */
+    /**
+     * Resets a to-many relationship, making the next get call to query for a fresh result.
+     */
     @Generated(hash = 524656932)
     public synchronized void resetPlaySheetVideos() {
         playSheetVideos = null;
@@ -150,7 +158,9 @@ public class PlaySheet implements Serializable, MultiItemEntity {
         myDao.update(this);
     }
 
-    /** called by internal mechanisms, do not call yourself. */
+    /**
+     * called by internal mechanisms, do not call yourself.
+     */
     @Generated(hash = 1591773655)
     public void __setDaoSession(DaoSession daoSession) {
         this.daoSession = daoSession;

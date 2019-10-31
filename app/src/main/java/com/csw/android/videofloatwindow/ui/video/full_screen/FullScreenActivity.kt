@@ -61,14 +61,6 @@ class FullScreenActivity : BaseActivity() {
         PlayHelper.setTopLevelVideoContainer(videoContainer)
     }
 
-    override fun onStart() {
-        super.onStart()
-    }
-
-    override fun onStop() {
-        super.onStop()
-    }
-
     override fun finish() {
         PlayHelper.removeTopLevelVideoContainer(videoContainer)
         super.finish()

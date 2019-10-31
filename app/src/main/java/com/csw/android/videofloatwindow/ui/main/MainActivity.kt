@@ -45,7 +45,7 @@ class MainActivity : BaseMVPActivity<MainContract.Presenter>(), MainContract.Vie
 
     override fun initAdapter() {
         super.initAdapter()
-        playSheetAdapter = PlaySheetAdapter()
+        playSheetAdapter = PlaySheetAdapter(this@MainActivity)
         recyclerView.adapter = playSheetAdapter
     }
 
@@ -95,7 +95,7 @@ class MainActivity : BaseMVPActivity<MainContract.Presenter>(), MainContract.Vie
         smartRefreshLayout.setEnableLoadMore(false)
         smartRefreshLayout.setOnRefreshListener {
             playSheetAdapter.setNewData(null)
-            presenter.loadPlaySheets()
+            presenter.requestPlaySheets()
         }
         floatActionBottom.setOnClickListener {
             //添加歌单
@@ -126,6 +126,7 @@ class MainActivity : BaseMVPActivity<MainContract.Presenter>(), MainContract.Vie
 
     override fun initData() {
         super.initData()
+        presenter.initUIData()
         smartRefreshLayout.autoRefresh()
         PlayHelper.backgroundPlay = true
     }
@@ -144,11 +145,11 @@ class MainActivity : BaseMVPActivity<MainContract.Presenter>(), MainContract.Vie
         playSheetAdapter.setNewData(playSheets)
     }
 
-    override fun onLoadPlaySheetsSucceed() {
+    override fun onRequestPlaySheetsSucceed() {
         smartRefreshLayout.finishRefresh(true)
     }
 
-    override fun onLoadPlaySheetsFailed(errorMsg: String) {
+    override fun onRequestPlaySheetsFailed(errorMsg: String) {
         smartRefreshLayout.finishRefresh(false)
         Snackbar.make(recyclerView, errorMsg, Snackbar.LENGTH_SHORT).show()
     }

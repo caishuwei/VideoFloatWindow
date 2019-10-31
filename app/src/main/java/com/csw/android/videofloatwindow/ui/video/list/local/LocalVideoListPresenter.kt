@@ -5,17 +5,21 @@ import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.ui.video.list.VideoListPresenter
 import com.csw.android.videofloatwindow.util.DBUtils
+import com.csw.android.videofloatwindow.util.LogUtils
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * 本地视频MVP切面实现
  *
  * Inject注解，将本类的实例构建方式注入Dagger框架中
  */
-class LocalVideoListPresenter<T : LocalVideoListContract.View> constructor(view: T) :
+class LocalVideoListPresenter<T : LocalVideoListContract.View> @Inject constructor(view: T) :
         VideoListPresenter<LocalVideoListContract.View>(view),
         LocalVideoListContract.Presenter {
 
@@ -26,9 +30,19 @@ class LocalVideoListPresenter<T : LocalVideoListContract.View> constructor(view:
             view.onScanLocalVideosFailed("localPlaySheetId 为空")
             return
         }
-        addRxJavaTaskDisposable(Observable.create(ObservableOnSubscribe<ArrayList<VideoInfo>> { emitter ->
+        addRxJavaTaskRunOnUILive(Observable.create(ObservableOnSubscribe<ArrayList<VideoInfo>> { emitter ->
+            //查媒体库
             val result = getLocalVideos()
+            LogUtils.i("addRxJavaTaskRunOnUILive",""+emitter.isDisposed)
+            if (emitter.isDisposed) {
+                return@ObservableOnSubscribe
+            }
+            //数据库写入
             DBUtils.updatePlaySheetVideos(localPlaySheetId, result)
+            if (emitter.isDisposed) {
+                return@ObservableOnSubscribe
+            }
+            //回调结果
             emitter.onNext(result)
             emitter.onComplete()
         })

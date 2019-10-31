@@ -71,20 +71,24 @@ class CommonVideoListFragment : VideoListView<VideoListContract.Presenter>() {
             edt_title.setOnEditorActionListener(TextView.OnEditorActionListener { v, actionId, event ->
                 if (actionId == EditorInfo.IME_ACTION_DONE || (event != null && event.action == ACTION_UP && event.keyCode == KeyEvent.KEYCODE_ENTER)) {
                     val newName = edt_title.text.toString().trim()
-                    if (TextUtils.isEmpty(newName)) {
-                        Snackbar.make(toolbar, "歌单名称不可为空", Snackbar.LENGTH_SHORT).show()
-                        edt_title.requestFocus()
-                    } else if (presenter.isPlaySheetExist(newName)) {
-                        Snackbar.make(toolbar, "名称已被使用", Snackbar.LENGTH_SHORT).show()
-                        edt_title.requestFocus()
-                    } else {
-                        this@CommonVideoListFragment.playSheetName = newName
-                        presenter.updatePlaySheetName(playSheetId, newName)
-                        //关闭已打开的键盘
-                        val inputMethodManager = MyApplication.instance.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                        inputMethodManager.hideSoftInputFromWindow(v.windowToken, 0)
-                        //把焦点转移走
-                        recyclerView.requestFocus()
+                    when {
+                        TextUtils.isEmpty(newName) -> {
+                            Snackbar.make(toolbar, "歌单名称不可为空", Snackbar.LENGTH_SHORT).show()
+                            edt_title.requestFocus()
+                        }
+                        presenter.isPlaySheetExist(newName) -> {
+                            Snackbar.make(toolbar, "名称已被使用", Snackbar.LENGTH_SHORT).show()
+                            edt_title.requestFocus()
+                        }
+                        else -> {
+                            this@CommonVideoListFragment.playSheetName = newName
+                            presenter.updatePlaySheetName(playSheetId, newName)
+                            //关闭已打开的键盘
+                            val inputMethodManager = MyApplication.instance.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                            inputMethodManager.hideSoftInputFromWindow(v.windowToken, 0)
+                            //把焦点转移走
+                            recyclerView.requestFocus()
+                        }
                     }
                     return@OnEditorActionListener true
                 }
@@ -102,12 +106,13 @@ class CommonVideoListFragment : VideoListView<VideoListContract.Presenter>() {
             android.R.id.home -> activity?.finish()
             R.id.menu_add_video -> {
                 Utils.runIfNotNull(playSheetId, playSheetName) { id, name ->
-                    SwipeBackCommonActivity.openActivityForResult(
-                            this@CommonVideoListFragment,
-                            REQUEST_CODE_EDIT_PLAY_SHEET,
-                            PlaySheetEditFragment::class.java,
-                            PlaySheetEditFragment.createData(id, name)
-                    )
+                    activity?.let {
+                        SwipeBackCommonActivity.openActivity(
+                                it,
+                                PlaySheetEditFragment::class.java,
+                                PlaySheetEditFragment.createData(id, name)
+                        )
+                    }
                 }
             }
             else -> return super.onOptionsItemSelected(item)

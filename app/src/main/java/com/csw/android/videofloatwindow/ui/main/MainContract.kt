@@ -7,7 +7,7 @@ import com.csw.android.videofloatwindow.entities.PlaySheet
 interface MainContract {
 
     interface Presenter : IBasePresenter {
-        fun loadPlaySheets()
+        fun requestPlaySheets()
         fun removePlaySheet(playSheet: PlaySheet)
         fun addPlaySheet(playSheet: PlaySheet)
         fun isPlaySheetExist(name: String): Boolean
@@ -16,8 +16,8 @@ interface MainContract {
     interface View : IBaseView {
         fun refreshPlaySheetList()
         fun updatePlaySheets(playSheets: List<PlaySheet>)
-        fun onLoadPlaySheetsSucceed()
-        fun onLoadPlaySheetsFailed(errorMsg: String)
+        fun onRequestPlaySheetsSucceed()
+        fun onRequestPlaySheetsFailed(errorMsg: String)
     }
 
 }

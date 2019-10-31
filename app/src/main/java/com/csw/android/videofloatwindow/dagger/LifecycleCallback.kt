@@ -1,6 +1,12 @@
 package com.csw.android.videofloatwindow.dagger
 
 interface LifecycleCallback {
+
+    /**
+     * 创建
+     */
+    fun onCreated()
+
     /**
      * UI创建
      */
@@ -30,4 +36,9 @@ interface LifecycleCallback {
      * UI销毁
      */
     fun onUIDestroy()
+
+    /**
+     * 销毁
+     */
+    fun onDestroy()
 }

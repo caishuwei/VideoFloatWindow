@@ -96,7 +96,8 @@ class PlaySheetEditFragment : BaseMVPFragment<PlaySheetEditContract.Presenter>()
 //        val playSheetName = arguments?.getString("playSheetName")
 
         playSheetId?.let {
-            presenter.loadPlaySheet(it)
+            presenter.setPlaySheetId(it)
+            presenter.initUIData()
             return
         }
         activity?.finish()
@@ -112,9 +113,7 @@ class PlaySheetEditFragment : BaseMVPFragment<PlaySheetEditContract.Presenter>()
             R.id.menu_save -> {
                 val videos = adapter1?.data
                 Utils.runIfNotNull(playSheetId, videos) { id, videoList ->
-                    presenter.savePlaySheetVideos(id, videoList)
-                    activity?.setResult(Activity.RESULT_OK)
-                    activity?.finish()
+                    presenter.savePlaySheetVideos(videoList)
                 }
             }
             else -> return super.onOptionsItemSelected(item)
