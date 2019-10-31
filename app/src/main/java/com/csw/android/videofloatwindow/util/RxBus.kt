@@ -3,6 +3,10 @@ package com.csw.android.videofloatwindow.util
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 
+/**
+ * RxBus，用RxJava实现的一个消息订阅，发布框架。主要用于取代广播（ps，这里应该是无法完全取代广播的，
+ * Android的组件可以运行在不同进程，若有进程间发消息的需要，广播还是比较好的选择）
+ */
 class RxBus private constructor() {
 
     companion object {

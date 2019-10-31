@@ -15,6 +15,9 @@ import com.csw.android.videofloatwindow.player.PlayList
 import com.csw.android.videofloatwindow.player.window.OnFloatWindowChangeListener
 import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
 
+/**
+ * 播放服务，使用前台服务实现，减少被回收的概率，提供播放控制通知，处理通知的播放控制事件
+ */
 class PlayService : Service() {
 
     companion object {

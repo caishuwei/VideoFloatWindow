@@ -5,6 +5,9 @@ import java.util.ArrayList
 import kotlin.collections.HashMap
 import kotlin.collections.set
 
+/**
+ * 播放列表，用于存储当前正在播放的视频列表，实现上一个与下一个视频的查找，优化查找性能
+ */
 class PlayList {
 
     companion object {

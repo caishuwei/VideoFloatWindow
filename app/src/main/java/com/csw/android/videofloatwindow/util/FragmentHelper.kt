@@ -3,10 +3,18 @@ package com.csw.android.videofloatwindow.util
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 
+/**
+ * 碎片帮助类
+ */
 class FragmentHelper {
 
     companion object {
 
+        /**
+         * 获取碎片实例，若不存在碎片则创建并添加，这些碎片一般都是用于完成某种事物，而不需要界面，如第三方登录用StartActivityForResult接收登录结果，
+         * 可以通过将第三方登录的调用与回调代码封装到一个Fragment中，并将其添加到Activity或Fragment上去执行，这样可以大大减少UI界面的复杂程度，还可以隔离第三方包
+         * ，避免需要多处改动（Glide中还将其用于监听Activity,Fragment的生命周期以便及时停止异步任务，RxPermissions将其用于封装权限请求过程）
+         */
         fun <T : Fragment> getFragmentInstance(fragmentManager: FragmentManager, tag: String, clazz: Class<T>): T {
             var fragment = fragmentManager.findFragmentByTag(tag)
             var result: T? = null

@@ -2,6 +2,9 @@ package com.csw.android.videofloatwindow.player.video.layer
 
 import android.view.ViewGroup
 
+/**
+ * 实现在最后一个子视图移除时，隐藏视图层
+ */
 class HintLayerController(layer: ViewGroup) : LayerController(layer) {
 
     override fun hide() {

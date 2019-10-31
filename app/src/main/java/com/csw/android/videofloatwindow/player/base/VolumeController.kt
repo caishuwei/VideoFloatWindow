@@ -8,6 +8,9 @@ import android.media.AudioManager
 import com.csw.android.videofloatwindow.app.MyApplication
 import java.util.*
 
+/**
+ * 音量变化监听
+ */
 class VolumeController {
     companion object {
         val instance = VolumeController()

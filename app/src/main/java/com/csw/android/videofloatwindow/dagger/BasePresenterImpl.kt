@@ -3,8 +3,12 @@ package com.csw.android.videofloatwindow.dagger
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 
+/**
+ * 切面基类的实现
+ * 提供添加只在切面存活时执行的任务，当切面销毁时取消订阅之前添加的RxJava任务
+ * 提供添加只在UI存活时执行的任务，当UI销毁时取消订阅之前添加的RxJava任务
+ */
 open class BasePresenterImpl<V : IBaseView>(protected val view: V) : IBasePresenter, LifecycleCallback {
-
 
     private val presenterCompositeDisposable = CompositeDisposable()
     private var uiCompositeDisposable = CompositeDisposable()

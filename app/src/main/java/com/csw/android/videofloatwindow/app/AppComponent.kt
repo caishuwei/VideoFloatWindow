@@ -18,7 +18,7 @@ import dagger.Provides
 @Component(modules = [AppModule::class])
 interface AppComponent {
 
-    //添加子实例池构建器
+    //添加子实例池构建器，在View使用子组件注入变量实例时可以注入在此父组件已经注册的实例
     fun getMainComponentBuilder(): MainComponent.Builder
     fun getVideoListComponentBuilder(): VideoListComponent.Builder
     fun getLocalVideoListComponentBuilder(): LocalVideoListComponent.Builder

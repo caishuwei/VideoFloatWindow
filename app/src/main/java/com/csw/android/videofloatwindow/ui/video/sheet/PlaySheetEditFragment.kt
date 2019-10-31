@@ -113,7 +113,10 @@ class PlaySheetEditFragment : BaseMVPFragment<PlaySheetEditContract.Presenter>()
             R.id.menu_save -> {
                 val videos = adapter1?.data
                 Utils.runIfNotNull(playSheetId, videos) { id, videoList ->
+                    //存储编辑后的歌单
                     presenter.savePlaySheetVideos(videoList)
+                    activity?.setResult(Activity.RESULT_OK)
+                    activity?.finish()
                 }
             }
             else -> return super.onOptionsItemSelected(item)

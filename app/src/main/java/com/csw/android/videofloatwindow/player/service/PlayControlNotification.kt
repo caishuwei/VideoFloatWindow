@@ -17,6 +17,9 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 
+/**
+ * 播放控制通知，用于通过通知控制后台播放的视频
+ */
 class PlayControlNotification {
 
     companion object {

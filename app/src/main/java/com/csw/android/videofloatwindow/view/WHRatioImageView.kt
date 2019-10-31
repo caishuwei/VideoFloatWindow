@@ -5,6 +5,9 @@ import android.util.AttributeSet
 import android.widget.ImageView
 import com.csw.android.videofloatwindow.util.Utils
 
+/**
+ * 用于根据指定的宽高比例确定视图尺寸的ImageView
+ */
 open class WHRatioImageView : ImageView {
 
     constructor(context: Context?) : super(context)

@@ -5,12 +5,17 @@ import android.view.Window
 import com.csw.android.videofloatwindow.app.MyApplication
 import java.util.*
 
+/**
+ * 亮度控制器，用于屏幕亮度的控制，监听
+ */
 class BrightnessController {
     companion object {
         val instance = BrightnessController()
     }
 
     private var currValue = -1
+    //采用弱引用，当key不存在强引用或软引用时可以被回收，WeakHashMap会将这个键值对移除，不会造成内存泄露
+    //也可以直接用引用队列与虚引用实现，但懒得写了，就用WeakHashMap吧
     private val listeners: WeakHashMap<BrightnessChangeListener, Any> = WeakHashMap()
 
     /**
@@ -73,7 +78,7 @@ class BrightnessController {
     }
 
     fun addListener(listener: BrightnessChangeListener) {
-        listeners.put(listener,listener)
+        listeners.put(listener, listener)
     }
 
     fun removeListener(listener: BrightnessChangeListener) {

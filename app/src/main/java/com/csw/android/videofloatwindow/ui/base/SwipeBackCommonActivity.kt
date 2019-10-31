@@ -6,6 +6,9 @@ import android.os.Bundle
 import androidx.fragment.app.Fragment
 import com.csw.android.videofloatwindow.R
 
+/**
+ * 滑动返回的FragmentActivity
+ */
 class SwipeBackCommonActivity : SwipeBackActivity() {
 
     companion object {

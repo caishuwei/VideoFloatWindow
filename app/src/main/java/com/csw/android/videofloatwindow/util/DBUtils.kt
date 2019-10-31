@@ -11,6 +11,9 @@ import com.csw.android.videofloatwindow.greendao.*
 import com.github.yuweiguocn.library.greendao.MigrationHelper
 import org.greenrobot.greendao.database.Database
 
+/**
+ * 基于GreenDao实现的数据库操作类
+ */
 class DBUtils {
     companion object {
 

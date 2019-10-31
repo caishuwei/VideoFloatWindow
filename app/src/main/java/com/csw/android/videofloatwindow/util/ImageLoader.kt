@@ -26,8 +26,8 @@ import com.csw.android.videofloatwindow.app.MyApplication
 class ImageLoader {
     companion object {
 
-        fun loadLocalVideoImage(with: Any?, imageView: ImageView, videoDbId: Long, placeHolderImgResId: Int = 0) {
-            //url检查
+//        fun loadLocalVideoImage(with: Any?, imageView: ImageView, videoDbId: Long, placeHolderImgResId: Int = 0) {
+//            //url检查
 //            if (TextUtils.isEmpty(url)) {
 //                imageView.setImageResource(placeHolderImgResId)
 //                return
@@ -56,7 +56,7 @@ class ImageLoader {
 //            } catch (e: Exception) {
 //                e.printStackTrace()
 //            }
-        }
+//        }
 
         /**
          * 根据url加载图片

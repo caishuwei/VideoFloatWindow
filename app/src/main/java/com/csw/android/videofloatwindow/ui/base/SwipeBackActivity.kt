@@ -11,6 +11,9 @@ import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.util.ScreenInfo
 import kotlinx.android.synthetic.main.activity_swipe_back.*
 
+/**
+ * 实现滑动返回Activity，这里使用的是ViewPager
+ */
 open class SwipeBackActivity : BaseActivity() {
     private lateinit var firstView: View //第一页透明
     private lateinit var secondView: View//第二页，用于显示内容

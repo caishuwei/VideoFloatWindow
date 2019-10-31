@@ -21,6 +21,9 @@ import com.csw.android.videofloatwindow.util.LogUtils
 import com.csw.android.videofloatwindow.util.Utils
 import com.google.android.material.snackbar.Snackbar
 
+/**
+ * 视频容器，实现VideoView与UI上视图的绑定与解绑，使得VideoView可以随意脱离这个界面添加到另一个界面
+ */
 open class VideoContainer : FrameLayout {
     private val videoContainer: FrameLayout;
     var whRatio: Float = 16f / 9
@@ -202,6 +205,9 @@ open class VideoContainer : FrameLayout {
         UiDestroyListenerFragment.releaseVideoOnUiDestroy(fragmentManager, this)
     }
 
+    /**
+     * 用于监听当前播放容器所在的界面是否销毁，在销毁时释放视频播放器,就不用自己在UI销毁时再调用销毁视频播放器
+     */
     class UiDestroyListenerFragment : Fragment() {
 
         companion object {

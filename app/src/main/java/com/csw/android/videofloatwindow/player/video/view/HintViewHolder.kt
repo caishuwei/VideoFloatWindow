@@ -8,7 +8,9 @@ import android.widget.TextView
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.player.video.layer.LayerController
 
-
+/**
+ * 提示视图持有者，持有用于提示的视图，提供显示到播放器提示视图层的方法
+ */
 open class HintViewHolder {
     protected var mView: View
     protected var iv_hint_img: ImageView

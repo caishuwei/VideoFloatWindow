@@ -5,6 +5,9 @@ import android.view.animation.DecelerateInterpolator
 import android.view.animation.RotateAnimation
 import com.csw.android.videofloatwindow.player.video.layer.LayerController
 
+/**
+ * 视频加载中的提示视图显示
+ */
 class LoadingHintViewHolder(parent: ViewGroup) : HintViewHolder(parent) {
     private val loadingAnimation: RotateAnimation
 

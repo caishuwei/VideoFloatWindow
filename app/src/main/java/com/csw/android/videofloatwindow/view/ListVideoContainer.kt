@@ -10,6 +10,9 @@ import com.csw.android.videofloatwindow.player.base.VideoContainer
 import com.csw.android.videofloatwindow.player.video.base.IControllerSettingHelper
 import com.csw.android.videofloatwindow.player.video.base.IVideo
 
+/**
+ * 用于列表的视频显示容器，添加了ImageView作为视频预览图显示控件，以及与悬浮窗播放的协调，优先在悬浮窗播放
+ */
 class ListVideoContainer : VideoContainer {
 
     val whRatioImageView: WHRatioImageView

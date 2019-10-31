@@ -16,6 +16,9 @@ import com.csw.android.videofloatwindow.view.FullScreenVideoContainer
 import java.lang.ref.WeakReference
 import java.util.*
 
+/**
+ * 播放帮助类，作为视频播放视图的创建、销毁决策实现，提供全局播放下一个、上一个、视频播放停止等方法
+ */
 class PlayHelper {
 
     companion object {

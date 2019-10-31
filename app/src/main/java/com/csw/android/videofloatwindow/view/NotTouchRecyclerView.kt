@@ -6,7 +6,10 @@ import android.view.MotionEvent
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 
-class NotTouchRecyclerView :RecyclerView {
+/**
+ * 关闭所有触摸事件的RecyclerView，包括添加的子视图也无法响应点击
+ */
+class NotTouchRecyclerView : RecyclerView {
 
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)

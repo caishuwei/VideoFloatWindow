@@ -4,6 +4,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.*
 
+/**
+ * 视图层控制器，提供视图容器用于添加与移除视图，指定显示与隐藏的动画
+ */
 open class LayerController {
     val layer: ViewGroup
     private val showAnimation: AnimationSet;

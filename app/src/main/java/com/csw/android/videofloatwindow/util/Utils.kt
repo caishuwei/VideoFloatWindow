@@ -15,6 +15,9 @@ import com.csw.android.videofloatwindow.entities.VideoInfo
 
 class Utils {
     companion object {
+        /**
+         * 通过媒体库视频的Uri获取视频信息，这些视频信息当然也来自于媒体库
+         */
         fun getVideoInfo(contentResolver: ContentResolver, uri: Uri): VideoInfo? {
             var cursor: Cursor? = null
             try {
@@ -82,7 +85,7 @@ class Utils {
 
         fun videoEquals(videoInfo1: VideoInfo?, videoInfo2: VideoInfo?): Boolean {
             if (videoInfo1 != null && videoInfo2 != null) {
-                return videoInfo1.target.equals(videoInfo2.target)
+                return videoInfo1.target == videoInfo2.target
             }
             return false
         }
@@ -101,15 +104,15 @@ class Utils {
             if (scaleY > 1 && scaleY > scaleX) {
                 scale = scaleY
             }
-            if (scale != 1) {
+            return if (scale != 1) {
                 val scaleBitmap = Bitmap.createBitmap(bitmap.width / scale, bitmap.height / scale, Bitmap.Config.ARGB_8888)
                 val scaleCanvas = Canvas(scaleBitmap)
                 val scaleMatrix = Matrix()
                 scaleMatrix.postScale(1f / scale, 1f / scale)
                 scaleCanvas.drawBitmap(bitmap, scaleMatrix, null)
-                return BitmapDrawable(MyApplication.instance.resources, scaleBitmap)
+                BitmapDrawable(MyApplication.instance.resources, scaleBitmap)
             } else {
-                return BitmapDrawable(MyApplication.instance.resources, bitmap)
+                BitmapDrawable(MyApplication.instance.resources, bitmap)
             }
         }
     }
