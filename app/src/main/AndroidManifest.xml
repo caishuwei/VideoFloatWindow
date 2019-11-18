@@ -23,6 +23,7 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".ui.main.MainActivity"
+            android:launchMode="singleTask"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -44,6 +45,9 @@
                     android:scheme="content" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".player.service.CloseNotificationBarActivity"
+            android:theme="@style/SwipeBackStyle" />
         <activity
             android:name=".ui.base.CommonActivity"
             android:screenOrientation="portrait" />

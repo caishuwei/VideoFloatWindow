@@ -12,6 +12,7 @@ import android.view.View
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import com.csw.android.videofloatwindow.R
+import com.csw.android.videofloatwindow.app.MyApplication
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -56,20 +57,24 @@ class PlayControlNotification {
 
     private fun createNotification() {
         bigRemoteViews = RemoteViews(context.packageName, R.layout.view_play_control_big_notification)
+        setNotificationClickListener(bigRemoteViews, R.id.v_notification_root, PlayService.ACTION_NOTIFICATION_CLICK, true)
         setNotificationClickListener(bigRemoteViews, R.id.v_previous, PlayService.ACTION_PLAY_PREVIOUS)
         setNotificationClickListener(bigRemoteViews, R.id.v_next, PlayService.ACTION_PLAY_NEXT)
         setNotificationClickListener(bigRemoteViews, R.id.exo_play, PlayService.ACTION_PLAY_CURR)
         setNotificationClickListener(bigRemoteViews, R.id.exo_pause, PlayService.ACTION_PAUSE_CURR)
-        setNotificationClickListener(bigRemoteViews, R.id.v_full_screen, PlayService.ACTION_FULL_SCREEN)
-        setNotificationClickListener(bigRemoteViews, R.id.v_float_window, PlayService.ACTION_FLOAT_WINDOW)
+        setNotificationClickListener(bigRemoteViews, R.id.v_full_screen, PlayService.ACTION_FULL_SCREEN, true)
+        setNotificationClickListener(bigRemoteViews, R.id.iv_image, PlayService.ACTION_FULL_SCREEN, true)
+        setNotificationClickListener(bigRemoteViews, R.id.v_float_window, PlayService.ACTION_FLOAT_WINDOW, true)
 
         normalRemoteViews = RemoteViews(context.packageName, R.layout.view_play_control_normal_notification)
+        setNotificationClickListener(normalRemoteViews, R.id.v_notification_root, PlayService.ACTION_NOTIFICATION_CLICK, true)
         setNotificationClickListener(normalRemoteViews, R.id.v_previous, PlayService.ACTION_PLAY_PREVIOUS)
         setNotificationClickListener(normalRemoteViews, R.id.v_next, PlayService.ACTION_PLAY_NEXT)
         setNotificationClickListener(normalRemoteViews, R.id.exo_play, PlayService.ACTION_PLAY_CURR)
         setNotificationClickListener(normalRemoteViews, R.id.exo_pause, PlayService.ACTION_PAUSE_CURR)
-        setNotificationClickListener(normalRemoteViews, R.id.v_full_screen, PlayService.ACTION_FULL_SCREEN)
-        setNotificationClickListener(normalRemoteViews, R.id.v_float_window, PlayService.ACTION_FLOAT_WINDOW)
+        setNotificationClickListener(normalRemoteViews, R.id.v_full_screen, PlayService.ACTION_FULL_SCREEN, true)
+        setNotificationClickListener(normalRemoteViews, R.id.iv_image, PlayService.ACTION_FULL_SCREEN, true)
+        setNotificationClickListener(normalRemoteViews, R.id.v_float_window, PlayService.ACTION_FLOAT_WINDOW, true)
 
         mNotification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setCustomContentView(normalRemoteViews)
@@ -81,16 +86,30 @@ class PlayControlNotification {
 
     }
 
-    private fun setNotificationClickListener(remoteViews: RemoteViews, viewId: Int, broadcastAction: String) {
-        remoteViews.setOnClickPendingIntent(
-                viewId,
-                PendingIntent.getBroadcast(
-                        context,
-                        PlayService.REQUEST_CODE,
-                        Intent(broadcastAction),
-                        PendingIntent.FLAG_UPDATE_CURRENT
-                )
-        )
+    private fun setNotificationClickListener(remoteViews: RemoteViews, viewId: Int, action: String, closeNotificationBar: Boolean = false) {
+        if (closeNotificationBar) {
+            val intent = Intent(MyApplication.instance, CloseNotificationBarActivity::class.java)
+            intent.action = action
+            remoteViews.setOnClickPendingIntent(
+                    viewId,
+                    PendingIntent.getActivity(
+                            context,
+                            PlayService.REQUEST_CODE,
+                            intent,
+                            PendingIntent.FLAG_UPDATE_CURRENT
+                    )
+            )
+        } else {
+            remoteViews.setOnClickPendingIntent(
+                    viewId,
+                    PendingIntent.getBroadcast(
+                            context,
+                            PlayService.REQUEST_CODE,
+                            Intent(action),
+                            PendingIntent.FLAG_UPDATE_CURRENT
+                    )
+            )
+        }
     }
 
     private fun createChannel() {
@@ -171,11 +190,13 @@ class PlayControlNotification {
                     MediaStore.Images.Thumbnails.MINI_KIND,
                     null
             )
-            if (bitmap != null) {
-                it.onNext(bitmap)
-                it.onComplete()
-            } else {
-                it.onError(Exception("no video image has found"))
+            if (!it.isDisposed) {
+                if (bitmap != null) {
+                    it.onNext(bitmap)
+                    it.onComplete()
+                } else {
+                    it.onError(Exception("no video image has found"))
+                }
             }
         }
                 .subscribeOn(Schedulers.io())

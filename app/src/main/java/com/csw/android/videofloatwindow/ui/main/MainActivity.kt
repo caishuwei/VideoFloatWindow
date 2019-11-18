@@ -1,6 +1,9 @@
 package com.csw.android.videofloatwindow.ui.main
 
+import android.app.Activity
 import android.app.AlertDialog
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -24,6 +27,18 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : BaseMVPActivity<MainContract.Presenter>(), MainContract.View {
 
+    companion object {
+
+        fun openActivity(context: Context) {
+            val intent = Intent(context, MainActivity::class.java)
+            if (!(context is Activity)) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            context.startActivity(intent)
+        }
+
+    }
 
     private lateinit var playSheetAdapter: PlaySheetAdapter
 

@@ -1,5 +1,6 @@
 package com.csw.android.videofloatwindow.ui.video.full_screen
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -18,6 +19,10 @@ class FullScreenActivity : BaseActivity() {
     companion object {
         fun openActivity(context: Context, videoInfo: VideoInfo) {
             val intent = Intent(context, FullScreenActivity::class.java)
+            if (!(context is Activity)) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            intent.addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT)//若该页面启动了多次，将该页面重排到栈顶
             intent.putExtra("VideoInfo", videoInfo)
             context.startActivity(intent)
         }

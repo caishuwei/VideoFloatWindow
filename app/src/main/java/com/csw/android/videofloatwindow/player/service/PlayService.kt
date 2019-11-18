@@ -14,6 +14,7 @@ import com.csw.android.videofloatwindow.player.PlayHelper
 import com.csw.android.videofloatwindow.player.PlayList
 import com.csw.android.videofloatwindow.player.window.OnFloatWindowChangeListener
 import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
+import com.csw.android.videofloatwindow.ui.main.MainActivity
 
 /**
  * 播放服务，使用前台服务实现，减少被回收的概率，提供播放控制通知，处理通知的播放控制事件
@@ -36,6 +37,7 @@ class PlayService : Service() {
         }
 
         const val REQUEST_CODE: Int = 100
+        const val ACTION_NOTIFICATION_CLICK: String = "notification_click"
         const val ACTION_PLAY_NEXT: String = "play_next"
         const val ACTION_PLAY_PREVIOUS: String = "play_previous"
         const val ACTION_PLAY_CURR: String = "play_curr"
@@ -71,6 +73,9 @@ class PlayService : Service() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent != null) {
                 when (intent.action) {
+                    ACTION_NOTIFICATION_CLICK -> {
+                        MainActivity.openActivity(this@PlayService)
+                    }
                     ACTION_PLAY_NEXT -> PlayHelper.tryPlayNext()
                     ACTION_PLAY_PREVIOUS -> PlayHelper.tryPlayPrevious()
                     ACTION_PLAY_CURR -> PlayHelper.tryPlayCurr()
@@ -98,6 +103,7 @@ class PlayService : Service() {
         }
 
         val intentFilter = IntentFilter()
+        intentFilter.addAction(ACTION_NOTIFICATION_CLICK)
         intentFilter.addAction(ACTION_PLAY_NEXT)
         intentFilter.addAction(ACTION_PLAY_PREVIOUS)
         intentFilter.addAction(ACTION_PLAY_CURR)

@@ -12,7 +12,6 @@ import io.reactivex.ObservableOnSubscribe
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * 主界面切面，通过注解构造方法，可以实现将该类的实例化方式加入dagger框架中，构造函数的参数由dagger框架提供
@@ -82,7 +81,6 @@ class MainPresenter @Inject constructor(view: MainContract.View) : BasePresenter
     }
 
     override fun requestPlaySheets() {
-        data.clear()
         addRxJavaTaskRunOnUILive(
                 Observable.create(
                         ObservableOnSubscribe<List<PlaySheet>> {
@@ -100,6 +98,7 @@ class MainPresenter @Inject constructor(view: MainContract.View) : BasePresenter
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                                 {
+                                    data.clear()
                                     data.addAll(it)
                                     view.updatePlaySheets(data)
                                     view.onRequestPlaySheetsSucceed()
