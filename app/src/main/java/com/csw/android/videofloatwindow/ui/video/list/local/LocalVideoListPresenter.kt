@@ -33,7 +33,6 @@ class LocalVideoListPresenter<T : LocalVideoListContract.View> @Inject construct
         addRxJavaTaskRunOnUILive(Observable.create(ObservableOnSubscribe<ArrayList<VideoInfo>> { emitter ->
             //查媒体库
             val result = getLocalVideos()
-            LogUtils.i("addRxJavaTaskRunOnUILive",""+emitter.isDisposed)
             if (emitter.isDisposed) {
                 return@ObservableOnSubscribe
             }

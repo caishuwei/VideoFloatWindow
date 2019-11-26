@@ -8,6 +8,7 @@ import android.provider.MediaStore;
 import com.csw.android.videofloatwindow.greendao.DaoSession;
 import com.csw.android.videofloatwindow.greendao.PlaySheetVideoDao;
 import com.csw.android.videofloatwindow.greendao.VideoInfoDao;
+import com.csw.android.videofloatwindow.util.ScreenInfo;
 
 import org.greenrobot.greendao.DaoException;
 import org.greenrobot.greendao.annotation.Entity;
@@ -40,7 +41,7 @@ public class VideoInfo implements Serializable {
             metaData.release();
             rotation = Integer.parseInt(rotationStr);
         } catch (Exception e) {
-            rotation = 0;
+            rotation = 90;
         }
         switch (rotation) {
             case 90:
@@ -54,7 +55,20 @@ public class VideoInfo implements Serializable {
                 height = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.HEIGHT));
                 break;
         }
-
+        if (width == 0 || height == 0) {
+            switch (rotation) {
+                case 90:
+                case -90:
+                case 270:
+                    height = Math.min(ScreenInfo.Companion.getWIDTH(), ScreenInfo.Companion.getHEIGHT());
+                    width = Math.max(ScreenInfo.Companion.getWIDTH(), ScreenInfo.Companion.getHEIGHT());
+                    break;
+                default:
+                    width = Math.min(ScreenInfo.Companion.getWIDTH(), ScreenInfo.Companion.getHEIGHT());
+                    height = Math.max(ScreenInfo.Companion.getWIDTH(), ScreenInfo.Companion.getHEIGHT());
+                    break;
+            }
+        }
         return new VideoInfo(
                 filePath,
                 cursor.getLong(cursor.getColumnIndex(MediaStore.Video.Media.DURATION)),
@@ -113,7 +127,7 @@ public class VideoInfo implements Serializable {
 
     @Generated(hash = 1223459747)
     public VideoInfo(Long id, String filePath, long duration, long fileSize, String fileName, long mediaDbId, int width, int height,
-            String resolution, String imageUri) {
+                     String resolution, String imageUri) {
         this.id = id;
         this.filePath = filePath;
         this.duration = duration;

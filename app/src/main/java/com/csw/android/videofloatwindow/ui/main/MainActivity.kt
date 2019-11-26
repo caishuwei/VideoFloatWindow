@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -22,6 +23,8 @@ import com.csw.android.videofloatwindow.ui.base.BaseMVPActivity
 import com.csw.android.videofloatwindow.ui.base.SwipeBackCommonActivity
 import com.csw.android.videofloatwindow.ui.video.list.CommonVideoListFragment
 import com.csw.android.videofloatwindow.ui.video.list.local.LocalVideoListFragment
+import com.csw.android.videofloatwindow.util.LogUtils
+import com.csw.android.videofloatwindow.util.Utils
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -144,6 +147,8 @@ class MainActivity : BaseMVPActivity<MainContract.Presenter>(), MainContract.Vie
         presenter.initUIData()
         smartRefreshLayout.autoRefresh()
         PlayHelper.backgroundPlay = true
+
+        LogUtils.i(this::class.java.name, Utils.getDeviceInfo())
     }
 
     override fun finish() {

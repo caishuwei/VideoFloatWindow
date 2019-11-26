@@ -13,9 +13,7 @@ class Constants {
         companion object {
             const val PLAY_SHEET = 1//歌单
             const val EMPTY_PLAY_SHEET = 2//空歌单
-
         }
-
     }
 
 }

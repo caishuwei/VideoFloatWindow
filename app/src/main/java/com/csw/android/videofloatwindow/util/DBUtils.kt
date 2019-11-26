@@ -86,12 +86,13 @@ class DBUtils {
 
         fun insertVideoInfo(videoInfo: VideoInfo): VideoInfo {
             val exitsRow = videoInfoDao.queryBuilder().where(VideoInfoDao.Properties.MediaDbId.eq(videoInfo.mediaDbId)).build().unique()
-            exitsRow?.let {
-                videoInfo.id = it.id
-                return videoInfo
+            if (exitsRow != null) {
+                videoInfo.id = exitsRow.id
+                videoInfoDao.update(videoInfo)
+            } else {
+                val id = videoInfoDao.insert(videoInfo)
+                videoInfo.id = id
             }
-            val id = videoInfoDao.insert(videoInfo)
-            videoInfo.id = id
             daoSession.clear()
             return videoInfo
         }
