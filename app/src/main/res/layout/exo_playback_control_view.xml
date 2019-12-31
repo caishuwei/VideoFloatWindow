@@ -76,7 +76,13 @@
             android:typeface="monospace"
             tools:text="00:00" />
 
-        <com.google.android.exoplayer2.ui.DefaultTimeBar
+     <!--   <com.google.android.exoplayer2.ui.DefaultTimeBar
+            android:id="@id/exo_progress"
+            android:layout_width="0dp"
+            android:layout_height="26dp"
+            android:layout_weight="1" />-->
+
+        <com.csw.android.videofloatwindow.player.video.exo.MyTimeBar
             android:id="@id/exo_progress"
             android:layout_width="0dp"
             android:layout_height="26dp"
