@@ -5,7 +5,7 @@ import android.graphics.Color
 import android.util.AttributeSet
 import com.csw.android.videofloatwindow.util.ScreenInfo
 
-class MyTimeBar(context: Context, attrs: AttributeSet) : CopyFormDefaultTimeBar(context, attrs) {
+class MyTimeBar(context: Context, attrs: AttributeSet) : CopyFromDefaultTimeBar(context, attrs) {
 
     init {
         //以下属性是可用通过xml配置实现，但我懒得写到xml中了，这里直接在视图初始化后覆盖这些属性

@@ -140,7 +140,7 @@ import androidx.annotation.Nullable;
  *       </ul>
  * </ul>
  */
-public class CopyFormDefaultTimeBar extends View implements TimeBar {
+public class CopyFromDefaultTimeBar extends View implements TimeBar {
 
     /**
      * Default height for the time bar, in dp.
@@ -235,7 +235,7 @@ public class CopyFormDefaultTimeBar extends View implements TimeBar {
     /**
      * Creates a new time bar.
      */
-    public CopyFormDefaultTimeBar(Context context, AttributeSet attrs) {
+    public CopyFromDefaultTimeBar(Context context, AttributeSet attrs) {
         super(context, attrs);
         seekBounds = new Rect();
         progressBar = new Rect();
@@ -612,14 +612,14 @@ public class CopyFormDefaultTimeBar extends View implements TimeBar {
         if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_SELECTED) {
             event.getText().add(getProgressText());
         }
-        event.setClassName(CopyFormDefaultTimeBar.class.getName());
+        event.setClassName(CopyFromDefaultTimeBar.class.getName());
     }
 
     @TargetApi(21)
     @Override
     public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
         super.onInitializeAccessibilityNodeInfo(info);
-        info.setClassName(CopyFormDefaultTimeBar.class.getCanonicalName());
+        info.setClassName(CopyFromDefaultTimeBar.class.getCanonicalName());
         info.setContentDescription(getProgressText());
         if (duration <= 0) {
             return;
