@@ -1,15 +1,28 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.csw.android.videofloatwindow.player.video.exo;
-
 
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.AttributeSet;
@@ -34,14 +47,105 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 
-public class MyTimeBar extends View implements TimeBar {
+/**
+ * 这个类直接复制于DefaultTimeBar源码
+ * <p>
+ * 修改了scrubberDrawable的访问修饰符，使得他可以使用java代码编写的自定义Drawable
+ * 否则他只能使用xml定义的drawable
+ * <p>
+ * 修改了barHeight的访问修饰符
+ * <p>
+ * 修改了scrubberDraggedSize的访问修饰符
+ */
+
+/**
+ * A time bar that shows a current position, buffered position, duration and ad markers.
+ *
+ * <p>A DefaultTimeBar can be customized by setting attributes, as outlined below.
+ *
+ * <h3>Attributes</h3>
+ *
+ * The following attributes can be set on a DefaultTimeBar when used in a layout XML file:
+ *
+ * <p>
+ *
+ * <ul>
+ *   <li><b>{@code bar_height}</b> - Dimension for the height of the time bar.
+ *       <ul>
+ *         <li>Default: {@link #DEFAULT_BAR_HEIGHT_DP}
+ *       </ul>
+ *   <li><b>{@code touch_target_height}</b> - Dimension for the height of the area in which touch
+ *       interactions with the time bar are handled. If no height is specified, this also determines
+ *       the height of the view.
+ *       <ul>
+ *         <li>Default: {@link #DEFAULT_TOUCH_TARGET_HEIGHT_DP}
+ *       </ul>
+ *   <li><b>{@code ad_marker_width}</b> - Dimension for the width of any ad markers shown on the
+ *       bar. Ad markers are superimposed on the time bar to show the times at which ads will play.
+ *       <ul>
+ *         <li>Default: {@link #DEFAULT_AD_MARKER_WIDTH_DP}
+ *       </ul>
+ *   <li><b>{@code scrubber_enabled_size}</b> - Dimension for the diameter of the circular scrubber
+ *       handle when scrubbing is enabled but not in progress. Set to zero if no scrubber handle
+ *       should be shown.
+ *       <ul>
+ *         <li>Default: {@link #DEFAULT_SCRUBBER_ENABLED_SIZE_DP}
+ *       </ul>
+ *   <li><b>{@code scrubber_disabled_size}</b> - Dimension for the diameter of the circular scrubber
+ *       handle when scrubbing isn't enabled. Set to zero if no scrubber handle should be shown.
+ *       <ul>
+ *         <li>Default: {@link #DEFAULT_SCRUBBER_DISABLED_SIZE_DP}
+ *       </ul>
+ *   <li><b>{@code scrubber_dragged_size}</b> - Dimension for the diameter of the circular scrubber
+ *       handle when scrubbing is in progress. Set to zero if no scrubber handle should be shown.
+ *       <ul>
+ *         <li>Default: {@link #DEFAULT_SCRUBBER_DRAGGED_SIZE_DP}
+ *       </ul>
+ *   <li><b>{@code scrubber_drawable}</b> - Optional reference to a drawable to draw for the
+ *       scrubber handle. If set, this overrides the default behavior, which is to draw a circle for
+ *       the scrubber handle.
+ *   <li><b>{@code played_color}</b> - Color for the portion of the time bar representing media
+ *       before the current playback position.
+ *       <ul>
+ *         <li>Corresponding method: {@link #setPlayedColor(int)}
+ *         <li>Default: {@link #DEFAULT_PLAYED_COLOR}
+ *       </ul>
+ *   <li><b>{@code scrubber_color}</b> - Color for the scrubber handle.
+ *       <ul>
+ *         <li>Corresponding method: {@link #setScrubberColor(int)}
+ *         <li>Default: see {@link #getDefaultScrubberColor(int)}
+ *       </ul>
+ *   <li><b>{@code buffered_color}</b> - Color for the portion of the time bar after the current
+ *       played position up to the current buffered position.
+ *       <ul>
+ *         <li>Corresponding method: {@link #setBufferedColor(int)}
+ *         <li>Default: see {@link #getDefaultBufferedColor(int)}
+ *       </ul>
+ *   <li><b>{@code unplayed_color}</b> - Color for the portion of the time bar after the current
+ *       buffered position.
+ *       <ul>
+ *         <li>Corresponding method: {@link #setUnplayedColor(int)}
+ *         <li>Default: see {@link #getDefaultUnplayedColor(int)}
+ *       </ul>
+ *   <li><b>{@code ad_marker_color}</b> - Color for unplayed ad markers.
+ *       <ul>
+ *         <li>Corresponding method: {@link #setAdMarkerColor(int)}
+ *         <li>Default: {@link #DEFAULT_AD_MARKER_COLOR}
+ *       </ul>
+ *   <li><b>{@code played_ad_marker_color}</b> - Color for played ad markers.
+ *       <ul>
+ *         <li>Corresponding method: {@link #setPlayedAdMarkerColor(int)}
+ *         <li>Default: see {@link #getDefaultPlayedAdMarkerColor(int)}
+ *       </ul>
+ * </ul>
+ */
+public class CopyFormDefaultTimeBar extends View implements TimeBar {
 
     /**
      * Default height for the time bar, in dp.
      */
-    public static final int DEFAULT_BAR_HEIGHT_DP = 3;
+    public static final int DEFAULT_BAR_HEIGHT_DP = 4;
     /**
      * Default height for the touch target, in dp.
      */
@@ -61,7 +165,7 @@ public class MyTimeBar extends View implements TimeBar {
     /**
      * Default diameter for the scrubber when dragged, in dp.
      */
-    public static final int DEFAULT_SCRUBBER_DRAGGED_SIZE_DP = 30;
+    public static final int DEFAULT_SCRUBBER_DRAGGED_SIZE_DP = 16;
     /**
      * Default color for the played portion of the time bar.
      */
@@ -96,13 +200,16 @@ public class MyTimeBar extends View implements TimeBar {
     private final Paint adMarkerPaint;
     private final Paint playedAdMarkerPaint;
     private final Paint scrubberPaint;
-    private final Drawable scrubberDrawable;
-    private final int barHeight;
+    //    private final Drawable scrubberDrawable;
+    protected Drawable scrubberDrawable;
+    //    private final int barHeight;
+    protected int barHeight;
     private final int touchTargetHeight;
     private final int adMarkerWidth;
     private final int scrubberEnabledSize;
     private final int scrubberDisabledSize;
-    private final int scrubberDraggedSize;
+    //    private final int scrubberDraggedSize;
+    protected int scrubberDraggedSize;
     private final int scrubberPadding;
     private final int fineScrubYThreshold;
     private final StringBuilder formatBuilder;
@@ -128,7 +235,7 @@ public class MyTimeBar extends View implements TimeBar {
     /**
      * Creates a new time bar.
      */
-    public MyTimeBar(Context context, AttributeSet attrs) {
+    public CopyFormDefaultTimeBar(Context context, AttributeSet attrs) {
         super(context, attrs);
         seekBounds = new Rect();
         progressBar = new Rect();
@@ -153,77 +260,62 @@ public class MyTimeBar extends View implements TimeBar {
         int defaultScrubberEnabledSize = dpToPx(displayMetrics, DEFAULT_SCRUBBER_ENABLED_SIZE_DP);
         int defaultScrubberDisabledSize = dpToPx(displayMetrics, DEFAULT_SCRUBBER_DISABLED_SIZE_DP);
         int defaultScrubberDraggedSize = dpToPx(displayMetrics, DEFAULT_SCRUBBER_DRAGGED_SIZE_DP);
-//        if (attrs != null) {
-//            TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.DefaultTimeBar, 0,
-//                    0);
-//            try {
-//                scrubberDrawable = a.getDrawable(R.styleable.DefaultTimeBar_scrubber_drawable);
-//                if (scrubberDrawable != null) {
-//                    setDrawableLayoutDirection(scrubberDrawable);
-//                    defaultTouchTargetHeight =
-//                            Math.max(scrubberDrawable.getMinimumHeight(), defaultTouchTargetHeight);
-//                }
-//                barHeight = a.getDimensionPixelSize(R.styleable.DefaultTimeBar_bar_height,
-//                        defaultBarHeight);
-//                touchTargetHeight = a.getDimensionPixelSize(R.styleable.DefaultTimeBar_touch_target_height,
-//                        defaultTouchTargetHeight);
-//                adMarkerWidth = a.getDimensionPixelSize(R.styleable.DefaultTimeBar_ad_marker_width,
-//                        defaultAdMarkerWidth);
-//                scrubberEnabledSize = a.getDimensionPixelSize(
-//                        R.styleable.DefaultTimeBar_scrubber_enabled_size, defaultScrubberEnabledSize);
-//                scrubberDisabledSize = a.getDimensionPixelSize(
-//                        R.styleable.DefaultTimeBar_scrubber_disabled_size, defaultScrubberDisabledSize);
-//                scrubberDraggedSize = a.getDimensionPixelSize(
-//                        R.styleable.DefaultTimeBar_scrubber_dragged_size, defaultScrubberDraggedSize);
-//                int playedColor = a.getInt(R.styleable.DefaultTimeBar_played_color, DEFAULT_PLAYED_COLOR);
-//                int scrubberColor = a.getInt(R.styleable.DefaultTimeBar_scrubber_color,
-//                        getDefaultScrubberColor(playedColor));
-//                int bufferedColor = a.getInt(R.styleable.DefaultTimeBar_buffered_color,
-//                        getDefaultBufferedColor(playedColor));
-//                int unplayedColor = a.getInt(R.styleable.DefaultTimeBar_unplayed_color,
-//                        getDefaultUnplayedColor(playedColor));
-//                int adMarkerColor = a.getInt(R.styleable.DefaultTimeBar_ad_marker_color,
-//                        DEFAULT_AD_MARKER_COLOR);
-//                int playedAdMarkerColor = a.getInt(R.styleable.DefaultTimeBar_played_ad_marker_color,
-//                        getDefaultPlayedAdMarkerColor(adMarkerColor));
-//                playedPaint.setColor(playedColor);
-//                scrubberPaint.setColor(scrubberColor);
-//                bufferedPaint.setColor(bufferedColor);
-//                unplayedPaint.setColor(unplayedColor);
-//                adMarkerPaint.setColor(adMarkerColor);
-//                playedAdMarkerPaint.setColor(playedAdMarkerColor);
-//            } finally {
-//                a.recycle();
-//            }
-//        } else {
-//            barHeight = defaultBarHeight;
-//            touchTargetHeight = defaultTouchTargetHeight;
-//            adMarkerWidth = defaultAdMarkerWidth;
-//            scrubberEnabledSize = defaultScrubberEnabledSize;
-//            scrubberDisabledSize = defaultScrubberDisabledSize;
-//            scrubberDraggedSize = defaultScrubberDraggedSize;
-//            playedPaint.setColor(DEFAULT_PLAYED_COLOR);
-//            scrubberPaint.setColor(getDefaultScrubberColor(DEFAULT_PLAYED_COLOR));
-//            bufferedPaint.setColor(getDefaultBufferedColor(DEFAULT_PLAYED_COLOR));
-//            unplayedPaint.setColor(getDefaultUnplayedColor(DEFAULT_PLAYED_COLOR));
-//            adMarkerPaint.setColor(DEFAULT_AD_MARKER_COLOR);
-//            scrubberDrawable = null;
-//        }
-
-        barHeight = defaultBarHeight;
-        touchTargetHeight = defaultTouchTargetHeight;
-        adMarkerWidth = defaultAdMarkerWidth;
-        scrubberEnabledSize = defaultScrubberEnabledSize;
-        scrubberDisabledSize = defaultScrubberDisabledSize;
-        scrubberDraggedSize = defaultScrubberDraggedSize;
-        playedPaint.setColor(Color.argb(255, 66, 133, 244));//已播放颜色
-        scrubberPaint.setColor(Color.argb(255, 66, 133, 244));//指示器颜色
-        bufferedPaint.setColor(Color.argb(255, 200, 200, 200));//已缓存颜色
-        unplayedPaint.setColor(Color.argb(255, 150, 150, 150));//未播放颜色
-        adMarkerPaint.setColor(DEFAULT_AD_MARKER_COLOR);
-
-        scrubberDrawable = new MySeekBarIndicateDrawable();
-
+        if (attrs != null) {
+            TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.DefaultTimeBar, 0,
+                    0);
+            try {
+                scrubberDrawable = a.getDrawable(R.styleable.DefaultTimeBar_scrubber_drawable);
+                if (scrubberDrawable != null) {
+                    setDrawableLayoutDirection(scrubberDrawable);
+                    defaultTouchTargetHeight =
+                            Math.max(scrubberDrawable.getMinimumHeight(), defaultTouchTargetHeight);
+                }
+                barHeight = a.getDimensionPixelSize(R.styleable.DefaultTimeBar_bar_height,
+                        defaultBarHeight);
+                touchTargetHeight = a.getDimensionPixelSize(R.styleable.DefaultTimeBar_touch_target_height,
+                        defaultTouchTargetHeight);
+                adMarkerWidth = a.getDimensionPixelSize(R.styleable.DefaultTimeBar_ad_marker_width,
+                        defaultAdMarkerWidth);
+                scrubberEnabledSize = a.getDimensionPixelSize(
+                        R.styleable.DefaultTimeBar_scrubber_enabled_size, defaultScrubberEnabledSize);
+                scrubberDisabledSize = a.getDimensionPixelSize(
+                        R.styleable.DefaultTimeBar_scrubber_disabled_size, defaultScrubberDisabledSize);
+                scrubberDraggedSize = a.getDimensionPixelSize(
+                        R.styleable.DefaultTimeBar_scrubber_dragged_size, defaultScrubberDraggedSize);
+                int playedColor = a.getInt(R.styleable.DefaultTimeBar_played_color, DEFAULT_PLAYED_COLOR);
+                int scrubberColor = a.getInt(R.styleable.DefaultTimeBar_scrubber_color,
+                        getDefaultScrubberColor(playedColor));
+                int bufferedColor = a.getInt(R.styleable.DefaultTimeBar_buffered_color,
+                        getDefaultBufferedColor(playedColor));
+                int unplayedColor = a.getInt(R.styleable.DefaultTimeBar_unplayed_color,
+                        getDefaultUnplayedColor(playedColor));
+                int adMarkerColor = a.getInt(R.styleable.DefaultTimeBar_ad_marker_color,
+                        DEFAULT_AD_MARKER_COLOR);
+                int playedAdMarkerColor = a.getInt(R.styleable.DefaultTimeBar_played_ad_marker_color,
+                        getDefaultPlayedAdMarkerColor(adMarkerColor));
+                playedPaint.setColor(playedColor);
+                scrubberPaint.setColor(scrubberColor);
+                bufferedPaint.setColor(bufferedColor);
+                unplayedPaint.setColor(unplayedColor);
+                adMarkerPaint.setColor(adMarkerColor);
+                playedAdMarkerPaint.setColor(playedAdMarkerColor);
+            } finally {
+                a.recycle();
+            }
+        } else {
+            barHeight = defaultBarHeight;
+            touchTargetHeight = defaultTouchTargetHeight;
+            adMarkerWidth = defaultAdMarkerWidth;
+            scrubberEnabledSize = defaultScrubberEnabledSize;
+            scrubberDisabledSize = defaultScrubberDisabledSize;
+            scrubberDraggedSize = defaultScrubberDraggedSize;
+            playedPaint.setColor(DEFAULT_PLAYED_COLOR);
+            scrubberPaint.setColor(getDefaultScrubberColor(DEFAULT_PLAYED_COLOR));
+            bufferedPaint.setColor(getDefaultBufferedColor(DEFAULT_PLAYED_COLOR));
+            unplayedPaint.setColor(getDefaultUnplayedColor(DEFAULT_PLAYED_COLOR));
+            adMarkerPaint.setColor(DEFAULT_AD_MARKER_COLOR);
+            scrubberDrawable = null;
+        }
         formatBuilder = new StringBuilder();
         formatter = new Formatter(formatBuilder, Locale.getDefault());
         stopScrubbingRunnable = new Runnable() {
@@ -252,7 +344,7 @@ public class MyTimeBar extends View implements TimeBar {
      * Sets the color for the portion of the time bar representing media before the playback position.
      *
      * @param playedColor The color for the portion of the time bar representing media before the
-     *                    playback position.
+     *     playback position.
      */
     public void setPlayedColor(@ColorInt int playedColor) {
         playedPaint.setColor(playedColor);
@@ -274,7 +366,7 @@ public class MyTimeBar extends View implements TimeBar {
      * current buffered position.
      *
      * @param bufferedColor The color for the portion of the time bar after the current played
-     *                      position up to the current buffered position.
+     *     position up to the current buffered position.
      */
     public void setBufferedColor(@ColorInt int bufferedColor) {
         bufferedPaint.setColor(bufferedColor);
@@ -285,7 +377,7 @@ public class MyTimeBar extends View implements TimeBar {
      * Sets the color for the portion of the time bar after the current played position.
      *
      * @param unplayedColor The color for the portion of the time bar after the current played
-     *                      position.
+     *     position.
      */
     public void setUnplayedColor(@ColorInt int unplayedColor) {
         unplayedPaint.setColor(unplayedColor);
@@ -520,14 +612,14 @@ public class MyTimeBar extends View implements TimeBar {
         if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_SELECTED) {
             event.getText().add(getProgressText());
         }
-        event.setClassName(MyTimeBar.class.getName());
+        event.setClassName(CopyFormDefaultTimeBar.class.getName());
     }
 
     @TargetApi(21)
     @Override
     public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
         super.onInitializeAccessibilityNodeInfo(info);
-        info.setClassName(MyTimeBar.class.getCanonicalName());
+        info.setClassName(CopyFormDefaultTimeBar.class.getCanonicalName());
         info.setContentDescription(getProgressText());
         if (duration <= 0) {
             return;

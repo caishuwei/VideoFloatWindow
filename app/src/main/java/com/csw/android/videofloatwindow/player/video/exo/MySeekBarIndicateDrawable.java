@@ -11,8 +11,8 @@ import com.csw.android.videofloatwindow.util.ScreenInfo;
 
 public class MySeekBarIndicateDrawable extends BitmapDrawable {
 
-    private int sizeInPressed = ScreenInfo.Companion.dp2Px(MyTimeBar.DEFAULT_SCRUBBER_DRAGGED_SIZE_DP);
-    private int sizeInNormal = ScreenInfo.Companion.dp2Px(MyTimeBar.DEFAULT_SCRUBBER_ENABLED_SIZE_DP);
+    private int sizeInPressed = ScreenInfo.Companion.dp2Px(30);//按压时Drawable自身的尺寸
+    private int sizeInNormal = ScreenInfo.Companion.dp2Px(12);//普通状态下Drawable自身的尺寸
 
     public MySeekBarIndicateDrawable() {
         super(MyApplication.instance.getResources(), BitmapFactory.decodeResource(MyApplication.instance.getResources(), R.drawable.player_seekbar));
@@ -22,11 +22,12 @@ public class MySeekBarIndicateDrawable extends BitmapDrawable {
 
     @Override
     public boolean isStateful() {
-        return super.isStateful() | true;
+        return super.isStateful() | true;//设置这个Drawable是携带状态的
     }
 
     @Override
     protected boolean onStateChange(int[] stateSet) {
+        //获取按下状态的改变
         boolean pressStateChanged = false;
         if (stateSet != null) {
             boolean hasPressed = false;
@@ -47,6 +48,9 @@ public class MySeekBarIndicateDrawable extends BitmapDrawable {
         return super.onStateChange(stateSet) | pressStateChanged;
     }
 
+    /**
+     * 根据按压状态，修改自身尺寸
+     */
     @Override
     public int getIntrinsicWidth() {
         return isPressed ? sizeInPressed : sizeInNormal;
@@ -62,6 +66,9 @@ public class MySeekBarIndicateDrawable extends BitmapDrawable {
         super.onBoundsChange(bounds);
     }
 
+    /**
+     * 绘制不用我们操心，BitmapDrawable在绘制时已经将图片缩放到自身尺寸能完全显示的大小
+     */
     @Override
     public void draw(Canvas canvas) {
         super.draw(canvas);
