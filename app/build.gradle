@@ -1,11 +1,25 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
-apply plugin: 'org.greenrobot.greendao'
 apply plugin: 'kotlin-kapt'
+apply plugin: 'org.greenrobot.greendao'
 
 
 android {
+    signingConfigs {
+        debug {
+            storeFile file("DevKeystore.jks")
+            storePassword 'develop'
+            keyAlias 'develop'
+            keyPassword 'develop'
+        }
+        release {
+            storeFile file('DevKeystore.jks')
+            storePassword 'develop'
+            keyAlias 'develop'
+            keyPassword 'develop'
+        }
+    }
     compileSdkVersion rootProject.ext.android.compileSdkVersion
     buildToolsVersion rootProject.ext.android.buildToolsVersion
     defaultConfig {
@@ -16,9 +30,14 @@ android {
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
+        signingConfig signingConfigs.debug
     }
     buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

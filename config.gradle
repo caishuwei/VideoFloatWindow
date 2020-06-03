@@ -116,11 +116,11 @@ ext {
             //https://github.com/comScore/ComScore-Android
             //app界面统计
             comscore                     : "com.comscore:android-analytics:5.+",
-
+            //https://github.com/greenrobot/greenDAO
             //数据库
-            greenDao                     : "org.greenrobot:greendao:3.2.2",
-            greenDao_generator           : "org.greenrobot:greendao-generator:3.2.2",
-            greenDao_classpath           : 'org.greenrobot:greendao-gradle-plugin:3.2.2',
+            greenDao                     : "org.greenrobot:greendao:3.3.0",
+            greenDao_generator           : "org.greenrobot:greendao-generator:3.3.0",
+            greenDao_classpath           : 'org.greenrobot:greendao-gradle-plugin:3.3.0',
             //数据库更新辅助
             greenDao_update_helper       : 'io.github.yuweiguocn:GreenDaoUpgradeHelper:v2.2.1',
 

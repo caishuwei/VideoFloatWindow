@@ -81,8 +81,10 @@ class Utils {
             var cursor: Cursor? = null
             try {
                 cursor = contentResolver.query(uri, null, null, null, null)
-                if (cursor.moveToFirst()) {
-                    return VideoInfo.readFromCursor(cursor)
+                cursor?.let {
+                    if (it.moveToFirst()) {
+                        return VideoInfo.readFromCursor(it)
+                    }
                 }
             } finally {
                 cursor?.close()
