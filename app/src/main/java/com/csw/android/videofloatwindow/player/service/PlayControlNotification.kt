@@ -89,6 +89,7 @@ class PlayControlNotification {
     private fun setNotificationClickListener(remoteViews: RemoteViews, viewId: Int, action: String, closeNotificationBar: Boolean = false) {
         if (closeNotificationBar) {
             val intent = Intent(MyApplication.instance, CloseNotificationBarActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             intent.action = action
             remoteViews.setOnClickPendingIntent(
                     viewId,
