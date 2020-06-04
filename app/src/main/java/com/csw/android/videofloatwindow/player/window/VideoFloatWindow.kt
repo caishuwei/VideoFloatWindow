@@ -103,7 +103,7 @@ class VideoFloatWindow(context: Context) : FrameLayout(context), NestedScrolling
     private fun removeFromWindow() {
         if (parent != null) {
             windowManager.removeView(this)
-            videoContainer.releaseVideoView()
+            videoContainer.release()
             PlayHelper.removeTopLevelVideoContainer(videoContainer)
             onFloatWindowChangeListener?.onFloatWindowVisibilityChanged(false)
             AvailableAreaMeasure.instance.removeWindow()
@@ -111,7 +111,7 @@ class VideoFloatWindow(context: Context) : FrameLayout(context), NestedScrolling
     }
 
     fun setVideoInfo(videoInfo: VideoInfo) {
-        videoContainer.setVideoInfo(videoInfo, true)
+        videoContainer.setVideoInfo(videoInfo)
         videoContainer.play()
     }
 
@@ -131,7 +131,7 @@ class VideoFloatWindow(context: Context) : FrameLayout(context), NestedScrolling
     }
 
     fun onAvailableAreaChanged() {
-        videoContainer.mVideoInfo?.let {
+        videoContainer.getVideoInfo()?.let {
             updateWindowWH(it)
         }
     }

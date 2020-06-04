@@ -4,14 +4,13 @@ import android.os.Handler
 import android.os.Looper
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
-import com.csw.android.videofloatwindow.player.base.VideoContainer
+import com.csw.android.videofloatwindow.player.container.impl.VideoContainer
+import com.csw.android.videofloatwindow.player.core.VideoInstanceManager
 import com.csw.android.videofloatwindow.player.service.PlayService
-import com.csw.android.videofloatwindow.player.video.base.IVideo
-import com.csw.android.videofloatwindow.player.video.exo.ExoVideoView
+import com.csw.android.videofloatwindow.player.video.IVideo
 import com.csw.android.videofloatwindow.player.window.FloatWindowVideoContainer
 import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
 import com.csw.android.videofloatwindow.ui.video.full_screen.FullScreenActivity
-import com.csw.android.videofloatwindow.util.LogUtils
 import com.csw.android.videofloatwindow.view.FullScreenVideoContainer
 import java.lang.ref.WeakReference
 import java.util.*
@@ -22,54 +21,23 @@ import java.util.*
 class PlayHelper {
 
     companion object {
-        //VideoView的创建与回收
-        private val videoMap = WeakHashMap<String, IVideo>()
         //单一前台的VideoContainer，如全屏视频或者悬浮窗视频，其可见时设置到这里，用于在通过通知切换下一首时可以通过这里绑定到容器中
         private var topLevelVideoContainer: WeakReference<VideoContainer>? = null
+
         //播放结束处理器
         private val playEndHandler = PlayEndHandler()
+
         //播放状态改变监听器集合
         private val onPlayVideoChangeListenerSet = HashSet<OnPlayChangeListener>()
+
         //顶层视频容器变化监听器集合
         private val onTopLevelVideoContainerChangeListenerSet = HashSet<OnTopLevelVideoContainerChangeListener>()
+
         //主消息循环处理器
         private val mainHandler = Handler(Looper.getMainLooper())
 
         init {
             addOnPlayVideoChangeListener(playEndHandler)
-        }
-
-        /**
-         * 获取VideoView实例
-         */
-        fun getVideo(videoInfo: VideoInfo): IVideo {
-            var instance = videoMap[videoInfo.target]
-            if (instance == null) {
-                instance = ExoVideoView(videoInfo)
-                videoMap[videoInfo.target] = instance
-            }
-            LogUtils.i("PlayHelper", "videoMap size = " + videoMap.size)
-            return instance
-        }
-
-        /**
-         * 重新设置VideoView的key
-         */
-        fun resetVideoKey(oldKey: String, newKey: String, video: IVideo) {
-            //移除旧key
-            videoMap.remove(oldKey)
-            //释放新key的VideoView
-            videoMap.remove(newKey)?.release()
-            videoMap[newKey] = video
-        }
-
-        /**
-         * 释放VideoView
-         */
-        fun removeVideo(video: IVideo) {
-            videoMap.remove(video.getVideoInfo().target)
-            LogUtils.i("PlayHelper", "removeVideo ${video.getVideoInfo().fileName}")
-            LogUtils.i("PlayHelper", "videoMap size = " + videoMap.size)
         }
 
         /**
@@ -128,7 +96,7 @@ class PlayHelper {
          */
         var lastPlayVideo: IVideo? = null
             set(value) {
-                if (field != value) {
+                if (field !== value) {
                     val old = field
                     field = value
                     //上个播放的视频，如果在容器中就停止播放，否则将其释放掉
@@ -222,7 +190,7 @@ class PlayHelper {
                     currVideoContainer.setVideoInfo(next)
                     currVideoContainer.play()
                 } else {
-                    getVideo(next).play()
+                    VideoInstanceManager.ensureVideo(next).play()
                 }
                 return true
             }
@@ -240,7 +208,7 @@ class PlayHelper {
                     currVideoContainer.setVideoInfo(pre)
                     currVideoContainer.play()
                 } else {
-                    getVideo(pre).play()
+                    VideoInstanceManager.ensureVideo(pre).play()
                 }
                 return true
             }

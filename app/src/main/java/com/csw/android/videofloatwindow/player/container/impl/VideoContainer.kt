@@ -1,4 +1,4 @@
-package com.csw.android.videofloatwindow.player.base
+package com.csw.android.videofloatwindow.player.container.impl
 
 import android.app.Activity
 import android.content.Context
@@ -11,9 +11,10 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.permission.SystemAlertWindowPermission
-import com.csw.android.videofloatwindow.player.PlayHelper
-import com.csw.android.videofloatwindow.player.video.base.IControllerSettingHelper
-import com.csw.android.videofloatwindow.player.video.base.IVideo
+import com.csw.android.videofloatwindow.player.container.IVideoContainer
+import com.csw.android.videofloatwindow.player.core.VideoBindHelper
+import com.csw.android.videofloatwindow.player.video.IControllerSettingHelper
+import com.csw.android.videofloatwindow.player.video.IVideo
 import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
 import com.csw.android.videofloatwindow.ui.video.full_screen.FullScreenActivity
 import com.csw.android.videofloatwindow.util.FragmentHelper
@@ -24,8 +25,8 @@ import com.google.android.material.snackbar.Snackbar
 /**
  * 视频容器，实现VideoView与UI上视图的绑定与解绑，使得VideoView可以随意脱离这个界面添加到另一个界面
  */
-open class VideoContainer : FrameLayout {
-    private val videoContainer: FrameLayout;
+open class VideoContainer : FrameLayout, IVideoContainer {
+    private val videoContainer: FrameLayout
     var whRatio: Float = 16f / 9
         set(value) {
             var ratio = value
@@ -42,100 +43,81 @@ open class VideoContainer : FrameLayout {
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
         videoContainer = FrameLayout(context)
-        videoContainer.tag = this
         super.addView(videoContainer, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
         super.setBackgroundColor(0xFF000000.toInt())
     }
 
-    var mVideoInfo: VideoInfo? = null
-        private set
+    private var mVideoInfo: VideoInfo? = null
 
-    open fun setVideoInfo(videoInfo: VideoInfo, changeVideoView: Boolean = false) {
+    override fun setVideoInfo(videoInfo: VideoInfo) {
         if (!Utils.videoEquals(mVideoInfo, videoInfo)) {
+            val old = mVideoInfo
             mVideoInfo = videoInfo
-            if (changeVideoView) {
-                currVideo?.unbindVideoContainer(this, true)
-            } else {
-                currVideo?.let {
-                    it.setVideoInfo(videoInfo)
-                    settingPlayController(it.getControllerSettingHelper());
-                }
-            }
+            onVideoInfoChanged(old, videoInfo)
         }
     }
 
     /**
-     * 绑定VideoView
+     * 视频信息改变
      */
-    open fun bindVideoView() {
-        mVideoInfo?.let {
-            getVideo(it)
+    open fun onVideoInfoChanged(old: VideoInfo?, new: VideoInfo) {
+        unBindVideoView()
+    }
+
+    fun syncVideoInfoToCurrVideo() {
+        currVideo?.let {
+            VideoBindHelper.syncVideoInfoToVideo(mVideoInfo, it)
+            onPlayControllerSetup(it.getControllerSettingHelper())
         }
     }
 
-    var currVideo: IVideo? = null
+    override fun getVideoInfo(): VideoInfo? {
+        return mVideoInfo
+    }
 
-    /**
-     * 绑定VideoView
-     */
-    open fun onBindVideo(video: IVideo) {
+    override fun bindVideoView() {
+        VideoBindHelper.bindVideo(this)
+    }
+
+    override fun unBindVideoView() {
+        VideoBindHelper.unBindVideo(this)
+    }
+
+    private var currVideo: IVideo? = null
+    override fun getVideo(): IVideo? {
+        return currVideo
+    }
+
+    override fun onVideoBind(video: IVideo) {
         this.currVideo = video
         videoContainer.addView(video.getView(), LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
-        settingPlayController(video.getControllerSettingHelper())
     }
 
-    /**
-     * 绑定播放视图后的操作，如设播放控制器的各种按钮监听
-     */
-    open fun settingPlayController(controllerSettingHelper: IControllerSettingHelper) {
+    override fun onPlayControllerSetup(controllerSettingHelper: IControllerSettingHelper) {
 
     }
 
-    /**
-     * 解除VideoView绑定
-     */
-    open fun onUnbindVideo(video: IVideo) {
+    override fun onVideoUnbind(video: IVideo) {
         videoContainer.removeView(video.getView())
         this.currVideo = null
     }
 
-    /**
-     * 释放播放器
-     */
-    fun releaseVideoView() {
-        currVideo?.unbindVideoContainer(this)
+    override fun play() {
+        if (currVideo == null) {
+            bindVideoView()
+        }
+        currVideo?.play()
     }
 
-    private fun getVideo(videoInfo: VideoInfo): IVideo {
-        val videoView = currVideo
-        return if (videoView == null) {
-            val vv = PlayHelper.getVideo(videoInfo)
-            vv.bindVideoContainer(this)
-            vv
-        } else {
-            videoView
-        }
+    override fun pause() {
+        currVideo?.pause()
     }
 
-    /**
-     * 播放当前的视频
-     */
-    open fun play(): VideoContainer {
-        mVideoInfo?.let {
-            getVideo(it).play()
+    override fun release() {
+        currVideo?.let {
+            unBindVideoView()
+            it.release()
         }
-        return this
-    }
-
-
-    /**
-     * 停止视频播放
-     */
-    open fun pause(): VideoContainer {
-        mVideoInfo?.let {
-            getVideo(it).pause()
-        }
-        return this
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -222,7 +204,7 @@ open class VideoContainer : FrameLayout {
         private fun registerVideoContainer(videoContainer: VideoContainer) {
             videoContainerSet.add(videoContainer)
             if (isViewDestroyed) {
-                videoContainer.releaseVideoView()
+                videoContainer.release()
             }
         }
 
@@ -230,17 +212,17 @@ open class VideoContainer : FrameLayout {
          * 这是一个没有视图的fragment，onViewCreated不会走，但onDestroyView会
          */
         override fun onDestroyView() {
-            LogUtils.i("UiDestroyListenerFragment", "onDestroyView")
+            LogUtils.i(javaClass.simpleName, "onDestroyView")
             isViewDestroyed = true
             for (videoContainer in videoContainerSet) {
-                videoContainer.releaseVideoView()
+                videoContainer.release()
             }
             videoContainerSet.clear()
             super.onDestroyView()
         }
 
         override fun onDestroy() {
-            LogUtils.i("UiDestroyListenerFragment", "onDestroy")
+            LogUtils.i(javaClass.simpleName, "onDestroy")
             super.onDestroy()
         }
 

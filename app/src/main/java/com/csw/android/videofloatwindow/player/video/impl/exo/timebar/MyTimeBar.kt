@@ -1,4 +1,4 @@
-package com.csw.android.videofloatwindow.player.video.exo
+package com.csw.android.videofloatwindow.player.video.impl.exo.timebar
 
 import android.content.Context
 import android.graphics.Color

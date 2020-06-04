@@ -15,7 +15,7 @@ import com.csw.android.videofloatwindow.entities.PlaySheet
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.PlayHelper
 import com.csw.android.videofloatwindow.player.PlayList
-import com.csw.android.videofloatwindow.player.base.VideoContainer
+import com.csw.android.videofloatwindow.player.container.impl.VideoContainer
 import com.csw.android.videofloatwindow.ui.base.BaseMVPFragment
 import com.csw.android.videofloatwindow.ui.video.full_screen.FullScreenActivity
 import com.csw.android.videofloatwindow.util.Utils

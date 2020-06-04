@@ -3,13 +3,12 @@ package com.csw.android.videofloatwindow.player.window
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View.OnClickListener
-import com.csw.android.videofloatwindow.app.MyApplication
+import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.PlayHelper
 import com.csw.android.videofloatwindow.player.PlayList
-import com.csw.android.videofloatwindow.player.base.VideoContainer
-import com.csw.android.videofloatwindow.player.video.base.IControllerSettingHelper
-import com.csw.android.videofloatwindow.player.video.base.IVideo
-import com.csw.android.videofloatwindow.player.video.exo.ExoVideoView
+import com.csw.android.videofloatwindow.player.container.impl.VideoContainer
+import com.csw.android.videofloatwindow.player.core.VideoInstanceManager
+import com.csw.android.videofloatwindow.player.video.IControllerSettingHelper
 
 class FloatWindowVideoContainer : VideoContainer {
     var videoFloatWindow: VideoFloatWindow? = null
@@ -18,9 +17,9 @@ class FloatWindowVideoContainer : VideoContainer {
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    override fun settingPlayController(controllerSettingHelper: IControllerSettingHelper) {
-        super.settingPlayController(controllerSettingHelper)
-        mVideoInfo?.let { it ->
+    override fun onPlayControllerSetup(controllerSettingHelper: IControllerSettingHelper) {
+        super.onPlayControllerSetup(controllerSettingHelper)
+        getVideoInfo()?.let { it ->
             controllerSettingHelper.setBackClickListener(null)
                     .setTitle(it.fileName)
                     .setCloseClickListener(OnClickListener { _ ->
@@ -49,6 +48,14 @@ class FloatWindowVideoContainer : VideoContainer {
                     )
                     .setVolumeAndBrightnessControllerEnable(false)
             videoFloatWindow?.updateWindowWH(it)
+        }
+    }
+
+    override fun onVideoInfoChanged(old: VideoInfo?, new: VideoInfo) {
+        if(VideoInstanceManager.hasInstance(new.target)){
+            unBindVideoView()
+        }else{
+            syncVideoInfoToCurrVideo()
         }
     }
 

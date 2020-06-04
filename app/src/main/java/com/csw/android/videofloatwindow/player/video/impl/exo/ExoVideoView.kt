@@ -1,4 +1,4 @@
-package com.csw.android.videofloatwindow.player.video.exo
+package com.csw.android.videofloatwindow.player.video.impl.exo
 
 import android.app.Activity
 import android.graphics.Color
@@ -16,12 +16,12 @@ import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.PlayHelper
-import com.csw.android.videofloatwindow.player.PlayList
 import com.csw.android.videofloatwindow.player.base.BrightnessController
-import com.csw.android.videofloatwindow.player.base.VideoContainer
 import com.csw.android.videofloatwindow.player.base.VolumeController
-import com.csw.android.videofloatwindow.player.video.base.IControllerSettingHelper
-import com.csw.android.videofloatwindow.player.video.base.IVideo
+import com.csw.android.videofloatwindow.player.container.impl.VideoContainer
+import com.csw.android.videofloatwindow.player.core.VideoInstanceManager
+import com.csw.android.videofloatwindow.player.video.IControllerSettingHelper
+import com.csw.android.videofloatwindow.player.video.IVideo
 import com.csw.android.videofloatwindow.player.video.layer.AutoHintLayerController
 import com.csw.android.videofloatwindow.player.video.layer.HintLayerController
 import com.csw.android.videofloatwindow.player.video.view.ErrorHintViewHolder
@@ -65,10 +65,13 @@ class ExoVideoView internal constructor(videoInfo: VideoInfo) : RelativeLayout(M
     private lateinit var vFloatWindow: View
     private lateinit var vPrevious: View
     private lateinit var vNext: View
+
     //手动关闭提示层
     private lateinit var fl_hint_layer: FrameLayout
+
     //自动关闭提示层
     private lateinit var fl_auto_hide_layer: FrameLayout
+
     //播放器
     lateinit var player: SimpleExoPlayer
         private set
@@ -252,18 +255,12 @@ class ExoVideoView internal constructor(videoInfo: VideoInfo) : RelativeLayout(M
         nestedScrollingChildHelper.isNestedScrollingEnabled = true
     }
 
-    override fun onFinishInflate() {
-        super.onFinishInflate()
-    }
-
     //---------------------------------------对外暴露方法-------------------------------------------
 
     override fun getView(): View {
         return this
     }
 
-    //当前所在的播放容器
-    private var currVideoContainer: VideoContainer? = null
 
     /**
      * 辅助控制器的设置
@@ -289,35 +286,20 @@ class ExoVideoView internal constructor(videoInfo: VideoInfo) : RelativeLayout(M
             val currKey = mVideoInfo.target
             mVideoInfo = videoInfo
             player.stop(true)
-            PlayHelper.resetVideoKey(currKey, mVideoInfo.target, this);
-            PlayHelper.onVideoViewVideoInfoChanged(this)
-            if (PlayHelper.lastPlayVideo == this) {
-                PlayList.updateCurrIndex()
-            }
         } else {
             mVideoInfo = videoInfo
         }
     }
 
-    override fun bindVideoContainer(videoContainer: VideoContainer) {
-        if (currVideoContainer != videoContainer) {
-            currVideoContainer?.let {
-                unbindVideoContainer(it, false)
-            }
-            videoContainer.onBindVideo(this)
-            currVideoContainer = videoContainer
-        }
+
+    //当前所在的播放容器
+    private var currVideoContainer: VideoContainer? = null
+    override fun setVideoContainer(videoContainer: VideoContainer?) {
+        currVideoContainer = videoContainer
     }
 
-    override fun unbindVideoContainer(videoContainer: VideoContainer, release: Boolean) {
-        if (currVideoContainer == videoContainer) {
-            videoContainer.onUnbindVideo(this)
-            controllerSettingHelper.reset()
-            currVideoContainer = null
-            if (release) {
-                release()
-            }
-        }
+    override fun getVideoContainer(): VideoContainer? {
+        return currVideoContainer
     }
 
     override fun inContainer(): Boolean {
@@ -355,14 +337,11 @@ class ExoVideoView internal constructor(videoInfo: VideoInfo) : RelativeLayout(M
 
     override fun release() {
         if (!PlayHelper.isVideoViewCanBackgroundPlay(this)) {
-            currVideoContainer?.let {
-                unbindVideoContainer(it, false)
-            }
-            player.release()
             if (PlayHelper.lastPlayVideo == this) {
                 PlayHelper.lastPlayVideo = null
             }
-            PlayHelper.removeVideo(this)
+            player.release()
+            VideoInstanceManager.removeVideo(this)
         }
     }
 

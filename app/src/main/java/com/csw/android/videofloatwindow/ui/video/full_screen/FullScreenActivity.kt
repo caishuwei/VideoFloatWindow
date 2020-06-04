@@ -53,13 +53,13 @@ class FullScreenActivity : BaseActivity() {
             val videoInfo = intent.getSerializableExtra("VideoInfo")
             val uri = intent.data
             if (videoInfo != null && videoInfo is VideoInfo) {
-                videoContainer.setVideoInfo(videoInfo, true)
+                videoContainer.setVideoInfo(videoInfo)
                 videoContainer.play()
             } else if (uri != null && "content" == uri.scheme) {
                 //处理媒体库Uri，这通常是文件浏览器之类的寻找能处理视频播放的app，最终进入到这里
                 val vi = Utils.getVideoInfo(contentResolver, uri)
                 vi?.let {
-                    videoContainer.setVideoInfo(it, true)
+                    videoContainer.setVideoInfo(it)
                     videoContainer.play()
                 }
             }
@@ -74,7 +74,7 @@ class FullScreenActivity : BaseActivity() {
 
     override fun onDestroy() {
         PlayHelper.removeTopLevelVideoContainer(videoContainer)
-        videoContainer.releaseVideoView()
+        videoContainer.release()
         super.onDestroy()
     }
 

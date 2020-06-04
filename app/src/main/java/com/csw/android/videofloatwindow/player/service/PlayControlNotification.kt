@@ -13,6 +13,7 @@ import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.app.MyApplication
+import com.csw.android.videofloatwindow.util.ScreenInfo
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -56,25 +57,11 @@ class PlayControlNotification {
 
 
     private fun createNotification() {
-        bigRemoteViews = RemoteViews(context.packageName, R.layout.view_play_control_big_notification)
-        setNotificationClickListener(bigRemoteViews, R.id.v_notification_root, PlayService.ACTION_NOTIFICATION_CLICK, true)
-        setNotificationClickListener(bigRemoteViews, R.id.v_previous, PlayService.ACTION_PLAY_PREVIOUS)
-        setNotificationClickListener(bigRemoteViews, R.id.v_next, PlayService.ACTION_PLAY_NEXT)
-        setNotificationClickListener(bigRemoteViews, R.id.exo_play, PlayService.ACTION_PLAY_CURR)
-        setNotificationClickListener(bigRemoteViews, R.id.exo_pause, PlayService.ACTION_PAUSE_CURR)
-        setNotificationClickListener(bigRemoteViews, R.id.v_full_screen, PlayService.ACTION_FULL_SCREEN, true)
-        setNotificationClickListener(bigRemoteViews, R.id.iv_image, PlayService.ACTION_FULL_SCREEN, true)
-        setNotificationClickListener(bigRemoteViews, R.id.v_float_window, PlayService.ACTION_FLOAT_WINDOW, true)
+        bigRemoteViews = RemoteViews(context.packageName, R.layout.view_play_control_large_notification)
+        setupNoticationRemoteViews(bigRemoteViews)
 
-        normalRemoteViews = RemoteViews(context.packageName, R.layout.view_play_control_normal_notification)
-        setNotificationClickListener(normalRemoteViews, R.id.v_notification_root, PlayService.ACTION_NOTIFICATION_CLICK, true)
-        setNotificationClickListener(normalRemoteViews, R.id.v_previous, PlayService.ACTION_PLAY_PREVIOUS)
-        setNotificationClickListener(normalRemoteViews, R.id.v_next, PlayService.ACTION_PLAY_NEXT)
-        setNotificationClickListener(normalRemoteViews, R.id.exo_play, PlayService.ACTION_PLAY_CURR)
-        setNotificationClickListener(normalRemoteViews, R.id.exo_pause, PlayService.ACTION_PAUSE_CURR)
-        setNotificationClickListener(normalRemoteViews, R.id.v_full_screen, PlayService.ACTION_FULL_SCREEN, true)
-        setNotificationClickListener(normalRemoteViews, R.id.iv_image, PlayService.ACTION_FULL_SCREEN, true)
-        setNotificationClickListener(normalRemoteViews, R.id.v_float_window, PlayService.ACTION_FLOAT_WINDOW, true)
+        normalRemoteViews = RemoteViews(context.packageName, R.layout.view_play_control_big_notification)
+        setupNoticationRemoteViews(normalRemoteViews)
 
         mNotification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setCustomContentView(normalRemoteViews)
@@ -82,7 +69,17 @@ class PlayControlNotification {
                 .setSmallIcon(R.mipmap.ic_launcher_round)
                 .setOnlyAlertOnce(true)
                 .build()
+    }
 
+    private fun setupNoticationRemoteViews(remoteViews: RemoteViews) {
+        setNotificationClickListener(remoteViews, R.id.v_notification_root, PlayService.ACTION_NOTIFICATION_CLICK, true)
+        setNotificationClickListener(remoteViews, R.id.v_previous, PlayService.ACTION_PLAY_PREVIOUS)
+        setNotificationClickListener(remoteViews, R.id.v_next, PlayService.ACTION_PLAY_NEXT)
+        setNotificationClickListener(remoteViews, R.id.exo_play, PlayService.ACTION_PLAY_CURR)
+        setNotificationClickListener(remoteViews, R.id.exo_pause, PlayService.ACTION_PAUSE_CURR)
+        setNotificationClickListener(remoteViews, R.id.v_full_screen, PlayService.ACTION_FULL_SCREEN, true)
+        setNotificationClickListener(remoteViews, R.id.iv_image, PlayService.ACTION_FULL_SCREEN, true)
+        setNotificationClickListener(remoteViews, R.id.v_float_window, PlayService.ACTION_FLOAT_WINDOW, true)
 
     }
 

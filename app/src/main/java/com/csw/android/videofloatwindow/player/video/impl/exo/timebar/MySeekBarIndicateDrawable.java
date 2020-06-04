@@ -1,4 +1,4 @@
-package com.csw.android.videofloatwindow.player.video.exo;
+package com.csw.android.videofloatwindow.player.video.impl.exo.timebar;
 
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -9,9 +9,12 @@ import com.csw.android.videofloatwindow.R;
 import com.csw.android.videofloatwindow.app.MyApplication;
 import com.csw.android.videofloatwindow.util.ScreenInfo;
 
+/**
+ * 自定义BitmapDrawable，实现按下与抬起时有不同的状态表现
+ */
 public class MySeekBarIndicateDrawable extends BitmapDrawable {
 
-    private int sizeInPressed = ScreenInfo.Companion.dp2Px(30);//按压时Drawable自身的尺寸
+    private int sizeInPressed = ScreenInfo.Companion.dp2Px(25);//按压时Drawable自身的尺寸
     private int sizeInNormal = ScreenInfo.Companion.dp2Px(12);//普通状态下Drawable自身的尺寸
 
     public MySeekBarIndicateDrawable() {

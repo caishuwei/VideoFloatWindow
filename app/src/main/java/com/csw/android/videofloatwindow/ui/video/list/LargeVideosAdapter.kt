@@ -1,5 +1,6 @@
 package com.csw.android.videofloatwindow.ui.video.list
 
+import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import com.chad.library.adapter.base.BaseQuickAdapter
@@ -12,6 +13,12 @@ import com.csw.android.videofloatwindow.view.ListVideoContainer
 
 class LargeVideosAdapter(val fragment: Fragment) : BaseQuickAdapter<VideoInfo, BaseViewHolder>(R.layout.item_large_video) {
 
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
+        val h = super.onCreateViewHolder(parent, viewType)
+        val listVideoContainer = h.getView<ListVideoContainer>(R.id.mv_video_container)
+        return h
+    }
+
     override fun convert(helper: BaseViewHolder?, item: VideoInfo?) {
         Utils.runIfNotNull(helper, item) { h, i ->
 //            h.itemView.
@@ -21,7 +28,7 @@ class LargeVideosAdapter(val fragment: Fragment) : BaseQuickAdapter<VideoInfo, B
             listVideoContainer.releaseOnUiDestroy(fragment.childFragmentManager)
             listVideoContainer.setVideoInfo(i)
 //            listVideoContainer.whRatio = i.whRatio
-            listVideoContainer.bindVideoView()
+//            listVideoContainer.bindVideoView()
             ImageLoader.loadImage(fragment,  listVideoContainer.whRatioImageView, i.imageUri)
         }
     }

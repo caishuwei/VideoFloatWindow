@@ -1,4 +1,4 @@
-package com.csw.android.videofloatwindow.player.video.base
+package com.csw.android.videofloatwindow.player.video
 
 import android.view.View
 

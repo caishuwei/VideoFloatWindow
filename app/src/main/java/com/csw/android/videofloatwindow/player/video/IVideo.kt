@@ -1,8 +1,9 @@
-package com.csw.android.videofloatwindow.player.video.base
+package com.csw.android.videofloatwindow.player.video
 
 import android.view.View
 import com.csw.android.videofloatwindow.entities.VideoInfo
-import com.csw.android.videofloatwindow.player.base.VideoContainer
+import com.csw.android.videofloatwindow.player.container.impl.VideoContainer
+import com.csw.android.videofloatwindow.player.video.IControllerSettingHelper
 
 /**
  * 视频播放实现
@@ -30,15 +31,14 @@ interface IVideo {
     fun getVideoInfo(): VideoInfo
 
     /**
-     * 绑定到VideoContainer中
+     * 设置容器
      */
-    fun bindVideoContainer(videoContainer: VideoContainer)
+    fun setVideoContainer(videoContainer: VideoContainer?)
 
     /**
-     * 从videoContainer解绑VideoView
-     * @param release true 解绑后释放VideoView
+     * 获取容器
      */
-    fun unbindVideoContainer(videoContainer: VideoContainer, release: Boolean = true)
+    fun getVideoContainer(): VideoContainer?
 
     /**
      * VideoView是否处于容器中

@@ -6,9 +6,9 @@ import android.view.View
 import android.view.View.OnClickListener
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.PlayHelper
-import com.csw.android.videofloatwindow.player.base.VideoContainer
-import com.csw.android.videofloatwindow.player.video.base.IControllerSettingHelper
-import com.csw.android.videofloatwindow.player.video.base.IVideo
+import com.csw.android.videofloatwindow.player.container.impl.VideoContainer
+import com.csw.android.videofloatwindow.player.video.IControllerSettingHelper
+import com.csw.android.videofloatwindow.player.video.IVideo
 
 /**
  * 用于列表的视频显示容器，添加了ImageView作为视频预览图显示控件，以及与悬浮窗播放的协调，优先在悬浮窗播放
@@ -16,6 +16,7 @@ import com.csw.android.videofloatwindow.player.video.base.IVideo
 class ListVideoContainer : VideoContainer {
 
     val whRatioImageView: WHRatioImageView
+
     //    var onVideoPlayListener: ExoVideoView.OnVideoPlayListener? = null
     val floatWindowClickListener = OnClickListener { _ ->
         tryPlayInWindow()
@@ -36,34 +37,35 @@ class ListVideoContainer : VideoContainer {
         addView(whRatioImageView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
     }
 
-    override fun setVideoInfo(videoInfo: VideoInfo, changeVideoView: Boolean) {
-        super.setVideoInfo(videoInfo, changeVideoView)
+    override fun setVideoInfo(videoInfo: VideoInfo) {
+        super.setVideoInfo(videoInfo)
         whRatioImageView.visibility = View.VISIBLE
+    }
+
+    override fun onVideoInfoChanged(old: VideoInfo?, new: VideoInfo) {
+        syncVideoInfoToCurrVideo()
     }
 
     //在不存在顶层视频容器时，才进行VideoView获取，避免在列表界面跟顶层容器抢占>>>>>>>>>>>>>>>>>>>>>
     /**
      * 开始播放，隐藏视频预览图
      */
-    override fun play(): VideoContainer {
+    override fun play() {
         val topLevelVideoContainer = PlayHelper.getTopLevelVideoContainer()
-        return if (topLevelVideoContainer != null) {
+        if (topLevelVideoContainer != null) {
             //通过顶层视频容器进行播放
-            mVideoInfo?.let {
+            getVideoInfo()?.let {
                 topLevelVideoContainer.setVideoInfo(it)
                 topLevelVideoContainer.play()
             }
-            this
         } else {
             whRatioImageView.visibility = View.GONE
             super.play()
         }
     }
 
-    override fun pause(): VideoContainer {
-        return if (PlayHelper.getTopLevelVideoContainer() != null) {
-            this
-        } else {
+    override fun pause() {
+        if (PlayHelper.getTopLevelVideoContainer() == null) {
             super.pause()
         }
     }
@@ -75,14 +77,14 @@ class ListVideoContainer : VideoContainer {
     }
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    override fun onUnbindVideo(video: IVideo) {
-        super.onUnbindVideo(video)
+    override fun onVideoUnbind(video: IVideo) {
+        super.onVideoUnbind(video)
         whRatioImageView.visibility = View.VISIBLE
     }
 
-    override fun settingPlayController(controllerSettingHelper: IControllerSettingHelper) {
-        super.settingPlayController(controllerSettingHelper)
-        mVideoInfo?.let {
+    override fun onPlayControllerSetup(controllerSettingHelper: IControllerSettingHelper) {
+        super.onPlayControllerSetup(controllerSettingHelper)
+        getVideoInfo()?.let {
             controllerSettingHelper.setTitle(it.fileName)
                     .setFloatWindowClickListener(floatWindowClickListener)
                     .setFullScreenClickListener(fullScreenClickListener)

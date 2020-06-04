@@ -1,4 +1,4 @@
-package com.csw.android.videofloatwindow.player.video.exo
+package com.csw.android.videofloatwindow.player.video.impl.exo
 
 import android.content.Context
 import android.util.AttributeSet

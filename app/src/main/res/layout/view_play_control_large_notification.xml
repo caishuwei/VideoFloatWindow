@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/v_notification_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!--
+    要按照比例设置通知高度，通知可用的系统View中，只有ImageView拥有adjustViewBounds根据图片尺寸重新调整视图
+    尺寸的能力，这里利用ImageView设置一个16：9的图片（直接用Shape就行）来决定通知大小。
+    设置为invisible，只参与测量布局不参与绘制。
+    -->
+    <ImageView
+        android:id="@+id/v_height_setting"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:src="@drawable/shape_notification_size"
+        android:visibility="invisible"
+        tools:ignore="contentDescription" />
+
+    <ImageView
+        android:id="@+id/iv_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:scaleType="centerCrop"
+        tools:ignore="contentDescription"
+        tools:src="@drawable/icon_float_window" />
+
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:background="#60000000"
+        android:ellipsize="end"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:padding="10dp"
+        android:textColor="@color/white"
+        tools:text="title" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="#60000000"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/v_previous"
+            style="@style/PlayerButton"
+            android:src="@drawable/exo_controls_previous"
+            tools:ignore="contentDescription" />
+
+        <ImageButton
+            android:id="@id/exo_play"
+            style="@style/PlayerButton"
+            android:src="@drawable/exo_controls_play"
+            tools:ignore="contentDescription" />
+
+        <ImageButton
+            android:id="@id/exo_pause"
+            style="@style/PlayerButton"
+            android:src="@drawable/exo_controls_pause"
+            android:visibility="gone"
+            tools:ignore="contentDescription" />
+
+        <ImageButton
+            android:id="@+id/v_next"
+            style="@style/PlayerButton"
+            android:src="@drawable/exo_controls_next"
+            tools:ignore="contentDescription" />
+
+        <ImageButton
+            android:id="@+id/v_full_screen"
+            style="@style/PlayerButton"
+            android:src="@drawable/icon_full_screen"
+            tools:ignore="contentDescription" />
+
+        <ImageButton
+            android:id="@+id/v_float_window"
+            style="@style/PlayerButton"
+            android:src="@drawable/icon_float_window"
+            tools:ignore="contentDescription" />
+
+    </LinearLayout>
+
+</FrameLayout>

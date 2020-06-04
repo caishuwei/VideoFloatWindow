@@ -4,10 +4,11 @@ import android.app.Activity
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View.OnClickListener
+import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.PlayHelper
 import com.csw.android.videofloatwindow.player.PlayList
-import com.csw.android.videofloatwindow.player.base.VideoContainer
-import com.csw.android.videofloatwindow.player.video.base.IControllerSettingHelper
+import com.csw.android.videofloatwindow.player.container.impl.VideoContainer
+import com.csw.android.videofloatwindow.player.video.IControllerSettingHelper
 
 /**
  * 全屏视频播放的视频容器，根据播放的视频旋转Activity，使得视频可以占用更大的空间来显示
@@ -19,9 +20,9 @@ class FullScreenVideoContainer : VideoContainer {
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    override fun settingPlayController(controllerSettingHelper: IControllerSettingHelper) {
-        super.settingPlayController(controllerSettingHelper)
-        mVideoInfo?.let {
+    override fun onPlayControllerSetup(controllerSettingHelper: IControllerSettingHelper) {
+        super.onPlayControllerSetup(controllerSettingHelper)
+        getVideoInfo()?.let {
             controllerSettingHelper
                     .setTitle(it.fileName)
                     .setBackClickListener(OnClickListener { _ ->
@@ -51,6 +52,10 @@ class FullScreenVideoContainer : VideoContainer {
                     .setVolumeAndBrightnessControllerEnable(true)
         }
         tryRotateScreen()
+    }
+
+    override fun onVideoInfoChanged(old: VideoInfo?, new: VideoInfo) {
+        syncVideoInfoToCurrVideo()
     }
 
 

@@ -61,7 +61,8 @@
         android:background="#CC000000"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingTop="4dp">
+        android:paddingTop="4dp"
+        android:paddingBottom="10dp">
 
         <TextView
             android:id="@id/exo_position"
@@ -76,13 +77,13 @@
             android:typeface="monospace"
             tools:text="00:00" />
 
-     <!--   <com.google.android.exoplayer2.ui.DefaultTimeBar
-            android:id="@id/exo_progress"
-            android:layout_width="0dp"
-            android:layout_height="26dp"
-            android:layout_weight="1" />-->
+        <!--   <com.google.android.exoplayer2.ui.DefaultTimeBar
+               android:id="@id/exo_progress"
+               android:layout_width="0dp"
+               android:layout_height="26dp"
+               android:layout_weight="1" />-->
 
-        <com.csw.android.videofloatwindow.player.video.exo.MyTimeBar
+        <com.csw.android.videofloatwindow.player.video.impl.exo.timebar.MyTimeBar
             android:id="@id/exo_progress"
             android:layout_width="0dp"
             android:layout_height="26dp"
