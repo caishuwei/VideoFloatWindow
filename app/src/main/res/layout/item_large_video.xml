@@ -16,7 +16,7 @@
         android:orientation="vertical"
         android:padding="10dp">
 
-        <com.csw.android.videofloatwindow.view.ListVideoContainer
+        <com.csw.android.videofloatwindow.player.container.impl.ListVideoContainer
             android:id="@+id/mv_video_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>

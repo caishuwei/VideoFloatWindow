@@ -1,4 +1,4 @@
-package com.csw.android.videofloatwindow.view
+package com.csw.android.videofloatwindow.player.container.impl
 
 import android.content.Context
 import android.util.AttributeSet
@@ -6,9 +6,9 @@ import android.view.View
 import android.view.View.OnClickListener
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.PlayHelper
-import com.csw.android.videofloatwindow.player.container.impl.VideoContainer
 import com.csw.android.videofloatwindow.player.video.IControllerSettingHelper
 import com.csw.android.videofloatwindow.player.video.IVideo
+import com.csw.android.videofloatwindow.view.WHRatioImageView
 
 /**
  * 用于列表的视频显示容器，添加了ImageView作为视频预览图显示控件，以及与悬浮窗播放的协调，优先在悬浮窗播放

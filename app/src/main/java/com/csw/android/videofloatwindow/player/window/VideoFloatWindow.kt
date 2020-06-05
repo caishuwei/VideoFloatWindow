@@ -16,6 +16,7 @@ import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.app.MyApplication
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.PlayHelper
+import com.csw.android.videofloatwindow.player.container.impl.FloatWindowVideoContainer
 import com.csw.android.videofloatwindow.util.LogUtils
 
 /**
@@ -103,10 +104,10 @@ class VideoFloatWindow(context: Context) : FrameLayout(context), NestedScrolling
     private fun removeFromWindow() {
         if (parent != null) {
             windowManager.removeView(this)
-            videoContainer.release()
             PlayHelper.removeTopLevelVideoContainer(videoContainer)
             onFloatWindowChangeListener?.onFloatWindowVisibilityChanged(false)
             AvailableAreaMeasure.instance.removeWindow()
+            videoContainer.release()
         }
     }
 

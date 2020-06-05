@@ -6,9 +6,9 @@ import android.content.pm.ActivityInfo
 import android.os.Build
 import android.util.AttributeSet
 import android.widget.FrameLayout
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
-import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.permission.SystemAlertWindowPermission
 import com.csw.android.videofloatwindow.player.container.IVideoContainer
@@ -17,8 +17,6 @@ import com.csw.android.videofloatwindow.player.video.IControllerSettingHelper
 import com.csw.android.videofloatwindow.player.video.IVideo
 import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
 import com.csw.android.videofloatwindow.ui.video.full_screen.FullScreenActivity
-import com.csw.android.videofloatwindow.util.FragmentHelper
-import com.csw.android.videofloatwindow.util.LogUtils
 import com.csw.android.videofloatwindow.util.Utils
 import com.google.android.material.snackbar.Snackbar
 
@@ -120,6 +118,60 @@ open class VideoContainer : FrameLayout, IVideoContainer {
         }
     }
 
+    private var mLifecycleObserver = LifecycleEventObserver { source, event ->
+        when (event) {
+            Lifecycle.Event.ON_CREATE -> {
+            }
+            Lifecycle.Event.ON_START -> {
+            }
+            Lifecycle.Event.ON_RESUME -> {
+                if (bindVideoOnViewEnterForeground) {
+                    bindVideoView()
+                }
+            }
+            Lifecycle.Event.ON_PAUSE -> {
+                if (pauseOnViewExitForeground) {
+                    pause()
+                }
+            }
+            Lifecycle.Event.ON_STOP -> {
+            }
+            Lifecycle.Event.ON_DESTROY -> {
+                if (releaseOnViewDestroy) {
+                    release()
+                }
+            }
+            else -> {
+            }
+        }
+    }
+    var bindVideoOnViewEnterForeground = false
+        private set
+    var pauseOnViewExitForeground = false
+        private set
+    var releaseOnViewDestroy = false
+        private set
+
+    override fun setBindVideoOnViewEnterForeground(bindVideo: Boolean) {
+        bindVideoOnViewEnterForeground = bindVideo
+    }
+
+    override fun setPauseOnViewExitForeground(pause: Boolean) {
+        pauseOnViewExitForeground = pause
+    }
+
+    override fun setReleaseOnViewDestroy(release: Boolean) {
+        releaseOnViewDestroy = release
+    }
+
+    override fun registerViewLifeCycleObserver(viewLifeCycle: Lifecycle, register: Boolean) {
+        if (register) {
+            viewLifeCycle.addObserver(mLifecycleObserver)
+        } else {
+            viewLifeCycle.removeObserver(mLifecycleObserver)
+        }
+    }
+
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         Utils.measureCenterInsideByScaleRatio(widthMeasureSpec, heightMeasureSpec, whRatio) { w, h ->
             super.onMeasure(w, h)
@@ -175,57 +227,8 @@ open class VideoContainer : FrameLayout, IVideoContainer {
      */
     open fun playInWindow() {
         mVideoInfo?.let {
-            VideoFloatWindow.instance.setVideoInfo(it)
             VideoFloatWindow.instance.show()
+            VideoFloatWindow.instance.setVideoInfo(it)
         }
     }
-
-    /**
-     *  在UI销毁时释放VideoView
-     */
-    fun releaseOnUiDestroy(fragmentManager: FragmentManager) {
-        UiDestroyListenerFragment.releaseVideoOnUiDestroy(fragmentManager, this)
-    }
-
-    /**
-     * 用于监听当前播放容器所在的界面是否销毁，在销毁时释放视频播放器,就不用自己在UI销毁时再调用销毁视频播放器
-     */
-    class UiDestroyListenerFragment : Fragment() {
-
-        companion object {
-            fun releaseVideoOnUiDestroy(fragmentManager: FragmentManager, videoContainer: VideoContainer) {
-                val instance = FragmentHelper.getFragmentInstance(fragmentManager, UiDestroyListenerFragment::class.java.name, UiDestroyListenerFragment::class.java)
-                instance.registerVideoContainer(videoContainer)
-            }
-        }
-
-        private val videoContainerSet = HashSet<VideoContainer>()
-        private var isViewDestroyed = false
-        private fun registerVideoContainer(videoContainer: VideoContainer) {
-            videoContainerSet.add(videoContainer)
-            if (isViewDestroyed) {
-                videoContainer.release()
-            }
-        }
-
-        /**
-         * 这是一个没有视图的fragment，onViewCreated不会走，但onDestroyView会
-         */
-        override fun onDestroyView() {
-            LogUtils.i(javaClass.simpleName, "onDestroyView")
-            isViewDestroyed = true
-            for (videoContainer in videoContainerSet) {
-                videoContainer.release()
-            }
-            videoContainerSet.clear()
-            super.onDestroyView()
-        }
-
-        override fun onDestroy() {
-            LogUtils.i(javaClass.simpleName, "onDestroy")
-            super.onDestroy()
-        }
-
-    }
-
 }

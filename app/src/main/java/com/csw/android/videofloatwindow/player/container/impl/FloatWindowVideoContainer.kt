@@ -1,35 +1,33 @@
-package com.csw.android.videofloatwindow.view
+package com.csw.android.videofloatwindow.player.container.impl
 
-import android.app.Activity
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View.OnClickListener
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.PlayHelper
 import com.csw.android.videofloatwindow.player.PlayList
-import com.csw.android.videofloatwindow.player.container.impl.VideoContainer
+import com.csw.android.videofloatwindow.player.core.VideoInstanceManager
 import com.csw.android.videofloatwindow.player.video.IControllerSettingHelper
+import com.csw.android.videofloatwindow.player.video.IVideo
+import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
 
-/**
- * 全屏视频播放的视频容器，根据播放的视频旋转Activity，使得视频可以占用更大的空间来显示
- * 开启播放控制器的一些按钮，设置点击事件
- */
-class FullScreenVideoContainer : VideoContainer {
+class FloatWindowVideoContainer : VideoContainer {
+    var videoFloatWindow: VideoFloatWindow? = null
 
-    constructor(context: Context) : super(context)
-    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
+    constructor(context: Context) : this(context, null)
+    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
     override fun onPlayControllerSetup(controllerSettingHelper: IControllerSettingHelper) {
         super.onPlayControllerSetup(controllerSettingHelper)
-        getVideoInfo()?.let {
-            controllerSettingHelper
+        getVideoInfo()?.let { it ->
+            controllerSettingHelper.setBackClickListener(null)
                     .setTitle(it.fileName)
-                    .setBackClickListener(OnClickListener { _ ->
-                        finishActivity()
+                    .setCloseClickListener(OnClickListener { _ ->
+                        VideoFloatWindow.instance.hide()
                     })
-                    .setFloatWindowClickListener(OnClickListener { _ ->
-                        tryPlayInWindow()
+                    .setFullScreenClickListener(OnClickListener { _ ->
+                        playInFullScreen()
                     })
                     .setPreviousClickListener(
                             if (PlayList.hasPrevious()) {
@@ -49,15 +47,18 @@ class FullScreenVideoContainer : VideoContainer {
                                 null
                             }
                     )
-                    .setVolumeAndBrightnessControllerEnable(true)
+                    .setVolumeAndBrightnessControllerEnable(false)
+            videoFloatWindow?.updateWindowWH(it)
         }
-        tryRotateScreen()
     }
 
     override fun onVideoInfoChanged(old: VideoInfo?, new: VideoInfo) {
-        syncVideoInfoToCurrVideo()
+        if(VideoInstanceManager.hasInstance(new.target)){
+            unBindVideoView()
+        }else{
+            syncVideoInfoToCurrVideo()
+        }
     }
-
 
     private fun playNext() {
         PlayHelper.tryPlayNext()
@@ -67,15 +68,4 @@ class FullScreenVideoContainer : VideoContainer {
         PlayHelper.tryPlayPrevious()
     }
 
-    override fun playInWindow() {
-        super.playInWindow()
-        finishActivity()
-    }
-
-    private fun finishActivity() {
-        val activity = context
-        if (activity is Activity) {
-            activity.finish()
-        }
-    }
 }

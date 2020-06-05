@@ -1,15 +1,15 @@
 package com.csw.android.videofloatwindow.ui.video.list
 
 import android.view.ViewGroup
-import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import com.chad.library.adapter.base.BaseQuickAdapter
 import com.chad.library.adapter.base.BaseViewHolder
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.entities.VideoInfo
+import com.csw.android.videofloatwindow.player.PlayHelper
 import com.csw.android.videofloatwindow.util.ImageLoader
 import com.csw.android.videofloatwindow.util.Utils
-import com.csw.android.videofloatwindow.view.ListVideoContainer
+import com.csw.android.videofloatwindow.player.container.impl.ListVideoContainer
 
 class LargeVideosAdapter(val fragment: Fragment) : BaseQuickAdapter<VideoInfo, BaseViewHolder>(R.layout.item_large_video) {
 
@@ -25,11 +25,12 @@ class LargeVideosAdapter(val fragment: Fragment) : BaseQuickAdapter<VideoInfo, B
             h.setText(R.id.tv_name, i.fileName)
             h.setText(R.id.tv_desc, i.filePath)
             val listVideoContainer = h.getView<ListVideoContainer>(R.id.mv_video_container)
-            listVideoContainer.releaseOnUiDestroy(fragment.childFragmentManager)
+            listVideoContainer.setBindVideoOnViewEnterForeground(true)
+            listVideoContainer.setPauseOnViewExitForeground(!PlayHelper.backgroundPlay)
+            listVideoContainer.setReleaseOnViewDestroy(true)
+            listVideoContainer.registerViewLifeCycleObserver(fragment.viewLifecycleOwner.lifecycle,true)
             listVideoContainer.setVideoInfo(i)
-//            listVideoContainer.whRatio = i.whRatio
-//            listVideoContainer.bindVideoView()
-            ImageLoader.loadImage(fragment,  listVideoContainer.whRatioImageView, i.imageUri)
+            ImageLoader.loadImage(fragment, listVideoContainer.whRatioImageView, i.imageUri)
         }
     }
 }

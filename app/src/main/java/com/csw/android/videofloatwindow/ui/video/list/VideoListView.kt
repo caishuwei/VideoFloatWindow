@@ -15,11 +15,11 @@ import com.csw.android.videofloatwindow.entities.PlaySheet
 import com.csw.android.videofloatwindow.entities.VideoInfo
 import com.csw.android.videofloatwindow.player.PlayHelper
 import com.csw.android.videofloatwindow.player.PlayList
+import com.csw.android.videofloatwindow.player.container.impl.ListVideoContainer
 import com.csw.android.videofloatwindow.player.container.impl.VideoContainer
 import com.csw.android.videofloatwindow.ui.base.BaseMVPFragment
 import com.csw.android.videofloatwindow.ui.video.full_screen.FullScreenActivity
 import com.csw.android.videofloatwindow.util.Utils
-import com.csw.android.videofloatwindow.view.ListVideoContainer
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.fragment_video_list.*
 
@@ -48,6 +48,12 @@ open class VideoListView<T : VideoListContract.Presenter>() : BaseMVPFragment<T>
             }
         }
     }
+
+    /**
+     * 当前列表页视频Tag对应所在列表的下标
+     */
+    private var videoPos = HashMap<String, Int>()
+
     /**
      * 当前播放列表，视频播放结束处理，用于取代默认的后台播放下一个
      */
@@ -55,11 +61,17 @@ open class VideoListView<T : VideoListContract.Presenter>() : BaseMVPFragment<T>
         override fun handlePlayEnd(videoInfo: VideoInfo?) {
             Utils.runIfNotNull(PlayHelper.lastPlayVideo, videosAdapter?.data) { video, data ->
                 if (video.isEnd()) {
+                    //遍历太耗时间，如果数据量大的话，这里用映射存储，查找位置方便很多
                     var currIndex = -1
-                    for ((index, vi) in data.withIndex()) {
-                        if (Utils.videoEquals(video.getVideoInfo(), vi)) {
-                            currIndex = index + 1
-                            break
+                    val dest = videoPos[video.getVideoInfo().target]
+                    if (dest != null) {
+                        currIndex = dest + 1
+                    } else {
+                        for ((index, vi) in data.withIndex()) {
+                            if (Utils.videoEquals(video.getVideoInfo(), vi)) {
+                                currIndex = index + 1
+                                break
+                            }
                         }
                     }
                     if (currIndex >= 0 && currIndex < data.size) {
@@ -70,6 +82,7 @@ open class VideoListView<T : VideoListContract.Presenter>() : BaseMVPFragment<T>
             }
         }
     }
+
     //当前的歌单Id
     var playSheetId: Long? = null
     var playSheetName: String? = null
@@ -346,8 +359,12 @@ open class VideoListView<T : VideoListContract.Presenter>() : BaseMVPFragment<T>
         smartRefreshLayout.autoRefresh()
     }
 
+
     override fun updatePlaySheetVideos(videoList: ArrayList<VideoInfo>) {
         videosAdapter?.setNewData(videoList)
+        for (viAndIndex in videoList.withIndex()) {
+            videoPos[viAndIndex.value.target] = viAndIndex.index
+        }
         play()
     }
 

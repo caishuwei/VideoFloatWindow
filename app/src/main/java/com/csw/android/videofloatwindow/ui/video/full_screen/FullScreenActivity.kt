@@ -49,6 +49,10 @@ class FullScreenActivity : BaseActivity() {
 
     private fun initData(intent: Intent?) {
         VideoFloatWindow.instance.hide()
+        videoContainer.setBindVideoOnViewEnterForeground(true)
+        videoContainer.setPauseOnViewExitForeground(!PlayHelper.backgroundPlay)
+        videoContainer.setReleaseOnViewDestroy(true)
+        videoContainer.registerViewLifeCycleObserver(lifecycle, true)
         if (intent != null) {
             val videoInfo = intent.getSerializableExtra("VideoInfo")
             val uri = intent.data
@@ -67,14 +71,20 @@ class FullScreenActivity : BaseActivity() {
         PlayHelper.setTopLevelVideoContainer(videoContainer)
     }
 
+    override fun onResume() {
+        super.onResume()
+        videoContainer.play()
+    }
+
     override fun finish() {
+        //退出界面就不需要停止播放了
+        videoContainer.setPauseOnViewExitForeground(false)
         PlayHelper.removeTopLevelVideoContainer(videoContainer)
         super.finish()
     }
 
     override fun onDestroy() {
         PlayHelper.removeTopLevelVideoContainer(videoContainer)
-        videoContainer.release()
         super.onDestroy()
     }
 

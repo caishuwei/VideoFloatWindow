@@ -5,6 +5,7 @@ import com.csw.android.videofloatwindow.player.PlayHelper
 import com.csw.android.videofloatwindow.player.PlayList
 import com.csw.android.videofloatwindow.player.container.impl.VideoContainer
 import com.csw.android.videofloatwindow.player.video.IVideo
+import com.csw.android.videofloatwindow.util.LogUtils
 import com.csw.android.videofloatwindow.util.Utils
 
 /**
@@ -24,10 +25,14 @@ class VideoBindHelper {
             val videoInfo = videoContainer.getVideoInfo() ?: return
 
             val video = VideoInstanceManager.ensureVideo(videoInfo)
+            if("FloatWindowVideoContainer" == videoContainer.javaClass.simpleName){
+                LogUtils.i(msg = "..")
+            }
             video.getVideoContainer()?.let {
                 if (it === videoContainer) return
                 unBindVideo(it)
             }
+            LogUtils.i(VideoBindHelper::class.java.simpleName,"容器${videoContainer.javaClass.simpleName} 绑定Video ${video.getVideoInfo().fileName}")
             video.setVideoContainer(videoContainer)
             videoContainer.onVideoBind(video)
             videoContainer.onPlayControllerSetup(video.getControllerSettingHelper())
@@ -39,6 +44,7 @@ class VideoBindHelper {
          */
         fun unBindVideo(videoContainer: VideoContainer) {
             videoContainer.getVideo()?.let {
+                LogUtils.i(VideoBindHelper::class.java.simpleName,"容器${videoContainer.javaClass.simpleName} 释放Video ${it.getVideoInfo().fileName}")
                 videoContainer.onVideoUnbind(it)
                 it.getControllerSettingHelper().reset()
                 it.setVideoContainer(null)

@@ -1,7 +1,7 @@
 package com.csw.android.videofloatwindow.player
 
 import com.csw.android.videofloatwindow.entities.VideoInfo
-import java.util.ArrayList
+import java.util.*
 import kotlin.collections.HashMap
 import kotlin.collections.set
 
@@ -15,6 +15,7 @@ class PlayList {
         private var maxIndex = -1
         private var currIndex = Int.MIN_VALUE
         private var videoPos = HashMap<String, Int>()
+
         /**
          * 设置播放列表,ArrayList采用数组的方式，可以提高查询速度
          */
@@ -34,7 +35,9 @@ class PlayList {
                 }
             }
 
-
+        /**
+         * 根据最后播放的Video 更新当前播放位置
+         */
         fun updateCurrIndex() {
             PlayHelper.lastPlayVideo?.let {
                 val ci = videoPos[it.getVideoInfo().target]
@@ -47,7 +50,6 @@ class PlayList {
             }
             currIndex = Int.MIN_VALUE
         }
-
 
         /**
          * 有上一曲

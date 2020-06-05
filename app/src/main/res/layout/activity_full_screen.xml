@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.csw.android.videofloatwindow.view.FullScreenVideoContainer
+    <com.csw.android.videofloatwindow.player.container.impl.FullScreenVideoContainer
         android:id="@+id/videoContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

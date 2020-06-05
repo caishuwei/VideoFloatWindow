@@ -8,10 +8,10 @@ import com.csw.android.videofloatwindow.player.container.impl.VideoContainer
 import com.csw.android.videofloatwindow.player.core.VideoInstanceManager
 import com.csw.android.videofloatwindow.player.service.PlayService
 import com.csw.android.videofloatwindow.player.video.IVideo
-import com.csw.android.videofloatwindow.player.window.FloatWindowVideoContainer
+import com.csw.android.videofloatwindow.player.container.impl.FloatWindowVideoContainer
 import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
 import com.csw.android.videofloatwindow.ui.video.full_screen.FullScreenActivity
-import com.csw.android.videofloatwindow.view.FullScreenVideoContainer
+import com.csw.android.videofloatwindow.player.container.impl.FullScreenVideoContainer
 import java.lang.ref.WeakReference
 import java.util.*
 

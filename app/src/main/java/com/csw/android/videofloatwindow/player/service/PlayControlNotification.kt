@@ -13,7 +13,7 @@ import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import com.csw.android.videofloatwindow.R
 import com.csw.android.videofloatwindow.app.MyApplication
-import com.csw.android.videofloatwindow.util.ScreenInfo
+import com.csw.android.videofloatwindow.util.LogUtils
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -42,15 +42,11 @@ class PlayControlNotification {
     private lateinit var bigRemoteViews: RemoteViews
     private lateinit var normalRemoteViews: RemoteViews
 
-    private val updateNotificationTask: Runnable
-    private val mainHandler = Handler(Looper.getMainLooper())
+    private val notificationUpdater = NotificationUpdater()
 
     constructor(context: Context) {
         this.context = context
         mNotificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        updateNotificationTask = Runnable {
-            mNotificationManager.notify(NOTIFICATION_ID, mNotification)
-        }
         createChannel()
         createNotification()
     }
@@ -129,9 +125,41 @@ class PlayControlNotification {
         }
     }
 
+    /**
+     * 实现间断更新，通知的更新本身是一个跨进程通信，比较耗时，这里限制两次更新的最小间隔时间
+     *
+     */
+    private inner class NotificationUpdater : Runnable {
+        private val mainHandler = Handler(Looper.getMainLooper())
+        private val minSpace = 100L//两次更新通知的最短间隔
+
+        private var recentCallTime = 0L//最近的调用时间
+        private var willWork = false//将会执行工作
+
+        fun update() {
+            if (!willWork) {
+                val spaceTime = System.currentTimeMillis() - recentCallTime
+                willWork = true
+                if (spaceTime < minSpace) {
+                    //与最近一次调用时间间隔过短，延时执行
+                    mainHandler.postDelayed(this, minSpace - spaceTime)
+                } else {
+                    mainHandler.post(this)
+                }
+            }
+        }
+
+        override fun run() {
+            recentCallTime = System.currentTimeMillis()
+            mNotificationManager.notify(NOTIFICATION_ID, mNotification)
+            willWork = false
+            LogUtils.i(javaClass.simpleName, "run on $recentCallTime")
+        }
+
+    }
+
     private fun updateNotification() {
-        mainHandler.removeCallbacks(updateNotificationTask)
-        mainHandler.postDelayed(updateNotificationTask, 100)
+        notificationUpdater.update()
     }
 
     fun setFloatWindowButtonVisibility(i: Int) {
