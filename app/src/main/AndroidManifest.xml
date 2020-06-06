@@ -63,6 +63,7 @@
 
         <service
             android:name=".player.service.PlayService"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
     </application>
 </manifest>

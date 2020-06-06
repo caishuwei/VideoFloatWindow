@@ -59,7 +59,14 @@ open class VideoContainer : FrameLayout, IVideoContainer {
      * 视频信息改变
      */
     open fun onVideoInfoChanged(old: VideoInfo?, new: VideoInfo) {
-        unBindVideoView()
+        releaseCurrVideo()
+    }
+
+    fun releaseCurrVideo() {
+        currVideo?.let {
+            unBindVideoView()
+            it.release()
+        }
     }
 
     fun syncVideoInfoToCurrVideo() {

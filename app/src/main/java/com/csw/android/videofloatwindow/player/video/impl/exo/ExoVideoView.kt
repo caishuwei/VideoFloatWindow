@@ -33,13 +33,11 @@ import com.csw.android.videofloatwindow.util.Utils
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.source.ExtractorMediaSource
 import com.google.android.exoplayer2.source.TrackGroupArray
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray
 import com.google.android.exoplayer2.ui.PlayerView
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
+import com.google.android.exoplayer2.video.VideoListener
 
 /**
  * 自定义VideoView对播放器进行封装
@@ -109,19 +107,13 @@ class ExoVideoView internal constructor(videoInfo: VideoInfo) : RelativeLayout(M
         vNext.isEnabled = true
         vFullScreen = playerView.findViewById(R.id.v_full_screen)
         vFloatWindow = playerView.findViewById(R.id.v_float_window)
-        val bandwidthMeter = DefaultBandwidthMeter()
         //        val window = Timeline.Window()
-        val videoTrackSelectionFactory = AdaptiveTrackSelection.Factory(bandwidthMeter)
-        val trackSelector = DefaultTrackSelector(videoTrackSelectionFactory)
-        player = ExoPlayerFactory.newSimpleInstance(
-                context,
-                trackSelector)
+        player = SimpleExoPlayer.Builder(context).build()
         playerView.player = player
         playerView.controllerAutoShow = false
         mediaDataSourceFactory = DefaultDataSourceFactory(
                 context,
-                Util.getUserAgent(context, context.getString(R.string.app_name)),
-                bandwidthMeter)
+                Util.getUserAgent(context, context.getString(R.string.app_name)))
 
 
         fl_hint_layer = rootView.findViewById(R.id.fl_hint_layer)
@@ -168,8 +160,17 @@ class ExoVideoView internal constructor(videoInfo: VideoInfo) : RelativeLayout(M
             errorHintViewHolder.removeFromLayer(hintLayerController)
             play()
         }
+        player.addVideoListener(object : VideoListener {
+            override fun onVideoSizeChanged(width: Int, height: Int, unappliedRotationDegrees: Int, pixelWidthHeightRatio: Float) {
+                LogUtils.i(ExoVideoView::class.java.name, "onVideoSizeChanged:$width $height $unappliedRotationDegrees ${getVideoInfo().fileName}")
+            }
+
+            override fun onRenderedFirstFrame() {
+            }
+
+        })
         player.addListener(object : Player.EventListener {
-            override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters?) {
+            override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
             }
 
             override fun onSeekProcessed() {
@@ -178,28 +179,23 @@ class ExoVideoView internal constructor(videoInfo: VideoInfo) : RelativeLayout(M
                 }
             }
 
-            override fun onTracksChanged(trackGroups: TrackGroupArray?, trackSelections: TrackSelectionArray?) {
+            override fun onTracksChanged(trackGroups: TrackGroupArray, trackSelections: TrackSelectionArray) {
             }
 
-            override fun onPlayerError(error: ExoPlaybackException?) {
-                if (error != null) {
-                    when (error.type) {
-                        ExoPlaybackException.TYPE_SOURCE -> {
-                            errorHintViewHolder.addToLayer(hintLayerController)
-                            errorHintViewHolder.setHintInfo(R.drawable.player_error, "播放源异常")
-                        }
-                        ExoPlaybackException.TYPE_RENDERER -> {
-                            errorHintViewHolder.addToLayer(hintLayerController)
-                            errorHintViewHolder.setHintInfo(R.drawable.player_error, "视频渲染异常")
-                        }
-                        ExoPlaybackException.TYPE_UNEXPECTED -> {
-                            errorHintViewHolder.addToLayer(hintLayerController)
-                            errorHintViewHolder.setHintInfo(R.drawable.player_error, "视频错误")
-                        }
+            override fun onPlayerError(error: ExoPlaybackException) {
+                when (error.type) {
+                    ExoPlaybackException.TYPE_SOURCE -> {
+                        errorHintViewHolder.addToLayer(hintLayerController)
+                        errorHintViewHolder.setHintInfo(R.drawable.player_error, "播放源异常")
                     }
-                } else {
-                    errorHintViewHolder.addToLayer(hintLayerController)
-                    errorHintViewHolder.setHintInfo(R.drawable.player_error, "视频错误")
+                    ExoPlaybackException.TYPE_RENDERER -> {
+                        errorHintViewHolder.addToLayer(hintLayerController)
+                        errorHintViewHolder.setHintInfo(R.drawable.player_error, "视频渲染异常")
+                    }
+                    ExoPlaybackException.TYPE_UNEXPECTED -> {
+                        errorHintViewHolder.addToLayer(hintLayerController)
+                        errorHintViewHolder.setHintInfo(R.drawable.player_error, "视频错误")
+                    }
                 }
                 player.stop(true)
             }
@@ -216,7 +212,8 @@ class ExoVideoView internal constructor(videoInfo: VideoInfo) : RelativeLayout(M
             override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
             }
 
-            override fun onTimelineChanged(timeline: Timeline?, manifest: Any?, reason: Int) {
+
+            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
             }
 
             override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
@@ -265,7 +262,8 @@ class ExoVideoView internal constructor(videoInfo: VideoInfo) : RelativeLayout(M
     /**
      * 辅助控制器的设置
      */
-    private val controllerSettingHelper: IControllerSettingHelper = ControllerSettingHelper()
+    private
+    val controllerSettingHelper: IControllerSettingHelper = ControllerSettingHelper()
 
     override fun getControllerSettingHelper(): IControllerSettingHelper {
         return controllerSettingHelper
@@ -274,7 +272,8 @@ class ExoVideoView internal constructor(videoInfo: VideoInfo) : RelativeLayout(M
     /**
      * 视频信息
      */
-    private var mVideoInfo: VideoInfo = videoInfo
+    private
+    var mVideoInfo: VideoInfo = videoInfo
 
     override fun getVideoInfo(): VideoInfo {
         return mVideoInfo;
@@ -293,7 +292,8 @@ class ExoVideoView internal constructor(videoInfo: VideoInfo) : RelativeLayout(M
 
 
     //当前所在的播放容器
-    private var currVideoContainer: VideoContainer? = null
+    private
+    var currVideoContainer: VideoContainer? = null
     override fun setVideoContainer(videoContainer: VideoContainer?) {
         currVideoContainer = videoContainer
     }
@@ -347,17 +347,38 @@ class ExoVideoView internal constructor(videoInfo: VideoInfo) : RelativeLayout(M
 
 
     //---------------------------------------触摸事件处理-------------------------------------------
-    private var scaledTouchSlop: Int = 0
-    private var handleGesture: Int = 0//是否处理手势 -1不处理 0待判断 1亮度与音量处理 2嵌套滑动处理
-    private var downX: Float = 0f
-    private var downY: Float = 0f
-    private var preX: Float = 0f
-    private var preY: Float = 0f
-    private var gestureHandler: GestureHandler? = null
-    private val volumeGestureHandler = VolumeGestureHandler()
-    private val brightnessGestureHandler = BrightnessGestureHandler()
-    private var downTime = 0L
-    private var isSingleTap = false
+    private
+    var scaledTouchSlop: Int = 0
+
+    private
+    var handleGesture: Int = 0//是否处理手势 -1不处理 0待判断 1亮度与音量处理 2嵌套滑动处理
+
+    private
+    var downX: Float = 0f
+
+    private
+    var downY: Float = 0f
+
+    private
+    var preX: Float = 0f
+
+    private
+    var preY: Float = 0f
+
+    private
+    var gestureHandler: GestureHandler? = null
+
+    private
+    val volumeGestureHandler = VolumeGestureHandler()
+
+    private
+    val brightnessGestureHandler = BrightnessGestureHandler()
+
+    private
+    var downTime = 0L
+
+    private
+    var isSingleTap = false
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         super.onTouchEvent(event)
@@ -450,7 +471,8 @@ class ExoVideoView internal constructor(videoInfo: VideoInfo) : RelativeLayout(M
 
     //--------------------------- 作为子视图拦截触摸事件后向父视图分发嵌套滑动 -----------------------
 
-    private val nestedScrollingChildHelper = NestedScrollingChildHelper(this)
+    private
+    val nestedScrollingChildHelper = NestedScrollingChildHelper(this)
 
     override fun setNestedScrollingEnabled(enabled: Boolean) {
         super.setNestedScrollingEnabled(enabled)

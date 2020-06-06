@@ -8,7 +8,6 @@ import com.csw.android.videofloatwindow.player.PlayHelper
 import com.csw.android.videofloatwindow.player.PlayList
 import com.csw.android.videofloatwindow.player.core.VideoInstanceManager
 import com.csw.android.videofloatwindow.player.video.IControllerSettingHelper
-import com.csw.android.videofloatwindow.player.video.IVideo
 import com.csw.android.videofloatwindow.player.window.VideoFloatWindow
 
 class FloatWindowVideoContainer : VideoContainer {
@@ -53,9 +52,9 @@ class FloatWindowVideoContainer : VideoContainer {
     }
 
     override fun onVideoInfoChanged(old: VideoInfo?, new: VideoInfo) {
-        if(VideoInstanceManager.hasInstance(new.target)){
-            unBindVideoView()
-        }else{
+        if (VideoInstanceManager.hasInstance(new.target)) {
+            releaseCurrVideo()
+        } else {
             syncVideoInfoToCurrVideo()
         }
     }

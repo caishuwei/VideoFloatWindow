@@ -54,7 +54,7 @@ class PlayService : Service() {
         override fun onPlayVideoInfoUpdated(videoInfo: VideoInfo?) {
             PlayHelper.lastPlayVideo?.let {
                 val newVideoInfo = it.getVideoInfo()
-                playControlNotification.loadVideoImage(newVideoInfo.mediaDbId)
+                playControlNotification.loadVideoImage(newVideoInfo.imageUri)
                 playControlNotification.setTitle(newVideoInfo.fileName)
                 playControlNotification.setPreviousButtonVisibility(
                         if (PlayList.hasPrevious()) View.VISIBLE

@@ -137,7 +137,7 @@ ext {
             gson               : "com.google.code.gson:gson:2.8.5",
 
             //exoplayer 基于Android底层实现播放器，高性能，简单易用，谷歌亲儿子
-            exoplayer:"com.google.android.exoplayer:exoplayer:2.8.2",
+            exoplayer:"com.google.android.exoplayer:exoplayer:2.11.5",
             //腾讯bugly
             bugly:"com.tencent.bugly:crashreport:latest.release",
     ]
